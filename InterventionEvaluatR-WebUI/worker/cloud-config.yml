@@ -1,0 +1,12 @@
+#cloud-config
+users:
+  - name: evaluatr
+    groups: docker
+    ssh-authorized-keys: 
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC/xyhn3lACQiw0N4jgoE9SwLlMyzu+3WzFLVI8iwOx7+8iyk3J0UxOvRHF3wNCHnuo1pkwP41Qt6LwEznvcGoDyO94grdRyrNgH/fjcLfbH14sNR9VbiOVfPLlBvwFpXanFKUlUWyfQfJPknyYwDNu2eLpgmLD5aqt/qyQY5xcfQvH854lsOpHznZQ168u6/evZOQ2ZtWgREzYkxc0Tk0XfSlgFMbFKgkIYCIGnSxnYYjBhko99PSkOqghJXh27VpqJe0Q73A43i/YK2jc5+pnL6QwU60YL2cl8hLzkO/cpabw6p0VYw59nWqqyGA6vfBkVCdUsNUWHnprrWqQJoOV interventionevaluatr.webui
+write_files:
+  - path: /usr/local/bin/Rscript-docker
+    content: |
+      #!/bin/bash
+      exec /usr/bin/docker run --network host interventionevaluatr-webui-worker "$@"
+    permissions: 0755
