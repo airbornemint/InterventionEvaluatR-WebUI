@@ -48,8 +48,13 @@ timeFormats = list(
 shinyServer(function(input, output, session) {
     
     inputData = reactive({
-        data("pnas_brazil", package="InterventionEvaluatR")
-        return(pnas_brazil)
+        switch(
+            input$stockDataset,
+            pnas_brazil={
+                data("pnas_brazil", package="InterventionEvaluatR")
+                return(pnas_brazil)
+            }
+        )
     })
     
     outcome = reactive({
@@ -178,20 +183,36 @@ shinyServer(function(input, output, session) {
         analysisResults()
     })
     
+    observeEvent(input$prev.load, {
+        updateTabsetPanel(session, "stepNav", selected="load")
+    })
+    
     observeEvent(input$next.outcome, {
-        updateTabsetPanel(session, "mainNav", selected="outcome")
+        updateTabsetPanel(session, "stepNav", selected="outcome")
     })
 
+    observeEvent(input$prev.outcome, {
+        updateTabsetPanel(session, "stepNav", selected="outcome")
+    })
+    
     observeEvent(input$next.time, {
-        updateTabsetPanel(session, "mainNav", selected="time")
+        updateTabsetPanel(session, "stepNav", selected="time")
+    })
+    
+    observeEvent(input$prev.time, {
+        updateTabsetPanel(session, "stepNav", selected="time")
     })
     
     observeEvent(input$next.grouping, {
-        updateTabsetPanel(session, "mainNav", selected="grouping")
+        updateTabsetPanel(session, "stepNav", selected="grouping")
+    })
+    
+    observeEvent(input$prev.grouping, {
+        updateTabsetPanel(session, "stepNav", selected="grouping")
     })
     
     observeEvent(input$next.analysis, {
-        updateTabsetPanel(session, "mainNav", selected="analysis")
+        updateTabsetPanel(session, "stepNav", selected="analysis")
     })
     
     observeEvent(input$analyze, {
