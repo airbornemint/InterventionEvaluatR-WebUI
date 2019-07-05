@@ -10,65 +10,77 @@
 library(shiny)
 
 # Define UI for application that draws a histogram
-shinyUI(fluidPage(
-
-    # Application title
-    titlePanel("InterventionEvaluatR"),
-
-    # Sidebar with a slider input for number of bins
-    sidebarLayout(
-        sidebarPanel(
+shinyUI(navbarPage("InterventionEvaluatR",
+    tabPanel(
+        "Load Data",
+        h1("Welcome to InterventionEvaluatR"),
+        p("Let's begin by loading some data to analyze. You can load your own data, or you can choose a stock dataset below."),
+        selectInput(
+            inputId = "stockDatasetName",
+            label = "Load stock data:",
+            choices = c("Preumococcal pneumonia, Brazil")
         ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-            plotOutput(
-                outputId = "previewPlot"
-            ),
-            
-            h3("Load data"),
-            
-            h3("Data description"),
-            
-            h3("Outcome"),
-            uiOutput("outcomeColUI"),
-            uiOutput("denomColUI"),
-            
-            h3("Time"),
-            uiOutput("timeColUI"),
-            textInput(
-                inputId = "timeFormat",
-                label = "Time Format:",
-                value = "YYYY-MM-DD"
-            ),
-            selectInput(
-                inputId = "obsFreq",
-                label = "Observation frequency:",
-                choices = c("Monthly", "Quarterly")
-            ),
-            selectInput(
-                inputId = "yearStart",
-                label = "Year:",
-                choices = c("January", "June")
-            ),
-            dateInput(
-                inputId = "postStart",
-                label = "Post Start:"
-            ),
-            dateInput(
-                inputId = "evalStart",
-                label = "Eval Start:"
-            ),
-            
-            h3("Stratification"),
-            uiOutput("groupColUI"),
-            
-            h3("Fine-tuning"),
-        
-            h3("Summary"),
-            actionButton("analyze", "Begin Analysis"),
-            textOutput("analysisStatus"),
-            tableOutput("analysisResults")
-        )
-    )
+        actionButton("next.outcome", "Next: Specify outcome variable"),
+        value="load"
+    ),
+    tabPanel(
+        "Outcome Variables",
+        h1("Specify Outcome Variables"),
+        uiOutput("outcomeColUI"),
+        uiOutput("denomColUI"),
+        actionButton("next.time", "Next: Specify time variable"),
+        value="outcome"
+    ),
+    tabPanel(
+        "Time Variable",
+        h1("Specify Time Variable"),
+        p("Which is the time variable in your data?"),
+        uiOutput("timeColUI"),
+        p("What is the date format of the time variable?"),
+        uiOutput("timeFormatUI"),
+        p("Does the time variable contain monthly or quarterly observations?"),
+        selectInput(
+            inputId = "obsFreq",
+            label = "Observation frequency:",
+            choices = c("Monthly", "Quarterly")
+        ),
+        p("Lorem ipsum year"),
+        selectInput(
+            inputId = "yearStart",
+            label = "Year:",
+            choices = c("January", "June")
+        ),
+        p("When was the vaccine introduced?"),
+        dateInput(
+            inputId = "postStart",
+            label = "Post Start:"
+        ),
+        p("Lorem ipsum eval start"),
+        dateInput(
+            inputId = "evalStart",
+            label = "Eval Start:"
+        ),
+        actionButton("next.grouping", "Next: Specify grouping"),
+        value="time"
+    ),
+    tabPanel(
+        "Grouping",
+        h1("Specify Grouping"),
+        uiOutput("groupColUI"),
+        actionButton("next.analysis", "Next: Begin analysis"),
+        value="grouping"
+    ),
+    tabPanel(
+        "Analysis",
+        h1("Analysis"),
+        actionButton("analyze", "Begin Analysis"),
+        textOutput("analysisStatus"),
+        tableOutput("analysisResults"),
+        value="analysis"
+    ),
+    header=conditionalPanel("output.showPlot", plotOutput(
+        outputId = "previewPlot"
+    )),
+    fluid=FALSE,
+    id="mainNav"
 ))

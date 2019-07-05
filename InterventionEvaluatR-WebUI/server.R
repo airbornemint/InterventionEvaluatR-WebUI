@@ -13,6 +13,8 @@ library(shiny)
 library(InterventionEvaluatR)
 library(uuid)
 library(magrittr)
+library(dplyr)
+library(ggplot2)
 
 plan(multisession)
 
@@ -35,30 +37,89 @@ check.output = function(args) {
     }
 }
 
+timeFormats = list(
+  `YYYY-MM-DD`="%Y-%m-%d",
+  `YYYY-DD-MM`="%Y-%d-%m",
+  `MM-DD-YYYY`="%m-%d-%Y",
+  `DD-MM-YYYY`="%d-%m-%Y"
+)
+
 # Define server logic required to draw a histogram
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
     
     inputData = reactive({
         data("pnas_brazil", package="InterventionEvaluatR")
         return(pnas_brazil)
     })
     
-    output$previewPlot <- renderPlot({
-        if(
-            is.null(input$outcomeCol) ||
-            is.null(input$timeCol) ||
-            !(input$outcomeCol %in% names(inputData())) ||
-            !(input$timeCol %in% names(inputData()))
-        ) {
-            return(NA)
+    outcome = reactive({
+        inputData = inputData()
+        if (is.null(input$outcomeCol) || !(input$outcomeCol %in% names(inputData))) {
+          return(NULL)
         }
-
-        plot(
-            x=inputData()[[input$timeCol]], 
-            y=inputData()[[input$outcomeCol]], 
-            type = 'l'
-        )
+        
+        if (is.null(input$denomCol) || !(input$denomCol %in% names(inputData))) {
+          return(inputData[[input$outcomeCol]])
+        } else {
+          return(inputData[[input$outcomeCol]] / inputData[[input$denomCol]])
+        }
     })
+    
+    time = reactive({
+      inputData = inputData()
+      if (is.null(input$timeCol) || !(input$timeCol %in% names(inputData))) {
+        return(NULL)
+      }
+      
+      time = as.Date(inputData[[input$timeCol]], format=timeFormats[[input$timeFormat]]) 
+      if (any(is.na(time))) {
+        return(NULL)
+      }
+      
+      return(time)
+    })
+    
+    group = reactive({
+      inputData = inputData()
+      if (is.null(input$groupCol) || !(input$groupCol %in% names(inputData))) {
+        return(NULL)
+      }
+      
+      return(inputData[[input$groupCol]])
+    })
+    
+    previewPlot = reactive({
+      outcome = outcome()
+      time = time()
+      group = group()
+      
+      if(is.null(outcome) || is.null(time)) {
+        return(NULL)
+      }
+      
+      if (!is.null(group)) {
+        ggplot(
+          data.frame(y=outcome, t=time, g=group) %>% arrange(t)
+        ) +
+          geom_line(aes(x=t, y=y, group=g)) +
+          theme_light()
+      } else {
+        ggplot(
+          data.frame(y=outcome, t=time) %>% arrange(t)
+        ) +
+          geom_line(aes(x=t, y=y)) +
+          theme_light()
+      }
+    })
+    
+    output$previewPlot = renderPlot({
+      previewPlot()
+    })
+    
+    output$showPlot = reactive({
+      return(!is.null(previewPlot()))
+    })
+    outputOptions(output, 'showPlot', suspendWhenHidden=FALSE)
     
     output$outcomeColUI <- renderUI({
         selectInput(
@@ -84,6 +145,14 @@ shinyServer(function(input, output) {
         )
     })
     
+    output$timeFormatUI <- renderUI({
+      selectInput(
+        inputId = "timeFormat",
+        label = "Time Format:",
+        choices = names(timeFormats)
+      )
+    })
+    
     output$groupColUI <- renderUI({
         selectInput(
             inputId = "groupCol",
@@ -107,6 +176,22 @@ shinyServer(function(input, output) {
     
     output$analysisResults = renderTable({
         analysisResults()
+    })
+    
+    observeEvent(input$next.outcome, {
+        updateTabsetPanel(session, "mainNav", selected="outcome")
+    })
+
+    observeEvent(input$next.time, {
+        updateTabsetPanel(session, "mainNav", selected="time")
+    })
+    
+    observeEvent(input$next.grouping, {
+        updateTabsetPanel(session, "mainNav", selected="grouping")
+    })
+    
+    observeEvent(input$next.analysis, {
+        updateTabsetPanel(session, "mainNav", selected="analysis")
     })
     
     observeEvent(input$analyze, {
