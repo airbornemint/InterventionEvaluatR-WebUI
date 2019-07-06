@@ -8,6 +8,7 @@
 #
 
 library(shiny)
+library(shinyBS)
 source("common.R")
 source("mdbootstrap.R")
 
@@ -42,6 +43,7 @@ md_page(
                             label = "Load stock data:",
                             choices = c("", stockDatasets)
                         ),
+                        bsButton("nextTime", "Next", style="primary", disabled=TRUE),
                         summary=textOutput("loadSummary")
                     ),
                     md_stepper_step(
@@ -70,6 +72,7 @@ md_page(
                             inputId = "evalStart",
                             label = "Eval Start:"
                         ),
+                        bsButton("nextOutcome", "Next", style="primary", disabled=TRUE),
                         summary=uiOutput("timeSummary")
                     ),
                     md_stepper_step(
@@ -78,12 +81,13 @@ md_page(
                         uiOutput("outcomeColUI"),
                         uiOutput("denomColUI"),
                         uiOutput("groupColUI"),
+                        bsButton("nextAnalysis", "Next", style="primary", disabled=TRUE),
                         summary=uiOutput("outcomeSummary")
                     ),
                     md_stepper_step(
                         title="Run Analysis",
                         value="analysis",
-                        actionButton("analyze", "Run Analysis"),
+                        bsButton("analyze", "Run Analysis", style="primary", disabled=TRUE),
                         textOutput("analysisStatus"),
                         tableOutput("analysisResults")
                     )

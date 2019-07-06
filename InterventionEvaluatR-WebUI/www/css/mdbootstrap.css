@@ -1,4 +1,4 @@
-ul.stepper > .active > .step-content {
+ul.stepper > li.active > .step-content {
   display: block;
 }
 
@@ -8,6 +8,11 @@ ul.stepper > li > .step-content {
 
 ul.stepper > li > a {
   width: 100%;
+  pointer-events: none;
+}
+
+ul.stepper > li.completed > a {
+  pointer-events: auto;
 }
 
 ul.stepper > li > a > .label.summary {

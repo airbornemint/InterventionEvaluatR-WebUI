@@ -1,3 +1,5 @@
+import::from(plyr, compact)
+
 md_page = function(...) {
   tags$html(
     singleton(tags$head(
@@ -49,8 +51,7 @@ md_stepper_vertical = function(..., id, selected) {
           step$content,
           class="step-content"
         ),
-        id=step$value,
-        class="completed"
+        id=step$value
       )
     }),
     class="stepper stepper-vertical",
@@ -61,4 +62,14 @@ md_stepper_vertical = function(..., id, selected) {
 
 md_stepper_step = function(title, ..., value, summary=NULL) {
   list(title=title, value=value, content=list(...), summary=summary)
+}
+
+md_update_stepper = function(session, stepper, value=NULL) {
+  session$sendCustomMessage("md_update_stepper", list(stepper=stepper, value=value) %>% compact())
+}
+
+md_update_stepper_step = function(session, stepper, step, completed=NULL) {
+  session$sendCustomMessage("md_update_stepper_step", list(
+    stepper=stepper, step=step, completed=completed
+  ) %>% compact())
 }

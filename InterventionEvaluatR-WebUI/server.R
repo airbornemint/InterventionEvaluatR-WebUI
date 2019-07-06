@@ -10,7 +10,7 @@
 library(future)
 library(promises)
 library(shiny)
-library(shinyjs)
+library(shinyBS)
 library(InterventionEvaluatR)
 library(uuid)
 library(magrittr)
@@ -178,19 +178,66 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'groupColUI', suspendWhenHidden=FALSE)
   
   ############################################################
-  # Set up reactive buttons
+  # Set up step enabled / disabled state
   ############################################################
   
-  loadDone = reactive({
-    !is.null(inputData())
+  autoTime = reactive({
+    if (!is.null(inputData())) {
+      autodetectTime(inputData())
+    }
+  })
+  
+  timeAvailable = reactive({
+    !is.null(autoTime())
   })
   
   observe({
-    if (loadDone()) {
-      enable("next.outcome")
-    } else {
-      disable("next.outcome")
-    }
+    updateButton(session, "nextTime", disabled=!timeAvailable())
+    md_update_stepper_step(session, "steps", "load", completed=timeAvailable())
+  })
+  
+  observeEvent(input$nextTime, {
+    md_update_stepper(session, "steps", value="time")
+  })
+  
+  outcomeAvailable = reactive({
+    !is.null(dataTime())
+  })
+  
+  observe({
+    updateButton(session, "nextOutcome", disabled=!outcomeAvailable())
+    md_update_stepper_step(session, "steps", "time", completed=outcomeAvailable())
+  })
+  
+  observeEvent(input$nextOutcome, {
+    md_update_stepper(session, "steps", value="outcome")
+  })
+  
+  groupAvailable = reactive({
+    !is.null(dataOutcome())
+  })
+  
+  observe({
+    updateButton(session, "nextGroup", disabled=!groupAvailable())
+    md_update_stepper_step(session, "steps", "outcome", completed=groupAvailable())
+  })
+  
+  observeEvent(input$nextGroup, {
+    md_update_stepper(session, "steps", value="group")
+  })
+  
+  analysisAvailable = reactive({
+    !is.null(dataGroup())
+  })
+  
+  observe({
+    updateButton(session, "nextAnalysis", disabled=!analysisAvailable())
+    md_update_stepper_step(session, "steps", "group", completed=analysisAvailable())
+    updateButton(session, "analyze", disabled=!analysisAvailable())
+  })
+  
+  observeEvent(input$nextAnalysis, {
+    md_update_stepper(session, "steps", value="analysis")
   })
   
   ############################################################

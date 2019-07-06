@@ -40,3 +40,15 @@ $.extend(stepperBinding, {
 });
 
 Shiny.inputBindings.register(stepperBinding);
+
+Shiny.addCustomMessageHandler("md_update_stepper", function(message) {
+  if (message.value) {
+    stepperBinding.setValue($("#" + message.stepper), message.value);
+  }
+});
+
+Shiny.addCustomMessageHandler("md_update_stepper_step", function(message) {
+  if (message.completed !== null) {
+    $("#" + message.stepper).children("#" + message.step).toggleClass("completed", message.completed);
+  }
+});
