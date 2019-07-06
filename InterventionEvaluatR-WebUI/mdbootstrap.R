@@ -1,12 +1,14 @@
 md_page = function(...) {
   tags$html(
-    tags$head(
+    singleton(tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "mdb/css/bootstrap.min.css"),
       tags$link(rel = "stylesheet", type = "text/css", href = "mdb/css/mdb.min.css"),
-      tags$link(rel = "stylesheet", type = "text/css", href = "css/app.css")
-    ),
+      tags$link(rel = "stylesheet", type = "text/css", href = "css/app.css"),
+      tags$link(rel = "stylesheet", type = "text/css", href = "css/mdbootstrap.css"),
+      tags$script(src = "js/mdbootstrap.js")
+    )),
     tags$body(
-      div(..., class="container")
+      div(...)
     )
   )
 }
@@ -31,7 +33,7 @@ md_column = function(...) {
   div(..., class="col")
 }
 
-md_stepper_vertical = function(..., id=NULL) {
+md_stepper_vertical = function(..., id, selected) {
   steps = list(...)
   tags$ul(
     lapply(seq_along(steps), function(idx) {
@@ -40,21 +42,23 @@ md_stepper_vertical = function(..., id=NULL) {
         a(
           span(as.character(idx), class="circle"),
           span(step$title, class="label"),
+          span(step$summary, class="label summary"),
           href="#!"
         ),
         div(
           step$content,
           class="step-content"
         ),
-        id=step$id,
+        id=step$value,
         class="completed"
       )
     }),
     class="stepper stepper-vertical",
-    id=id
+    id=id,
+    "data-stepper-selected"=selected
   )
 }
 
-md_stepper_step = function(title, ..., id=NULL) {
-  list(title=title, id=id, content=list(...))
+md_stepper_step = function(title, ..., value, summary=NULL) {
+  list(title=title, value=value, content=list(...), summary=summary)
 }

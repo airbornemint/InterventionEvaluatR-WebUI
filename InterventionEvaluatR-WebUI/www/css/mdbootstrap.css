@@ -1,0 +1,17 @@
+ul.stepper > .active > .step-content {
+  display: block;
+}
+
+ul.stepper > li > .step-content {
+  display: none;
+}
+
+ul.stepper > li > a {
+  width: 100%;
+}
+
+ul.stepper > li > a > .label.summary {
+  order: 3;
+  margin-left: auto;
+  font-weight: 300;
+}
