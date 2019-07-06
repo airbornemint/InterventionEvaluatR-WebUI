@@ -10,6 +10,7 @@
 library(future)
 library(promises)
 library(shiny)
+library(shinyjs)
 library(InterventionEvaluatR)
 library(uuid)
 library(magrittr)
@@ -17,6 +18,7 @@ library(dplyr)
 library(ggplot2)
 
 plan(multisession)
+future(1) # This forces the multisession workers to be set up right away, rather than randomly stalling the app later
 
 check.call = function(args) {
     status = system2(args[1], args[2:length(args)], stdout="", stderr="")
@@ -46,86 +48,88 @@ timeFormats = list(
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
-    
+    ############################################################
+    # Set up reactive data inputs
+    ############################################################
+
     inputData = reactive({
-        switch(
-            input$stockDataset,
-            pnas_brazil={
-                data("pnas_brazil", package="InterventionEvaluatR")
-                return(pnas_brazil)
-            }
-        )
+      switch(
+        input$stockDataset,
+        pnas_brazil = {
+          data("pnas_brazil", package="InterventionEvaluatR")
+          pnas_brazil
+        }
+      )
     })
     
-    outcome = reactive({
-        inputData = inputData()
-        if (is.null(input$outcomeCol) || !(input$outcomeCol %in% names(inputData))) {
-          return(NULL)
-        }
-        
-        if (is.null(input$denomCol) || !(input$denomCol %in% names(inputData))) {
-          return(inputData[[input$outcomeCol]])
+    dataOutcome = reactive({
+      if (is.null(inputData())) {
+        NULL
+      } else if (is.null(input$outcomeCol) || !(input$outcomeCol %in% names(inputData()))) {
+        NULL
+      } else if (is.null(input$denomCol) || !(input$denomCol %in% names(inputData()))) {
+        inputData()[[input$outcomeCol]]
+      } else {
+        data$outcome = inputData()[[input$outcomeCol]] / inputData()[[input$denomCol]]
+      }
+    })
+    
+    dataTime = reactive({
+      if (is.null(inputData())) {
+        NULL
+      } else if (is.null(input$timeCol) || !(input$timeCol %in% names(inputData()))) {
+        NULL
+      } else {
+        time = as.Date(inputData()[[input$timeCol]], format=timeFormats[[input$timeFormat]]) 
+        if (any(is.na(time))) {
+          NULL
         } else {
-          return(inputData[[input$outcomeCol]] / inputData[[input$denomCol]])
+          time
         }
+      }
     })
     
-    time = reactive({
-      inputData = inputData()
-      if (is.null(input$timeCol) || !(input$timeCol %in% names(inputData))) {
-        return(NULL)
+    dataGroup = reactive({
+      if (is.null(inputData())) {
+        NULL
+      } else if (is.null(input$groupCol) || !(input$groupCol %in% names(inputData()))) {
+        NULL
+      } else {
+        inputData()[[input$groupCol]]
       }
-      
-      time = as.Date(inputData[[input$timeCol]], format=timeFormats[[input$timeFormat]]) 
-      if (any(is.na(time))) {
-        return(NULL)
-      }
-      
-      return(time)
     })
+
+    ############################################################
+    # Set up reactive data display
+    ############################################################
     
-    group = reactive({
-      inputData = inputData()
-      if (is.null(input$groupCol) || !(input$groupCol %in% names(inputData))) {
-        return(NULL)
-      }
-      
-      return(inputData[[input$groupCol]])
-    })
-    
-    previewPlot = reactive({
-      outcome = outcome()
-      time = time()
-      group = group()
-      
-      if(is.null(outcome) || is.null(time)) {
-        return(NULL)
-      }
-      
-      if (!is.null(group)) {
+    output$previewPlot = renderPlot({
+      if(is.null(dataOutcome()) || is.null(dataTime())) {
+        NULL
+      } else if (!is.null(dataGroup())) {
         ggplot(
-          data.frame(y=outcome, t=time, g=group) %>% arrange(t)
+          data.frame(y=dataOutcome(), t=dataTime(), g=dataGroup()) %>% arrange(t)
         ) +
           geom_line(aes(x=t, y=y, group=g)) +
           theme_light()
       } else {
         ggplot(
-          data.frame(y=outcome, t=time) %>% arrange(t)
+          data.frame(y=dataOutcome(), t=dataTime()) %>% arrange(t)
         ) +
           geom_line(aes(x=t, y=y)) +
           theme_light()
       }
+    }, height=200)
+
+    output$showPreviewPlot = reactive({
+      !is.null(dataOutcome()) && !is.null(dataTime())
     })
+    outputOptions(output, 'showPreviewPlot', suspendWhenHidden=FALSE)
     
-    output$previewPlot = renderPlot({
-      previewPlot()
-    })
-    
-    output$showPlot = reactive({
-      return(!is.null(previewPlot()))
-    })
-    outputOptions(output, 'showPlot', suspendWhenHidden=FALSE)
-    
+    ############################################################
+    # Set up reactive input controls
+    ############################################################
+
     output$outcomeColUI <- renderUI({
         selectInput(
             inputId = "outcomeCol",
@@ -138,7 +142,7 @@ shinyServer(function(input, output, session) {
         selectInput(
             inputId = "denomCol",
             label = "Denominator Column:",
-            choices = c("", names(inputData()))
+            choices = c(`No denominator`="", names(inputData()))
         )
     })
     
@@ -162,10 +166,26 @@ shinyServer(function(input, output, session) {
         selectInput(
             inputId = "groupCol",
             label = "Group Column:",
-            choices = c("", names(inputData()))
+            choices = c(`No grouping`="", names(inputData()))
         )
     })
     
+    ############################################################
+    # Set up reactive buttons
+    ############################################################
+    
+    loadDone = reactive({
+      !is.null(inputData())
+    })
+
+    observe({
+      if (loadDone()) {
+        enable("next.outcome")
+      } else {
+        disable("next.outcome")
+      }
+    })
+
     ANALYSIS_READY = "ready"
     ANALYSIS_RUNNING = "running"
     ANALYSIS_DONE = "done"
@@ -220,7 +240,7 @@ shinyServer(function(input, output, session) {
             return()
         } else {
             analysisStatus(ANALYSIS_RUNNING)
-            
+          
             result = future({
                 worker = setupWorker()
                 oplan = workerPlan(worker)

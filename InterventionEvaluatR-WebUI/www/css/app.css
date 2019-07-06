@@ -1,0 +1,10 @@
+#previewPlot {
+  padding-top: 5rem;
+  background: white;
+  box-sizing: content-box;
+  box-shadow: 0 1rem 1rem white;
+}
+
+body {
+  padding-top: 5rem;
+}
