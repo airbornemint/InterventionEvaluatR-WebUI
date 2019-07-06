@@ -113,13 +113,13 @@ shinyServer(function(input, output, session) {
         data.frame(y=dataOutcome(), t=dataTime(), g=dataGroup()) %>% arrange(t)
       ) +
         geom_line(aes(x=t, y=y, group=g)) +
-        theme_light()
+        theme_minimal()
     } else {
       ggplot(
         data.frame(y=dataOutcome(), t=dataTime()) %>% arrange(t)
       ) +
         geom_line(aes(x=t, y=y)) +
-        theme_light()
+        theme_minimal()
     }
   }, height=200)
   
