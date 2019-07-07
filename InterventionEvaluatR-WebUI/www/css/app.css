@@ -13,3 +13,17 @@
 #steps {
   overflow: visible;
 }
+
+.button-next {
+  text-align: right;
+}
+
+.button-next button span.title {
+  margin-left: 40px;
+  margin-right: 40px;
+}
+
+.button-next button span.spinner-border-sm {
+  margin-left: -16px;
+}
+

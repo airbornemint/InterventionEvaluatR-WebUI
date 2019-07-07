@@ -60,3 +60,9 @@ autodetectTime = function(data) {
     }, simplify = FALSE, USE.NAMES = TRUE) %>%
     compact() 
 }
+
+# Turn of spinner if value is non-null
+unspin = function(session, spinner, value) {
+  md_update_spinner(session, spinner, hidden=!is.null(value))
+  value
+}

@@ -1,8 +1,8 @@
-ul.stepper > li.active > .step-content {
+ul.stepper > li.active > .step-body {
   display: block;
 }
 
-ul.stepper > li > .step-content {
+ul.stepper > li .step-body {
   display: none;
 }
 
@@ -11,7 +11,7 @@ ul.stepper > li > a {
   pointer-events: none;
 }
 
-ul.stepper > li.completed > a {
+ul.stepper > li.completed > a, ul.stepper > li.active > a {
   pointer-events: auto;
 }
 
@@ -19,4 +19,12 @@ ul.stepper > li > a > .label.summary {
   order: 3;
   margin-left: auto;
   font-weight: 300;
+}
+
+ul.stepper > li > .step-body {
+  width: 100%;
+}
+
+.spinner.invisible {
+  visibility: hidden;
 }

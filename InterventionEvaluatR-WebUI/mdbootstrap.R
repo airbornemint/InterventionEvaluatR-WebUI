@@ -1,4 +1,5 @@
 import::from(plyr, compact)
+import::from(shinyBS, bsButton)
 
 md_page = function(...) {
   tags$html(
@@ -48,10 +49,14 @@ md_stepper_vertical = function(..., id, selected) {
           href="#!"
         ),
         div(
-          step$content,
-          class="step-content"
+          class="step-body",
+          div(
+            step$content,
+            class="step-content"
+          )
         ),
-        id=step$value
+        id=step$value,
+        class=ifelse(step$enabled, "completed", "")
       )
     }),
     class="stepper stepper-vertical",
@@ -60,16 +65,42 @@ md_stepper_vertical = function(..., id, selected) {
   )
 }
 
-md_stepper_step = function(title, ..., value, summary=NULL) {
-  list(title=title, value=value, content=list(...), summary=summary)
+md_stepper_step = function(title, ..., value, summary=NULL, enabled=FALSE) {
+  list(title=title, value=value, content=list(...), summary=summary, enabled=enabled)
 }
 
 md_update_stepper = function(session, stepper, value=NULL) {
   session$sendCustomMessage("md_update_stepper", list(stepper=stepper, value=value) %>% compact())
 }
 
-md_update_stepper_step = function(session, stepper, step, completed=NULL) {
+md_update_stepper_step = function(session, stepper, step, enabled=NULL) {
   session$sendCustomMessage("md_update_stepper_step", list(
-    stepper=stepper, step=step, completed=completed
+    stepper=stepper, step=step, enabled=enabled
   ) %>% compact())
+}
+
+# All unnamed arguments except for the first one are treated as content
+md_button = function(id, ...) {
+  args = list(...)
+  named = args[names(args) != ""]
+  unnamed = args[names(args) == ""]
+  do.call(bsButton, c(list(inputId=id, label=tagList(unnamed)), named))
+}
+
+md_spinner = function(id) {
+  div(
+    class="spinner-border", role="status", id=id,
+    span(class="sr-only", "Loading…")
+  )
+}
+
+md_button_spinner = function(id, visible=FALSE) {
+  span(
+    class="spinner-border spinner-border-sm", role="status", id=id, "aria-hidden"="true"
+  ) %>% tagAppendAttributes(class=ifelse(visible, "", "invisible"))
+}
+
+# hidden vs visible = CSS display vs CSS visible
+md_update_spinner = function(session, spinner, hidden=NULL, visible=NULL) {
+  session$sendCustomMessage("md_update_spinner", list(spinner=spinner, hidden=hidden, visible=visible) %>% compact())
 }

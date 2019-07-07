@@ -10,17 +10,16 @@
 library(future)
 library(promises)
 library(shiny)
-library(shinyBS)
 library(InterventionEvaluatR)
 library(uuid)
-library(magrittr)
 library(dplyr)
 library(ggplot2)
+
+import::from(magrittr, "%>%")
 
 source("common.R")
 
 plan(multisession)
-future(1) # This forces the multisession workers to be set up right away, rather than randomly stalling the app later
 
 check.call = function(args) {
   status = system2(args[1], args[2:length(args)], stdout="", stderr="")
@@ -55,6 +54,9 @@ shinyServer(function(input, output, session) {
   ############################################################
   
   inputData = reactive({
+    if (!is.null(input$stockDataset) && input$stockDataset != "") {
+      md_update_spinner(session, "loadSpinner", visible=TRUE)
+    }
     switch(
       input$stockDataset,
       pnas_brazil = {
@@ -178,7 +180,7 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'groupColUI', suspendWhenHidden=FALSE)
   
   ############################################################
-  # Set up step enabled / disabled state
+  # Set up step enabled / disabled state and next buttons
   ############################################################
   
   autoTime = reactive({
@@ -187,53 +189,35 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  timeAvailable = reactive({
-    !is.null(autoTime())
-  })
-  
   observe({
-    updateButton(session, "nextTime", disabled=!timeAvailable())
-    md_update_stepper_step(session, "steps", "load", completed=timeAvailable())
+    with(list(timeAvailable=!is.null(autoTime())), {
+      print(timeAvailable)
+      updateButton(session, "nextTime", disabled=!timeAvailable)
+      md_update_stepper_step(session, "steps", "time", enabled=timeAvailable)
+    })
   })
   
   observeEvent(input$nextTime, {
     md_update_stepper(session, "steps", value="time")
   })
   
-  outcomeAvailable = reactive({
-    !is.null(dataTime())
-  })
-  
   observe({
-    updateButton(session, "nextOutcome", disabled=!outcomeAvailable())
-    md_update_stepper_step(session, "steps", "time", completed=outcomeAvailable())
+    with(list(outcomeAvailable=!is.null(dataTime())), {
+      updateButton(session, "nextOutcome", disabled=!outcomeAvailable)
+      md_update_stepper_step(session, "steps", "outcome", enabled=outcomeAvailable)
+    })
   })
   
   observeEvent(input$nextOutcome, {
     md_update_stepper(session, "steps", value="outcome")
   })
   
-  groupAvailable = reactive({
-    !is.null(dataOutcome())
-  })
-  
   observe({
-    updateButton(session, "nextGroup", disabled=!groupAvailable())
-    md_update_stepper_step(session, "steps", "outcome", completed=groupAvailable())
-  })
-  
-  observeEvent(input$nextGroup, {
-    md_update_stepper(session, "steps", value="group")
-  })
-  
-  analysisAvailable = reactive({
-    !is.null(dataGroup())
-  })
-  
-  observe({
-    updateButton(session, "nextAnalysis", disabled=!analysisAvailable())
-    md_update_stepper_step(session, "steps", "group", completed=analysisAvailable())
-    updateButton(session, "analyze", disabled=!analysisAvailable())
+    with(list(analysisAvailable=!is.null(dataOutcome())), {
+      updateButton(session, "nextAnalysis", disabled=!analysisAvailable)
+      md_update_stepper_step(session, "steps", "analysis", enabled=analysisAvailable)
+      updateButton(session, "analyze", disabled=!analysisAvailable)
+    })
   })
   
   observeEvent(input$nextAnalysis, {
@@ -245,7 +229,9 @@ shinyServer(function(input, output, session) {
   ############################################################
   
   output$loadSummary = reactive({
-    null2empty(invert.list(stockDatasets)[[input$stockDataset]])
+    null2empty(unspin(session, "loadSpinner", 
+      invert.list(stockDatasets)[[input$stockDataset]]
+    ))
   })
   
   output$timeSummary = renderUI({
@@ -309,38 +295,6 @@ shinyServer(function(input, output, session) {
   
   output$analysisResults = renderTable({
     analysisResults()
-  })
-  
-  observeEvent(input$prev.load, {
-    updateTabsetPanel(session, "stepNav", selected="load")
-  })
-  
-  observeEvent(input$next.outcome, {
-    updateTabsetPanel(session, "stepNav", selected="outcome")
-  })
-  
-  observeEvent(input$prev.outcome, {
-    updateTabsetPanel(session, "stepNav", selected="outcome")
-  })
-  
-  observeEvent(input$next.time, {
-    updateTabsetPanel(session, "stepNav", selected="time")
-  })
-  
-  observeEvent(input$prev.time, {
-    updateTabsetPanel(session, "stepNav", selected="time")
-  })
-  
-  observeEvent(input$next.grouping, {
-    updateTabsetPanel(session, "stepNav", selected="grouping")
-  })
-  
-  observeEvent(input$prev.grouping, {
-    updateTabsetPanel(session, "stepNav", selected="grouping")
-  })
-  
-  observeEvent(input$next.analysis, {
-    updateTabsetPanel(session, "stepNav", selected="analysis")
   })
   
   observeEvent(input$analyze, {

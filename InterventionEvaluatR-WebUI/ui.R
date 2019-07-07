@@ -8,9 +8,23 @@
 #
 
 library(shiny)
-library(shinyBS)
+
+import::from(magrittr, "%>%")
+
 source("common.R")
 source("mdbootstrap.R")
+
+nextButton = function(buttonId, spinnerId, title="Next") {
+    div(
+        class="button-next",
+        md_button(
+            buttonId,
+            span(class="title", title), 
+            md_button_spinner(spinnerId), 
+            style="primary", disabled=TRUE
+        )
+    )
+}
 
 # Define UI for application that draws a histogram
 md_page(
@@ -43,8 +57,9 @@ md_page(
                             label = "Load stock data:",
                             choices = c("", stockDatasets)
                         ),
-                        bsButton("nextTime", "Next", style="primary", disabled=TRUE),
-                        summary=textOutput("loadSummary")
+                        nextButton("nextTime", "loadSpinner"),
+                        summary=textOutput("loadSummary"),
+                        enabled=TRUE
                     ),
                     md_stepper_step(
                         title="Select Time Variable",
@@ -72,22 +87,22 @@ md_page(
                             inputId = "evalStart",
                             label = "Eval Start:"
                         ),
-                        bsButton("nextOutcome", "Next", style="primary", disabled=TRUE),
+                        nextButton("nextOutcome", "timeSpinner"),
                         summary=uiOutput("timeSummary")
                     ),
                     md_stepper_step(
                         title="Select Outcome Variable",
                         value="outcome",
                         uiOutput("outcomeColUI"),
-                        uiOutput("denomColUI"),
                         uiOutput("groupColUI"),
-                        bsButton("nextAnalysis", "Next", style="primary", disabled=TRUE),
+                        uiOutput("denomColUI"),
+                        nextButton("nextAnalysis", "outcomeSpinner"),
                         summary=uiOutput("outcomeSummary")
                     ),
                     md_stepper_step(
                         title="Run Analysis",
                         value="analysis",
-                        bsButton("analyze", "Run Analysis", style="primary", disabled=TRUE),
+                        nextButton("analyze", "analyzeSpinner", title="Run Analysis"),
                         textOutput("analysisStatus"),
                         tableOutput("analysisResults")
                     )
