@@ -10,6 +10,7 @@
 library(shiny)
 
 import::from(magrittr, "%>%")
+import::from(plotly, plotlyOutput)
 
 source("common.R")
 source("mdbootstrap.R")
@@ -35,7 +36,9 @@ md_page(
             "output.showPreviewPlot", 
             md_row(
                 md_column(
-                    plotOutput("previewPlot", height="200px")
+                    id="plotColumn",
+                    plotlyOutput("previewPlot", height="200px"),
+                    md_spinner("plotSpinner")
                     # conditionalPanel("output.showPreviewTable", dataTableOutput("previewTable"))
                 )
             )

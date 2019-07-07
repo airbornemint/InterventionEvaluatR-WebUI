@@ -16,6 +16,8 @@ library(dplyr)
 library(ggplot2)
 
 import::from(magrittr, "%>%")
+import::from(plotly, ggplotly, renderPlotly)
+import::from(shinyBS, updateButton)
 
 source("common.R")
 
@@ -107,23 +109,27 @@ shinyServer(function(input, output, session) {
   # Set up reactive data display
   ############################################################
   
-  output$previewPlot = renderPlot({
+  output$previewPlot = renderPlotly({
     if(is.null(dataOutcome()) || is.null(dataTime())) {
       NULL
     } else if (!is.null(dataGroup())) {
-      ggplot(
-        data.frame(y=dataOutcome(), t=dataTime(), g=dataGroup()) %>% arrange(t)
-      ) +
-        geom_line(aes(x=t, y=y, group=g)) +
-        theme_minimal()
+      ggplotly(ggplot(
+          data.frame(y=dataOutcome(), t=dataTime(), g=dataGroup()) %>% arrange(t)
+        ) +
+          geom_line(aes(x=t, y=y, group=g), size=0.1) +
+          labs(x=NULL, y=NULL) +
+          theme_minimal()
+      )
     } else {
-      ggplot(
-        data.frame(y=dataOutcome(), t=dataTime()) %>% arrange(t)
-      ) +
-        geom_line(aes(x=t, y=y)) +
-        theme_minimal()
+      ggplotly(ggplot(
+          data.frame(y=dataOutcome(), t=dataTime()) %>% arrange(t)
+        ) +
+          geom_line(aes(x=t, y=y), size=0.1) +
+          labs(x=NULL, y=NULL) +
+          theme_minimal()
+      )
     }
-  }, height=200)
+  })
   
   output$showPreviewPlot = reactive({
     !is.null(dataOutcome()) && !is.null(dataTime())
@@ -191,7 +197,6 @@ shinyServer(function(input, output, session) {
   
   observe({
     with(list(timeAvailable=!is.null(autoTime())), {
-      print(timeAvailable)
       updateButton(session, "nextTime", disabled=!timeAvailable)
       md_update_stepper_step(session, "steps", "time", enabled=timeAvailable)
     })
