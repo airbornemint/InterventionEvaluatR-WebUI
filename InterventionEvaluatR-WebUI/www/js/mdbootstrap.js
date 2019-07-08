@@ -24,9 +24,11 @@ $.extend(stepperBinding, {
       el.data("stepper-selected", step.attr("id"));
       el.children("li").not(step).removeClass("active");
       step.addClass("active");
+      el.trigger("stepper:selection-changed", [step.attr("id")]);
     } else {
       el.data("stepper-selected", null);
       el.children("li").removeClass("active");
+      el.trigger("stepper:selection-changed", null);
     }
   },
 
