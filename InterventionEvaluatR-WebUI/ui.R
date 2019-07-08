@@ -73,10 +73,14 @@ md_page(
                         md_stepper_step(
                             title="Load Data",
                             value="load",
-                            p("Let's begin by loading some data to analyze. You can load your own data, or you can choose a stock dataset below."),
+                            fileInput(
+                                inputId = "userDataset",
+                                label = "Load your data:",
+                                buttonLabel = "Choose a file…"
+                            ),
                             selectInput(
                                 inputId = "stockDataset",
-                                label = "Load stock data:",
+                                label = "Or load stock data:",
                                 choices = c("", stockDatasets)
                             ),
                             nextButton("nextTime", "loadSpinner"),
@@ -88,27 +92,17 @@ md_page(
                             value="time",
                             uiOutput("timeColUI"),
                             uiOutput("timeFormatUI"),
-                            selectInput(
-                                inputId = "obsFreq",
-                                label = "Observation frequency:",
-                                choices = c("Monthly", "Quarterly")
-                            ),
-                            p("Lorem ipsum year"),
-                            selectInput(
-                                inputId = "yearStart",
-                                label = "Year:",
-                                choices = c("January", "June")
-                            ),
-                            p("When was the vaccine introduced?"),
-                            dateInput(
-                                inputId = "postStart",
-                                label = "Post Start:"
-                            ),
-                            p("Lorem ipsum eval start"),
-                            dateInput(
-                                inputId = "evalStart",
-                                label = "Eval Start:"
-                            ),
+                            # selectInput(
+                            #     inputId = "obsFreq",
+                            #     label = "Observation frequency:",
+                            #     choices = c("Monthly", "Quarterly")
+                            # ),
+                            # p("Lorem ipsum year"),
+                            # selectInput(
+                            #     inputId = "yearStart",
+                            #     label = "Year:",
+                            #     choices = c("January", "June")
+                            # ),
                             nextButton("nextOutcome", "timeSpinner"),
                             summary=uiOutput("timeSummary")
                         ),
@@ -118,8 +112,24 @@ md_page(
                             uiOutput("outcomeColUI"),
                             uiOutput("groupColUI"),
                             uiOutput("denomColUI"),
-                            nextButton("nextAnalysis", "outcomeSpinner"),
+                            nextButton("nextPeriods", "outcomeSpinner"),
                             summary=uiOutput("outcomeSummary")
+                        ),
+                        md_stepper_step(
+                            title="Select Analysis Periods",
+                            value="periods",
+                            p("Lorem ipsum post start"),
+                            dateInput(
+                                inputId = "postStart",
+                                label = "Post Start:"
+                            ),
+                            p("Lorem ipsum eval start"),
+                            dateInput(
+                                inputId = "evalStart",
+                                label = "Eval Start:"
+                            ),
+                            nextButton("nextAnalysis", "periodsSpinner"),
+                            summary=uiOutput("periodsSummary")
                         ),
                         md_stepper_step(
                             title="Run Analysis",
@@ -149,8 +159,8 @@ md_page(
             ),
             div(
                 class="help-section card-body",
-                id="help-outcome",
-                h1("Selecting outcome variable"),
+                id="help-periods",
+                h1("Selecting analysis periods"),
                 p("Lorem ipsum")
             ),
             div(

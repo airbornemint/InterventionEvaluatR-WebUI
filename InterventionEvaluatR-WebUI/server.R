@@ -105,6 +105,10 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  dataPeriods = reactive({
+    dataGroup()
+  })
+  
   ############################################################
   # Set up reactive data display
   ############################################################
@@ -232,7 +236,18 @@ shinyServer(function(input, output, session) {
   })
   
   observe({
-    with(list(analysisAvailable=!is.null(dataOutcome())), {
+    with(list(periodsAvailable=!is.null(dataOutcome())), {
+      updateButton(session, "nextPeriods", disabled=!periodsAvailable)
+      md_update_stepper_step(session, "steps", "periods", enabled=periodsAvailable)
+    })
+  })
+  
+  observeEvent(input$nextPeriods, {
+    md_update_stepper(session, "steps", value="periods")
+  })
+
+  observe({
+    with(list(analysisAvailable=!is.null(dataPeriods())), {
       updateButton(session, "nextAnalysis", disabled=!analysisAvailable)
       md_update_stepper_step(session, "steps", "analysis", enabled=analysisAvailable)
       updateButton(session, "analyze", disabled=!analysisAvailable)
@@ -293,6 +308,10 @@ shinyServer(function(input, output, session) {
         }
       }
     })
+  })
+  
+  output$periodsSummary = renderUI({
+    ""
   })
   
   ############################################################
