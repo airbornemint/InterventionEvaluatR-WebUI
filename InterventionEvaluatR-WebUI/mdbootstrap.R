@@ -16,7 +16,7 @@ md_page = function(...) {
   )
 }
 
-md_navbar = function(..., title=NULL) {
+md_navbar = function(..., title=NULL, class=NULL) {
   tags$nav(
     tags$a(
       title,
@@ -25,7 +25,7 @@ md_navbar = function(..., title=NULL) {
     ),
     ...,
     class="navbar navbar-dark primary-color"
-  )
+  ) %>% tagAppendAttributes(class=class)
 }
 
 md_row = function(...) {

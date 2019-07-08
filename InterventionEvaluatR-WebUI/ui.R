@@ -31,15 +31,19 @@ nextButton = function(buttonId, spinnerId, title="Next") {
 md_page(
     div(
         class="sticky-top",
+        id="header",
         md_navbar(title="InterventionEvaluatR"),
-        conditionalPanel(
-            "output.showPreviewPlot", 
-            md_row(
-                md_column(
-                    id="plotColumn",
-                    plotlyOutput("previewPlot", height="200px"),
-                    md_spinner("plotSpinner")
-                    # conditionalPanel("output.showPreviewTable", dataTableOutput("previewTable"))
+        div(
+            class="container-fluid",
+            conditionalPanel(
+                "output.showPreviewPlot", 
+                md_row(
+                    md_column(
+                        id="plotColumn",
+                        plotlyOutput("previewPlot", height="200px"),
+                        md_spinner("plotSpinner")
+                        # conditionalPanel("output.showPreviewTable", dataTableOutput("previewTable"))
+                    )
                 )
             )
         )
