@@ -109,6 +109,20 @@ shinyServer(function(input, output, session) {
   # Set up reactive data display
   ############################################################
   
+  plotlyOptions = function(plot) {
+    plot %>% plotly::config(
+      staticPlot=TRUE,
+      editable=FALSE,
+      scrollZoom=FALSE,
+      doubleClick=FALSE,
+      showAxisDragHandles=FALSE,
+      showLink=FALSE,
+      displayModeBar=FALSE,
+      showSendToCloud=FALSE,
+      displaylogo=FALSE
+    )
+  }
+  
   output$previewPlot = renderPlotly({
     if(is.null(dataOutcome()) || is.null(dataTime())) {
       NULL
@@ -119,7 +133,7 @@ shinyServer(function(input, output, session) {
           geom_line(aes(x=t, y=y, group=g), size=0.1) +
           labs(x=NULL, y=NULL) +
           theme_minimal()
-      )
+      ) %>% plotlyOptions()
     } else {
       ggplotly(ggplot(
           data.frame(y=dataOutcome(), t=dataTime()) %>% arrange(t)
@@ -127,7 +141,7 @@ shinyServer(function(input, output, session) {
           geom_line(aes(x=t, y=y), size=0.1) +
           labs(x=NULL, y=NULL) +
           theme_minimal()
-      )
+      ) %>% plotlyOptions()
     }
   })
   
