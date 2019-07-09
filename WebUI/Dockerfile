@@ -22,11 +22,10 @@ RUN apt-get install -y -qq --no-install-recommends ${RUN_APT_DEPENDENCIES}
 ### Install required R packages. Doing it this way allows docker to cache packrat state and not rebuild everything when app source changes in a way that doesn't affect package dependencies
 COPY --chown=shiny packrat/packrat.lock packrat/packrat.opts /srv/shiny-server/WebUI/packrat/
 RUN install2.r packrat
-USER shiny
-RUN Rscript -e 'packrat::restore("/srv/shiny-server/WebUI")'
+RUN sudo -u shiny Rscript -e 'packrat::restore("/srv/shiny-server/WebUI")'
 ### Install Shiny app
-COPY . /srv/shiny-server/WebUI
-USER root
+COPY --chown=shiny . /srv/shiny-server/WebUI
+COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
 
 # Finish up the configuration
 RUN echo tzdata tzdata/Areas select America >> /tmp/debconf.txt
@@ -42,5 +41,6 @@ RUN apt-get autoremove -y
 RUN apt-get clean
 RUN rm -rf /tmp/*
 
+USER shiny
 EXPOSE 3838
 CMD ["/usr/bin/shiny-server.sh"] 
