@@ -1,3 +1,7 @@
+#### -- Packrat Autoloader (version 0.5.0-8) -- ####
+source("packrat/init.R")
+#### -- End Packrat Autoloader -- ####
+
 options(ie.worker.local=TRUE)
 options(ie.webui.docker.bindir="/usr/local/bin")
 options(ie.worker.docker.bindir="/usr/bin")
