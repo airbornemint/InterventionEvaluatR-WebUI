@@ -2,3 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+/WebUI/packrat/lib
+/WebUI/packrat/lib-R
+/WebUI/packrat/src
+/WebUI/packrat/lib-ext
