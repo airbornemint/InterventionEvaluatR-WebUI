@@ -12,6 +12,7 @@ library(shiny)
 import::from(magrittr, "%>%")
 import::from(plotly, plotlyOutput)
 import::from(fontawesome, fa)
+import::from(shinyjs, useShinyjs)
 
 source("common.R")
 source("mdbootstrap.R")
@@ -29,6 +30,7 @@ nextButton = function(buttonId, spinnerId, title="Next") {
 }
 
 md_page(
+    useShinyjs(),
     singleton(tags$head(
         tags$script(src = "js/app.js")
     )),

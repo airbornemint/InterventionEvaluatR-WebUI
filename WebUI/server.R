@@ -18,6 +18,7 @@ library(ggplot2)
 import::from(magrittr, "%>%")
 import::from(plotly, ggplotly, renderPlotly)
 import::from(shinyBS, updateButton)
+import::from(shinyjs, hidden)
 
 source("common.R")
 
@@ -42,13 +43,6 @@ check.output = function(args) {
   }
 }
 
-timeFormats = list(
-  `YYYY-MM-DD`="%Y-%m-%d",
-  `YYYY-DD-MM`="%Y-%d-%m",
-  `MM-DD-YYYY`="%m-%d-%Y",
-  `DD-MM-YYYY`="%d-%m-%Y"
-)
-
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
   ############################################################
@@ -68,25 +62,13 @@ shinyServer(function(input, output, session) {
     )
   })
   
-  dataOutcome = reactive({
-    if (is.null(inputData())) {
-      NULL
-    } else if (is.null(input$outcomeCol) || !(input$outcomeCol %in% names(inputData()))) {
-      NULL
-    } else if (is.null(input$denomCol) || !(input$denomCol %in% names(inputData()))) {
-      inputData()[[input$outcomeCol]]
-    } else {
-      inputData()[[input$outcomeCol]] / inputData()[[input$denomCol]]
-    }
-  })
-  
   dataTime = reactive({
-    if (is.null(inputData())) {
+    if (!validCol(input$timeCol, inputData(), . %>% timeColumns() %>% names())) {
       NULL
-    } else if (is.null(input$timeCol) || !(input$timeCol %in% names(inputData()))) {
+    } else if (is.null(input$timeFormat) || !input$timeFormat %in% dateFormats) {
       NULL
     } else {
-      time = as.Date(inputData()[[input$timeCol]], format=timeFormats[[input$timeFormat]]) 
+      time = as.Date(inputData()[[input$timeCol]], format=input$timeFormat) 
       if (any(is.na(time))) {
         NULL
       } else {
@@ -95,10 +77,18 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  dataGroup = reactive({
-    if (is.null(inputData())) {
+  dataOutcome = reactive({
+    if (!validCol(input$outcomeCol, inputData(), . %>% names())) {
       NULL
-    } else if (is.null(input$groupCol) || !(input$groupCol %in% names(inputData()))) {
+    } else if (is.null(input$denomCol) || !(input$denomCol %in% names(inputData()))) {
+      inputData()[[input$outcomeCol]]
+    } else {
+      inputData()[[input$outcomeCol]] / inputData()[[input$denomCol]]
+    }
+  })
+  
+  dataGroup = reactive({
+    if (!validCol(input$groupCol, inputData(), . %>% names())) {
       NULL
     } else {
       inputData()[[input$groupCol]]
@@ -148,6 +138,7 @@ shinyServer(function(input, output, session) {
       ) %>% plotlyOptions()
     }
   })
+  outputOptions(output, 'previewPlot', suspendWhenHidden=FALSE)
   
   output$showPreviewPlot = reactive({
     !is.null(dataOutcome()) && !is.null(dataTime())
@@ -157,6 +148,40 @@ shinyServer(function(input, output, session) {
   ############################################################
   # Set up reactive input controls
   ############################################################
+  
+  output$timeColUI <- renderUI({
+    choices = names(timeColumns(inputData()))
+    if (length(choices) > 1) {
+      choices = c("", choices)
+    }
+    
+    selectInput(
+      inputId = "timeCol",
+      label = "Which variable in your data represents time?",
+      choices = choices
+    )
+  })
+  outputOptions(output, 'timeColUI', suspendWhenHidden=FALSE)
+  
+  output$timeFormatUI <- renderUI({
+    if (!validCol(input$timeCol, inputData(), . %>% timeColumns() %>% names())) {
+      tagList()
+    } else {
+      choices = (inputData() %>% timeColumns())[[input$timeCol]]
+      select = selectInput(
+        inputId = "timeFormat",
+        label = "Time Format:",
+        choices = choices
+      )
+      
+      if (length(choices) == 1) {
+        select = hidden(select)
+      }
+      
+      select
+    }
+  })
+  outputOptions(output, 'timeFormatUI', suspendWhenHidden=FALSE)
   
   output$outcomeColUI <- renderUI({
     selectInput(
@@ -176,24 +201,6 @@ shinyServer(function(input, output, session) {
   })
   outputOptions(output, 'denomColUI', suspendWhenHidden=FALSE)
   
-  output$timeColUI <- renderUI({
-    selectInput(
-      inputId = "timeCol",
-      label = "Which variable in your data represents time?",
-      choices = c("", names(inputData()))
-    )
-  })
-  outputOptions(output, 'timeColUI', suspendWhenHidden=FALSE)
-  
-  output$timeFormatUI <- renderUI({
-    selectInput(
-      inputId = "timeFormat",
-      label = "Time Format:",
-      choices = names(timeFormats)
-    )
-  })
-  outputOptions(output, 'timeFormatUI', suspendWhenHidden=FALSE)
-  
   output$groupColUI <- renderUI({
     selectInput(
       inputId = "groupCol",
@@ -207,14 +214,14 @@ shinyServer(function(input, output, session) {
   # Set up step enabled / disabled state and next buttons
   ############################################################
   
-  autoTime = reactive({
+  timeCols = reactive({
     if (!is.null(inputData())) {
-      autodetectTime(inputData())
+      timeColumns(inputData())
     }
   })
   
   observe({
-    with(list(timeAvailable=!is.null(autoTime())), {
+    with(list(timeAvailable=!is.null(timeCols())), {
       updateButton(session, "nextTime", disabled=!timeAvailable)
       md_update_stepper_step(session, "steps", "time", enabled=timeAvailable)
     })

@@ -41,7 +41,7 @@ validFormat = function(v, format) {
 }
 
 # Auto-detect viable time columns and their formats. Empty list if none are found, NULL if data is NULL
-autodetectTime = function(data) {
+timeColumns = function(data) {
   names(data) %>% 
     sapply(function(name) {
       # List of viable formats for named column; NULL if none
@@ -65,4 +65,9 @@ autodetectTime = function(data) {
 unspin = function(session, spinner, value) {
   md_update_spinner(session, spinner, hidden=!is.null(value))
   value
+}
+
+# True if col is in data %>% names
+validCol = function(col, data, names=names) {
+  !is.null(data) && !is.null(col) && (col %in% (data %>% names))
 }
