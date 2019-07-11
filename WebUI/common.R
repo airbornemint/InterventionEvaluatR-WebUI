@@ -8,7 +8,7 @@ dateFormats = list(
 )
 
 stockDatasets = list(
-  `Preumococcal pneumonia, Brazil`="pnas_brazil"  
+  `Pneumonia, Brazil`="pnas_brazil"  
 )
 
 invert.list = function(l) {
