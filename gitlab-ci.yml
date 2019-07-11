@@ -1,0 +1,68 @@
+stages:
+  - build
+  - deploy
+  
+variables:
+  DOCKER_IMAGE_WEBUI: "${CI_REGISTRY_IMAGE}/interventionevaluatr-web-ui-ci:ci-${CI_PIPELINE_IID}"
+  DOCKER_SAVE_WEBUI: "docker/interventionevaluatr-web-ui-${CI_PIPELINE_IID}.tar.xz"
+  APP_WEBUI: "app/interventionevaluatr-web-ui-${CI_PIPELINE_IID}.tar.xz"
+  DOCKER_CONTAINER_WEBUI: "interventionevaluatr-web-ui"
+
+.build:
+  stage: build
+  tags:
+    - dind
+  image: docker:dind
+  services:
+    - docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2375/
+  script:
+    - docker login -u gitlab-ci-token -p "${CI_BUILD_TOKEN}" "${CI_REGISTRY_IMAGE}"
+    - docker build --rm=false -t "${DOCKER_IMAGE_WEBUI}" WebUI
+    - docker push "${DOCKER_IMAGE_WEBUI}"
+    - mkdir -p "app"
+    - tar -cvzf "${APP_WEBUI}" WebUI
+  artifacts:
+    paths:
+      - "${DOCKER_SAVE_WEBUI}"
+      - "${APP_WEBUI}"
+
+build-dev:
+  extends: .build
+  artifacts:
+    expire_in: 30 days
+
+build-rel:
+  extends: .build
+  only:
+    - tags
+
+.deploy:
+  tags:
+    - docker-machine
+  stage: deploy
+  script:
+    - docker-machine --debug status "${MACHINE_NAME}" && docker-machine --debug provision "${MACHINE_NAME}"
+    - docker-machine --debug status "${MACHINE_NAME}" || docker-machine --debug create --driver digitalocean --digitalocean-access-token "${DIGITAL_OCEAN_ACCESS_TOKEN}" --digitalocean-image ubuntu-16-04-x64 --digitalocean-monitoring --digitalocean-region=sfo2 --digitalocean-tags=InterventionEvaluatR "${MACHINE_NAME}" 
+    - docker $(docker-machine config "${MACHINE_NAME}") rm --force "${DOCKER_CONTAINER_WEBUI}" || true
+    - docker $(docker-machine config "${MACHINE_NAME}") run --detach --publish 80:3838 --name "${DOCKER_CONTAINER_WEBUI}" "${DOCKER_IMAGE_WEBUI}"
+  dependencies: []
+  artifacts:
+    paths:
+      - "${MACHINE_STORAGE_PATH}"
+    
+deploy-dev:
+  extends: .deploy
+  variables:
+    MACHINE_NAME: InterventionEvaluatR-dev
+
+deploy-rel:
+  extends: .deploy
+  variables:
+    MACHINE_NAME: InterventionEvaluatR-rel
+  only:
+    - tags
+  when: manual
+

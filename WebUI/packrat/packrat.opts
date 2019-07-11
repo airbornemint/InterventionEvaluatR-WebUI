@@ -3,7 +3,35 @@ use.cache: FALSE
 print.banner.on.startup: auto
 vcs.ignore.lib: TRUE
 vcs.ignore.src: TRUE
-external.packages: 
+external.packages:
+    BH
+    R6
+    Rcpp
+    base64enc
+    crayon
+    digest
+    evaluate
+    glue
+    highr
+    htmltools
+    httpuv
+    jsonlite
+    knitr
+    later
+    magrittr
+    markdown
+    mime
+    promises
+    rlang
+    rmarkdown
+    shiny
+    sourcetools
+    stringi
+    stringr
+    tinytex
+    xfun
+    xtable
+    yaml
 local.repos: 
 load.external.packages.on.startup: TRUE
 ignored.packages: devtools
