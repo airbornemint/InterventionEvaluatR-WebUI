@@ -89,6 +89,10 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  dataNeedsGroup = reactive({
+    length(unique(dataTime())) < length(dataTime())
+  })
+
   dataPeriods = reactive({
     dataGroup()
   })
@@ -120,13 +124,22 @@ shinyServer(function(input, output, session) {
           labs(x=NULL, y=NULL) +
           theme_minimal()
       ) %>% plotlyOptions()
+    } else if (dataNeedsGroup()) {
+      data = data.frame(y=dataOutcome(), t=dataTime()) %>% arrange(t)
+      data %<>% group_by(t) %>% summarize(ymin=min(y), ymax=max(y))
+      ggplotly(
+        ggplot(data) +
+        geom_ribbon(aes(x=t, ymin=ymin, ymax=ymax), size=0.1, fill="grey75") +
+        labs(x=NULL, y=NULL) +
+        theme_minimal()
+      ) %>% plotlyOptions()
     } else {
-      ggplotly(ggplot(
-          data.frame(y=dataOutcome(), t=dataTime()) %>% arrange(t)
-        ) +
-          geom_line(aes(x=t, y=y), size=0.1) +
-          labs(x=NULL, y=NULL) +
-          theme_minimal()
+      data = data.frame(y=dataOutcome(), t=dataTime()) %>% arrange(t)
+      ggplotly(
+        ggplot(data) +
+        geom_line(aes(x=t, y=y), size=0.1) +
+        labs(x=NULL, y=NULL) +
+        theme_minimal()
       ) %>% plotlyOptions()
     }
   })
@@ -192,11 +205,13 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'denomColUI', suspendWhenHidden=FALSE)
   
   output$groupColUI <- renderUI({
-    selectInput(
-      inputId = "groupCol",
-      label = "Group:",
-      choices = c(`No grouping`="", setdiff(names(inputData()), names(dateColumns(inputData()))))
-    )
+    if (dataNeedsGroup()) {
+      selectInput(
+        inputId = "groupCol",
+        label = "Group:",
+        choices = c(`No grouping`="", setdiff(names(inputData()), names(dateColumns(inputData()))))
+      )
+    }
   })
   outputOptions(output, 'groupColUI', suspendWhenHidden=FALSE)
   
