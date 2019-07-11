@@ -28,7 +28,6 @@ nextButton = function(buttonId, spinnerId, title="Next") {
     )
 }
 
-# Define UI for application that draws a histogram
 md_page(
     singleton(tags$head(
         tags$script(src = "js/app.js")
