@@ -488,10 +488,19 @@ Requires: R6, crayon, digest, jsonlite, mime, rlang, sourcetools,
     xtable, htmltools, later, promises, httpuv
 
 Package: shinyBS
-Source: CRAN
-Version: 0.61
-Hash: 4644935bd93e62a0b82686b26af7efc2
+Source: github
+Version: 0.62
+Hash: 20f0426588ec90d3e73b314007ad7d99
 Requires: htmltools, shiny
+GithubRepo: shinyBS
+GithubUsername: airbornemint
+GithubRef: issue-100-onLoad
+GithubSha1: f84b13327f280b64ded077da2845cb757528f459
+RemoteHost: api.github.com
+RemoteRepo: shinyBS
+RemoteUsername: airbornemint
+RemoteRef: issue-100-onLoad
+RemoteSha: f84b13327f280b64ded077da2845cb757528f459
 
 Package: sourcetools
 Source: CRAN
