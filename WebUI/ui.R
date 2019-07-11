@@ -84,15 +84,15 @@ md_page(
                                 label = "Or load stock data:",
                                 choices = c("", stockDatasets)
                             ),
-                            nextButton("nextTime", "loadSpinner"),
+                            nextButton("nextDate", "loadSpinner"),
                             summary=textOutput("loadSummary"),
                             enabled=TRUE
                         ),
                         md_stepper_step(
                             title="Select Time Variable",
-                            value="time",
-                            uiOutput("timeColUI"),
-                            uiOutput("timeFormatUI"),
+                            value="date",
+                            uiOutput("dateColUI"),
+                            uiOutput("dateFormatUI"),
                             # selectInput(
                             #     inputId = "obsFreq",
                             #     label = "Observation frequency:",
@@ -104,8 +104,8 @@ md_page(
                             #     label = "Year:",
                             #     choices = c("January", "June")
                             # ),
-                            nextButton("nextOutcome", "timeSpinner"),
-                            summary=uiOutput("timeSummary")
+                            nextButton("nextOutcome", "dateSpinner"),
+                            summary=uiOutput("dateSummary")
                         ),
                         md_stepper_step(
                             title="Select Outcome Variable",
@@ -154,7 +154,7 @@ md_page(
             ),
             div(
                 class="help-section card-body",
-                id="help-time",
+                id="help-date",
                 h1("Selecting time variable"),
                 p("Lorem ipsum")
             ),

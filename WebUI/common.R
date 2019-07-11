@@ -41,7 +41,7 @@ validFormat = function(v, format) {
 }
 
 # Auto-detect viable time columns and their formats. Empty list if none are found, NULL if data is NULL
-timeColumns = function(data) {
+dateColumns = function(data) {
   names(data) %>% 
     sapply(function(name) {
       # List of viable formats for named column; NULL if none
@@ -67,7 +67,7 @@ unspin = function(session, spinner, value) {
   value
 }
 
-# True if col is in data %>% names
-validCol = function(col, data, names=names) {
-  !is.null(data) && !is.null(col) && (col %in% (data %>% names))
+# True if expr is valid according to the same criteria as shiny::need
+checkNeed = function(expr) {
+  is.null(need(expr, ""))
 }

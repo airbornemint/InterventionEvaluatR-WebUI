@@ -62,35 +62,29 @@ shinyServer(function(input, output, session) {
     )
   })
   
+  dataDateColumns = reactive({
+    dateColumns(inputData())
+  })
+  
   dataTime = reactive({
-    if (!validCol(input$timeCol, inputData(), . %>% timeColumns() %>% names())) {
-      NULL
-    } else if (is.null(input$timeFormat) || !input$timeFormat %in% dateFormats) {
-      NULL
-    } else {
-      time = as.Date(inputData()[[input$timeCol]], format=input$timeFormat) 
-      if (any(is.na(time))) {
-        NULL
-      } else {
-        time
-      }
-    }
+    validate(need(input$dateCol, "Please select a date column"))
+    validate(need(input$dateFormat, "Please select a date format"))
+    
+    as.Date(inputData()[[input$dateCol]], format=input$dateFormat) 
   })
   
   dataOutcome = reactive({
-    if (!validCol(input$outcomeCol, inputData(), . %>% names())) {
-      NULL
-    } else if (is.null(input$denomCol) || !(input$denomCol %in% names(inputData()))) {
-      inputData()[[input$outcomeCol]]
-    } else {
+    validate(need(input$outcomeCol, "Please select an outcome column"))
+
+    if (checkNeed(input$denomCol)) {
       inputData()[[input$outcomeCol]] / inputData()[[input$denomCol]]
+    } else {
+      inputData()[[input$outcomeCol]]
     }
   })
   
   dataGroup = reactive({
-    if (!validCol(input$groupCol, inputData(), . %>% names())) {
-      NULL
-    } else {
+    if (!is.null(input$groupCol)) {
       inputData()[[input$groupCol]]
     }
   })
@@ -118,9 +112,7 @@ shinyServer(function(input, output, session) {
   }
   
   output$previewPlot = renderPlotly({
-    if(is.null(dataOutcome()) || is.null(dataTime())) {
-      NULL
-    } else if (!is.null(dataGroup())) {
+    if (!is.null(dataGroup())) {
       ggplotly(ggplot(
           data.frame(y=dataOutcome(), t=dataTime(), g=dataGroup()) %>% arrange(t)
         ) +
@@ -149,45 +141,43 @@ shinyServer(function(input, output, session) {
   # Set up reactive input controls
   ############################################################
   
-  output$timeColUI <- renderUI({
-    choices = names(timeColumns(inputData()))
+  output$dateColUI <- renderUI({
+    choices = names(dateColumns(inputData()))
     if (length(choices) > 1) {
       choices = c("", choices)
     }
     
     selectInput(
-      inputId = "timeCol",
+      inputId = "dateCol",
       label = "Which variable in your data represents time?",
       choices = choices
     )
   })
-  outputOptions(output, 'timeColUI', suspendWhenHidden=FALSE)
+  outputOptions(output, 'dateColUI', suspendWhenHidden=FALSE)
   
-  output$timeFormatUI <- renderUI({
-    if (!validCol(input$timeCol, inputData(), . %>% timeColumns() %>% names())) {
-      tagList()
-    } else {
-      choices = (inputData() %>% timeColumns())[[input$timeCol]]
-      select = selectInput(
-        inputId = "timeFormat",
-        label = "Time Format:",
-        choices = choices
-      )
-      
-      if (length(choices) == 1) {
-        select = hidden(select)
-      }
-      
-      select
+  output$dateFormatUI <- renderUI({
+    validate(need(input$dateCol, "Please select a date column"))
+
+    choices = (inputData() %>% dateColumns())[[input$dateCol]]
+    select = selectInput(
+      inputId = "dateFormat",
+      label = "Date Format:",
+      choices = choices
+    )
+    
+    if (length(choices) == 1) {
+      select = hidden(select)
     }
+    
+    select
   })
-  outputOptions(output, 'timeFormatUI', suspendWhenHidden=FALSE)
+  outputOptions(output, 'dateFormatUI', suspendWhenHidden=FALSE)
   
   output$outcomeColUI <- renderUI({
     selectInput(
       inputId = "outcomeCol",
       label = "Outcome:",
-      choices = c("", names(inputData()))
+      choices = c("", setdiff(names(inputData()), names(dateColumns(inputData()))))
     )
   })
   outputOptions(output, 'outcomeColUI', suspendWhenHidden=FALSE)
@@ -196,7 +186,7 @@ shinyServer(function(input, output, session) {
     selectInput(
       inputId = "denomCol",
       label = "Denominator:",
-      choices = c(`No denominator`="", names(inputData()))
+      choices = c(`No denominator`="", setdiff(names(inputData()), names(dateColumns(inputData()))))
     )
   })
   outputOptions(output, 'denomColUI', suspendWhenHidden=FALSE)
@@ -205,7 +195,7 @@ shinyServer(function(input, output, session) {
     selectInput(
       inputId = "groupCol",
       label = "Group:",
-      choices = c(`No grouping`="", names(inputData()))
+      choices = c(`No grouping`="", setdiff(names(inputData()), names(dateColumns(inputData()))))
     )
   })
   outputOptions(output, 'groupColUI', suspendWhenHidden=FALSE)
@@ -214,21 +204,21 @@ shinyServer(function(input, output, session) {
   # Set up step enabled / disabled state and next buttons
   ############################################################
   
-  timeCols = reactive({
+  dateCols = reactive({
     if (!is.null(inputData())) {
-      timeColumns(inputData())
+      dateColumns(inputData())
     }
   })
   
   observe({
-    with(list(timeAvailable=!is.null(timeCols())), {
-      updateButton(session, "nextTime", disabled=!timeAvailable)
-      md_update_stepper_step(session, "steps", "time", enabled=timeAvailable)
+    with(list(dateAvailable=!is.null(dateCols())), {
+      updateButton(session, "nextDate", disabled=!dateAvailable)
+      md_update_stepper_step(session, "steps", "date", enabled=dateAvailable)
     })
   })
   
-  observeEvent(input$nextTime, {
-    md_update_stepper(session, "steps", value="time")
+  observeEvent(input$nextDate, {
+    md_update_stepper(session, "steps", value="date")
   })
   
   observe({
@@ -275,9 +265,9 @@ shinyServer(function(input, output, session) {
     ))
   })
   
-  output$timeSummary = renderUI({
+  output$dateSummary = renderUI({
     null2empty(
-      tags$code(input$timeCol)
+      tags$code(input$dateCol)
     )
   })
   
