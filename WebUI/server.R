@@ -222,7 +222,7 @@ shinyServer(function(input, output, session) {
       view="months",
       minView="months",
       minDate=min(dataTime()),
-      maxDate=max(dataTime()),
+      maxDate=max(dataTime()) %m-% months(as.numeric(input$postDuration)),
       addon="none",
       autoClose=TRUE
     )
