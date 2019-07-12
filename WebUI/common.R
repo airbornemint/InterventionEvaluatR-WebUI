@@ -7,6 +7,13 @@ dateFormats = list(
   `DD-MM-YYYY`="%d-%m-%Y"
 )
 
+postDurations = list(
+  `6 months`=6,
+  `12 months`=12,
+  `18 months`=18,
+  `24 months`=24
+)
+
 stockDatasets = list(
   `Pneumonia, Brazil`="pnas_brazil"  
 )

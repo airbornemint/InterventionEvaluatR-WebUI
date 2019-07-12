@@ -19,6 +19,8 @@ import::from(magrittr, "%>%")
 import::from(plotly, ggplotly, renderPlotly)
 import::from(shinyBS, updateButton)
 import::from(shinyjs, hidden)
+import::from(shinyWidgets, airMonthpickerInput)
+import::from(lubridate, "%m+%")
 
 source("common.R")
 
@@ -93,10 +95,6 @@ shinyServer(function(input, output, session) {
     length(unique(dataTime())) < length(dataTime())
   })
 
-  dataPeriods = reactive({
-    dataGroup()
-  })
-  
   ############################################################
   # Set up reactive data display
   ############################################################
@@ -215,6 +213,20 @@ shinyServer(function(input, output, session) {
   })
   outputOptions(output, 'groupColUI', suspendWhenHidden=FALSE)
   
+  output$introDateUI <- renderUI({
+    airMonthpickerInput(
+      inputId = "postStart",
+      label = "When was the vaccine introduced?",
+      view="months",
+      minView="months",
+      minDate=min(dataTime()),
+      maxDate=max(dataTime()),
+      addon="none",
+      autoClose=TRUE
+    )
+  })
+  outputOptions(output, 'introDateUI', suspendWhenHidden=FALSE)
+  
   ############################################################
   # Set up step enabled / disabled state and next buttons
   ############################################################
@@ -259,7 +271,7 @@ shinyServer(function(input, output, session) {
   })
 
   observe({
-    with(list(analysisAvailable=!is.null(dataPeriods())), {
+    with(list(analysisAvailable=checkNeed(input$postStart) && checkNeed(input$postDuration)), {
       updateButton(session, "nextAnalysis", disabled=!analysisAvailable)
       md_update_stepper_step(session, "steps", "analysis", enabled=analysisAvailable)
       updateButton(session, "analyze", disabled=!analysisAvailable)
@@ -323,7 +335,14 @@ shinyServer(function(input, output, session) {
   })
   
   output$periodsSummary = renderUI({
-    ""
+    validate(need(input$postStart, ""), need(input$postDuration, ""))
+    introduced = as.Date(input$postStart, "%Y-%m-%d")
+    established = introduced %m+% months(as.numeric(input$postDuration))
+    sprintf(
+      "Introduced %s, established %s", 
+      strftime(introduced, "%b %Y"), 
+      strftime(established, "%b %Y")
+    )
   })
   
   ############################################################

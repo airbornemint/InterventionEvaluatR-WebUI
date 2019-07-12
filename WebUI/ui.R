@@ -119,15 +119,12 @@ md_page(
                         md_stepper_step(
                             title="Select Analysis Periods",
                             value="periods",
-                            p("Lorem ipsum post start"),
-                            dateInput(
-                                inputId = "postStart",
-                                label = "Post Start:"
-                            ),
-                            p("Lorem ipsum eval start"),
-                            dateInput(
-                                inputId = "evalStart",
-                                label = "Eval Start:"
+                            uiOutput("introDateUI"),
+                            selectInput(
+                                inputId = "postDuration",
+                                label = "How long after its introduction did the vaccine become established in the population?",
+                                choices=postDurations,
+                                selected=12
                             ),
                             nextButton("nextAnalysis", "periodsSpinner"),
                             summary=uiOutput("periodsSummary")

@@ -497,6 +497,12 @@ RemoteUsername: airbornemint
 RemoteRef: issue-100-onLoad
 RemoteSha: f84b13327f280b64ded077da2845cb757528f459
 
+Package: shinyWidgets
+Source: CRAN
+Version: 0.4.8
+Hash: 88973b8af3d99e133ebe0a738363e621
+Requires: htmltools, jsonlite, scales, shiny
+
 Package: shinyjs
 Source: CRAN
 Version: 1.0
