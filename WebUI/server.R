@@ -20,7 +20,7 @@ import::from(plotly, ggplotly, renderPlotly)
 import::from(shinyBS, updateButton)
 import::from(shinyjs, hidden, toggleElement, toggleClass)
 import::from(shinyWidgets, airMonthpickerInput)
-import::from(lubridate, "%m+%")
+import::from(lubridate, "%m+%", "%m-%")
 
 source("common.R")
 
@@ -222,7 +222,7 @@ shinyServer(function(input, output, session) {
       view="months",
       minView="months",
       minDate=min(dataTime()),
-      maxDate=max(dataTime()),
+      maxDate=max(dataTime()) %m-% months(as.numeric(input$postDuration)),
       addon="none",
       autoClose=TRUE
     )
