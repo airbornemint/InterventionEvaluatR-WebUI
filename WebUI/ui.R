@@ -43,7 +43,7 @@ md_page(
             tags$ul(
                 class="navbar-nav ml-auto",
                 tags$li(
-                    class="nav-item", id="help-toggle",
+                    class="nav-item", id="help-button",
                     tags$a(class="nav-link", fa("question-circle", height="1.5em", fill="white"))
                 )
             )
@@ -139,34 +139,65 @@ md_page(
                     )
                 )
             )
-        ),
-        conditionalPanel("true", div(
-            id="help",
-            class="card",
+        )
+    ),
+    div(
+        id="help-toggle", 
+        div(
+            id="help-container",
             div(
-                class="help-section card-body",
-                id="help-load",
-                h1("Loading data"),
-                p("Lorem ipsum")
-            ),
-            div(
-                class="help-section card-body",
-                id="help-date",
-                h1("Selecting time variable"),
-                p("Lorem ipsum")
-            ),
-            div(
-                class="help-section card-body",
-                id="help-periods",
-                h1("Selecting analysis periods"),
-                p("Lorem ipsum")
-            ),
-            div(
-                class="help-section card-body",
-                id="help-analysis",
-                h1("Running the analysis"),
-                p("Lorem ipsum")
+                id="help",
+                class="card",
+                div(
+                    class="help-section card-body",
+                    id="help-load",
+                    h1("Loading data"),
+                    p("Lorem ipsum")
+                ),
+                div(
+                    class="help-section card-body",
+                    id="help-date",
+                    h1("Selecting time variable"),
+                    p("Lorem ipsum")
+                ),
+                div(
+                    class="help-section card-body",
+                    id="help-outcome",
+                    h1("Selecting outcome"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum")
+                ),
+                div(
+                    class="help-section card-body",
+                    id="help-periods",
+                    h1("Selecting analysis periods"),
+                    p("Lorem ipsum")
+                ),
+                div(
+                    class="help-section card-body",
+                    id="help-analysis",
+                    h1("Running the analysis"),
+                    p("Lorem ipsum")
+                )
             )
-        ))
+        )
     )
 )
