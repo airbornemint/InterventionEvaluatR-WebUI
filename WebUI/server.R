@@ -226,7 +226,7 @@ shinyServer(function(input, output, session) {
   })
   
   observe({
-    with(list(dateAvailable=!is.null(dateCols())), {
+    with(list(dateAvailable=checkNeed(dateCols())), {
       updateButton(session, "nextDate", disabled=!dateAvailable)
       md_update_stepper_step(session, "steps", "date", enabled=dateAvailable)
     })
@@ -248,7 +248,7 @@ shinyServer(function(input, output, session) {
   })
   
   observe({
-    with(list(periodsAvailable=!is.null(dataOutcome())), {
+    with(list(periodsAvailable=checkNeed(dataOutcome()) && (!dataNeedsGroup() || checkNeed(dataGroup()))), {
       updateButton(session, "nextPeriods", disabled=!periodsAvailable)
       md_update_stepper_step(session, "steps", "periods", enabled=periodsAvailable)
     })
