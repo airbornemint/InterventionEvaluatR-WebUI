@@ -15,7 +15,7 @@ postDurations = list(
 )
 
 stockDatasets = list(
-  `Pneumonia, Brazil`="pnas_brazil"  
+  `Pneumonia in Brazil, 2003-2013`="pnas_brazil"  
 )
 
 invert.list = function(l) {
