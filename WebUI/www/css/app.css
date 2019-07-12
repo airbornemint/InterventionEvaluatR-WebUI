@@ -68,3 +68,11 @@
 .help-section.active {
   display: block;
 }
+
+ul.stepper li a .label {
+  text-align: left;
+}
+
+ul.stepper li a .summary {
+  text-align: right;
+}
