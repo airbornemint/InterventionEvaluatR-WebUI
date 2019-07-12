@@ -18,7 +18,7 @@ library(ggplot2)
 import::from(magrittr, "%>%")
 import::from(plotly, ggplotly, renderPlotly)
 import::from(shinyBS, updateButton)
-import::from(shinyjs, hidden)
+import::from(shinyjs, hidden, toggleElement)
 import::from(shinyWidgets, airMonthpickerInput)
 import::from(lubridate, "%m+%")
 
@@ -69,14 +69,14 @@ shinyServer(function(input, output, session) {
   })
   
   dataTime = reactive({
-    validate(need(input$dateCol, "Please select a date column"))
-    validate(need(input$dateFormat, "Please select a date format"))
+    validate(need(input$dateCol, FALSE))
+    validate(need(input$dateFormat, FALSE))
     
     as.Date(inputData()[[input$dateCol]], format=input$dateFormat) 
   })
   
   dataOutcome = reactive({
-    validate(need(input$outcomeCol, "Please select an outcome column"))
+    validate(need(input$outcomeCol, FALSE))
 
     if (checkNeed(input$denomCol)) {
       inputData()[[input$outcomeCol]] / inputData()[[input$denomCol]]
@@ -144,7 +144,9 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'previewPlot', suspendWhenHidden=FALSE)
   
   output$showPreviewPlot = reactive({
-    !is.null(dataOutcome()) && !is.null(dataTime())
+    show = !is.null(dataOutcome()) && !is.null(dataTime())
+    toggleElement(id="plotWithSpinner", condition=show)
+    show
   })
   outputOptions(output, 'showPreviewPlot', suspendWhenHidden=FALSE)
   
@@ -167,7 +169,7 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'dateColUI', suspendWhenHidden=FALSE)
   
   output$dateFormatUI <- renderUI({
-    validate(need(input$dateCol, "Please select a date column"))
+    validate(need(input$dateCol, FALSE))
 
     choices = (inputData() %>% dateColumns())[[input$dateCol]]
     select = selectInput(
@@ -335,7 +337,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$periodsSummary = renderUI({
-    validate(need(input$postStart, ""), need(input$postDuration, ""))
+    validate(need(input$postStart, FALSE), need(input$postDuration, FALSE))
     introduced = as.Date(input$postStart, "%Y-%m-%d")
     established = introduced %m+% months(as.numeric(input$postDuration))
     sprintf(

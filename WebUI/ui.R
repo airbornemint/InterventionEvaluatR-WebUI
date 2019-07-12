@@ -12,7 +12,7 @@ library(shiny)
 import::from(magrittr, "%>%")
 import::from(plotly, plotlyOutput)
 import::from(fontawesome, fa)
-import::from(shinyjs, useShinyjs)
+import::from(shinyjs, useShinyjs, hidden)
 
 source("common.R")
 source("mdbootstrap.R")
@@ -49,17 +49,16 @@ md_page(
         ) %>% tagAppendAttributes(class="navbar-expand-sm"),
         div(
             class="container-fluid",
-            conditionalPanel(
-                "output.showPreviewPlot", 
+            hidden(div(
+                id="plotWithSpinner",
                 md_row(
                     md_column(
                         id="plotColumn",
                         plotlyOutput("previewPlot", height="200px"),
                         md_spinner("plotSpinner")
-                        # conditionalPanel("output.showPreviewTable", dataTableOutput("previewTable"))
                     )
                 )
-            )
+            ))
         )
     ),
     div(
