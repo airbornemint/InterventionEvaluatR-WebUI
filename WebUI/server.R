@@ -332,62 +332,61 @@ shinyServer(function(input, output, session) {
   ############################################################
   
   output$loadSummary = reactive({
-    null2empty(unspin(session, "loadSpinner", 
-      invert.list(stockDatasets)[[input$stockDataset]]
-    ))
-  })
-  
-  output$dateSummary = renderUI({
-    null2empty(
-      tags$code(input$dateCol)
+    validate(need(input$stockDataset, FALSE))
+    unspin(
+      session, "loadSpinner", 
+      names(which(stockDatasets == input$stockDataset))
     )
   })
   
+  output$dateSummary = renderUI({
+    validate(need(input$dateCol, FALSE))
+    tags$code(input$dateCol)
+  })
+  
   output$outcomeSummary = renderUI({
-    null2empty({
-      if (is.null(inputData())) {
-        NULL
-      } else if (is.null(input$outcomeCol) || !(input$outcomeCol %in% names(inputData()))) {
-        NULL
-      } else if (is.null(input$denomCol) || !(input$denomCol %in% names(inputData()))) {
-        if (is.null(input$groupCol) || !(input$groupCol %in% names(inputData()))) {
-          tags$code(input$outcomeCol)
-        } else {
-          span(
-            tags$code(input$outcomeCol),
-            " by ",
-            tags$code(input$groupCol)
-          )
-        }
-      } else {
-        if (is.null(input$groupCol) || !(input$groupCol %in% names(inputData()))) {
-          span(
-            tags$code(input$outcomeCol),
-            " / ",
-            tags$code(input$denomCol)
-          )
-        } else {
-          span(
-            tags$code(input$outcomeCol),
-            " / ",
-            tags$code(input$denomCol),
-            " by ",
-            tags$code(input$groupCol)
-          )
-        }
-      }
-    })
+    validate(need(dataOutcome(), FALSE))
+    if (checkNeed(input$denomCol) && checkNeed(input$groupCol)) {
+      span(
+        tags$code(input$outcomeCol),
+        " / ",
+        tags$code(input$denomCol),
+        " by ",
+        tags$code(input$groupCol)
+      )
+    } else if (checkNeed(input$denomCol)) {
+      span(
+        tags$code(input$outcomeCol),
+        " / ",
+        tags$code(input$denomCol)
+      )
+    } else if (checkNeed(input$groupCol)) {
+      span(
+        tags$code(input$outcomeCol),
+        " by ",
+        tags$code(input$groupCol)
+      )
+    } else {
+      tags$code(input$outcomeCol)
+    }
   })
   
   output$periodsSummary = renderUI({
     validate(need(dataPostStart(), FALSE), need(dataEvalStart, FALSE))
-    
-    sprintf(
-      "%s — %s vs. %s — %s", 
-      strftime(min(dataTime()), "%b %Y"), 
-      strftime(dataPostStart(), "%b %Y"), 
-      strftime(dataEvalStart(), "%b %Y"), 
-      strftime(max(dataTime()), "%b %Y")
+    span(
+      span(
+        class="pre-period",
+        strftime(min(dataTime()), "%b %Y"), 
+        "—",
+        strftime(dataPostStart(), "%b %Y")
+      ),
+      "vs.",
+      span(
+        class="post-period",
+        strftime(dataEvalStart(), "%b %Y"), 
+        "—",
+        strftime(max(dataTime()), "%b %Y")
+      )
     )
   })
   
