@@ -7,6 +7,13 @@ dateFormats = list(
   `DD-MM-YYYY`="%d-%m-%Y"
 )
 
+postDurations = list(
+  `6 months`=6,
+  `12 months`=12,
+  `18 months`=18,
+  `24 months`=24
+)
+
 stockDatasets = list(
   `Pneumonia, Brazil`="pnas_brazil"  
 )
@@ -41,7 +48,7 @@ validFormat = function(v, format) {
 }
 
 # Auto-detect viable time columns and their formats. Empty list if none are found, NULL if data is NULL
-autodetectTime = function(data) {
+dateColumns = function(data) {
   names(data) %>% 
     sapply(function(name) {
       # List of viable formats for named column; NULL if none
@@ -65,4 +72,9 @@ autodetectTime = function(data) {
 unspin = function(session, spinner, value) {
   md_update_spinner(session, spinner, hidden=!is.null(value))
   value
+}
+
+# True if expr is valid according to the same criteria as shiny::need
+checkNeed = function(expr) {
+  is.null(need(expr, ""))
 }

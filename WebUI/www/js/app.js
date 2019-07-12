@@ -6,8 +6,8 @@ $(document).ready(function(){
     newSection.addClass("active");
   });
   
-  $("#help-toggle").on("click", function(event) {
-    $("#help").toggle();
+  $("#help-button").on("click", function(event) {
+    $("#page").toggleClass("help-on");
   });
 });
 

@@ -12,6 +12,7 @@ library(shiny)
 import::from(magrittr, "%>%")
 import::from(plotly, plotlyOutput)
 import::from(fontawesome, fa)
+import::from(shinyjs, useShinyjs, hidden)
 
 source("common.R")
 source("mdbootstrap.R")
@@ -29,39 +30,40 @@ nextButton = function(buttonId, spinnerId, title="Next") {
 }
 
 md_page(
+    id="page",
+    useShinyjs(),
     singleton(tags$head(
         tags$script(src = "js/app.js")
     )),
     div(
-        class="sticky-top",
+        class="fixed-top",
         id="header",
         md_navbar(
             title="InterventionEvaluatR",
             tags$ul(
                 class="navbar-nav ml-auto",
                 tags$li(
-                    class="nav-item", id="help-toggle",
+                    class="nav-item", id="help-button",
                     tags$a(class="nav-link", fa("question-circle", height="1.5em", fill="white"))
                 )
             )
         ) %>% tagAppendAttributes(class="navbar-expand-sm"),
         div(
+            id="plot-container",
             class="container-fluid",
-            conditionalPanel(
-                "output.showPreviewPlot", 
+            div(
                 md_row(
                     md_column(
                         id="plotColumn",
                         plotlyOutput("previewPlot", height="200px"),
                         md_spinner("plotSpinner")
-                        # conditionalPanel("output.showPreviewTable", dataTableOutput("previewTable"))
                     )
                 )
             )
         )
     ),
     div(
-        class="container-with-help",
+        class="main-content",
         div(
             class="container",
             md_row(
@@ -82,15 +84,15 @@ md_page(
                                 label = "Or load stock data:",
                                 choices = c("", stockDatasets)
                             ),
-                            nextButton("nextTime", "loadSpinner"),
+                            nextButton("nextDate", "loadSpinner"),
                             summary=textOutput("loadSummary"),
                             enabled=TRUE
                         ),
                         md_stepper_step(
                             title="Select Time Variable",
-                            value="time",
-                            uiOutput("timeColUI"),
-                            uiOutput("timeFormatUI"),
+                            value="date",
+                            uiOutput("dateColUI"),
+                            uiOutput("dateFormatUI"),
                             # selectInput(
                             #     inputId = "obsFreq",
                             #     label = "Observation frequency:",
@@ -102,8 +104,8 @@ md_page(
                             #     label = "Year:",
                             #     choices = c("January", "June")
                             # ),
-                            nextButton("nextOutcome", "timeSpinner"),
-                            summary=uiOutput("timeSummary")
+                            nextButton("nextOutcome", "dateSpinner"),
+                            summary=uiOutput("dateSummary")
                         ),
                         md_stepper_step(
                             title="Select Outcome Variable",
@@ -117,15 +119,12 @@ md_page(
                         md_stepper_step(
                             title="Select Analysis Periods",
                             value="periods",
-                            p("Lorem ipsum post start"),
-                            dateInput(
-                                inputId = "postStart",
-                                label = "Post Start:"
-                            ),
-                            p("Lorem ipsum eval start"),
-                            dateInput(
-                                inputId = "evalStart",
-                                label = "Eval Start:"
+                            uiOutput("introDateUI"),
+                            selectInput(
+                                inputId = "postDuration",
+                                label = "How long after its introduction did the vaccine become established in the population?",
+                                choices=postDurations,
+                                selected=12
                             ),
                             nextButton("nextAnalysis", "periodsSpinner"),
                             summary=uiOutput("periodsSummary")
@@ -133,41 +132,72 @@ md_page(
                         md_stepper_step(
                             title="Run Analysis",
                             value="analysis",
-                            nextButton("analyze", "analyzeSpinner", title="Run Analysis"),
+                            nextButton("analyze", "analyzeSpinner", title="Still Can't Run Analysis"),
                             textOutput("analysisStatus"),
                             tableOutput("analysisResults")
                         )
                     )
                 )
             )
-        ),
-        conditionalPanel("true", div(
-            id="help",
-            class="card",
+        )
+    ),
+    div(
+        id="help-toggle", 
+        div(
+            id="help-container",
             div(
-                class="help-section card-body",
-                id="help-load",
-                h1("Loading data"),
-                p("Lorem ipsum")
-            ),
-            div(
-                class="help-section card-body",
-                id="help-time",
-                h1("Selecting time variable"),
-                p("Lorem ipsum")
-            ),
-            div(
-                class="help-section card-body",
-                id="help-periods",
-                h1("Selecting analysis periods"),
-                p("Lorem ipsum")
-            ),
-            div(
-                class="help-section card-body",
-                id="help-analysis",
-                h1("Running the analysis"),
-                p("Lorem ipsum")
+                id="help",
+                class="card",
+                div(
+                    class="help-section card-body",
+                    id="help-load",
+                    h1("Loading data"),
+                    p("Lorem ipsum")
+                ),
+                div(
+                    class="help-section card-body",
+                    id="help-date",
+                    h1("Selecting time variable"),
+                    p("Lorem ipsum")
+                ),
+                div(
+                    class="help-section card-body",
+                    id="help-outcome",
+                    h1("Selecting outcome"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum"),
+                    p("Lorem ipsum")
+                ),
+                div(
+                    class="help-section card-body",
+                    id="help-periods",
+                    h1("Selecting analysis periods"),
+                    p("Lorem ipsum")
+                ),
+                div(
+                    class="help-section card-body",
+                    id="help-analysis",
+                    h1("Running the analysis"),
+                    p("Lorem ipsum")
+                )
             )
-        ))
+        )
     )
 )

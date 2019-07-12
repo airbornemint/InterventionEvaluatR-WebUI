@@ -18,6 +18,9 @@ library(ggplot2)
 import::from(magrittr, "%>%")
 import::from(plotly, ggplotly, renderPlotly)
 import::from(shinyBS, updateButton)
+import::from(shinyjs, hidden, toggleElement, toggleClass)
+import::from(shinyWidgets, airMonthpickerInput)
+import::from(lubridate, "%m+%")
 
 source("common.R")
 
@@ -42,13 +45,6 @@ check.output = function(args) {
   }
 }
 
-timeFormats = list(
-  `YYYY-MM-DD`="%Y-%m-%d",
-  `YYYY-DD-MM`="%Y-%d-%m",
-  `MM-DD-YYYY`="%m-%d-%Y",
-  `DD-MM-YYYY`="%d-%m-%Y"
-)
-
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
   ############################################################
@@ -68,47 +64,37 @@ shinyServer(function(input, output, session) {
     )
   })
   
-  dataOutcome = reactive({
-    if (is.null(inputData())) {
-      NULL
-    } else if (is.null(input$outcomeCol) || !(input$outcomeCol %in% names(inputData()))) {
-      NULL
-    } else if (is.null(input$denomCol) || !(input$denomCol %in% names(inputData()))) {
-      inputData()[[input$outcomeCol]]
-    } else {
-      inputData()[[input$outcomeCol]] / inputData()[[input$denomCol]]
-    }
+  dataDateColumns = reactive({
+    dateColumns(inputData())
   })
   
   dataTime = reactive({
-    if (is.null(inputData())) {
-      NULL
-    } else if (is.null(input$timeCol) || !(input$timeCol %in% names(inputData()))) {
-      NULL
+    validate(need(input$dateCol, FALSE))
+    validate(need(input$dateFormat, FALSE))
+    
+    as.Date(inputData()[[input$dateCol]], format=input$dateFormat) 
+  })
+  
+  dataOutcome = reactive({
+    validate(need(input$outcomeCol, FALSE))
+
+    if (checkNeed(input$denomCol)) {
+      inputData()[[input$outcomeCol]] / inputData()[[input$denomCol]]
     } else {
-      time = as.Date(inputData()[[input$timeCol]], format=timeFormats[[input$timeFormat]]) 
-      if (any(is.na(time))) {
-        NULL
-      } else {
-        time
-      }
+      inputData()[[input$outcomeCol]]
     }
   })
   
   dataGroup = reactive({
-    if (is.null(inputData())) {
-      NULL
-    } else if (is.null(input$groupCol) || !(input$groupCol %in% names(inputData()))) {
-      NULL
-    } else {
+    if (!is.null(input$groupCol)) {
       inputData()[[input$groupCol]]
     }
   })
   
-  dataPeriods = reactive({
-    dataGroup()
+  dataNeedsGroup = reactive({
+    length(unique(dataTime())) < length(dataTime())
   })
-  
+
   ############################################################
   # Set up reactive data display
   ############################################################
@@ -128,9 +114,7 @@ shinyServer(function(input, output, session) {
   }
   
   output$previewPlot = renderPlotly({
-    if(is.null(dataOutcome()) || is.null(dataTime())) {
-      NULL
-    } else if (!is.null(dataGroup())) {
+    if (!is.null(dataGroup())) {
       ggplotly(ggplot(
           data.frame(y=dataOutcome(), t=dataTime(), g=dataGroup()) %>% arrange(t)
         ) +
@@ -138,19 +122,31 @@ shinyServer(function(input, output, session) {
           labs(x=NULL, y=NULL) +
           theme_minimal()
       ) %>% plotlyOptions()
+    } else if (dataNeedsGroup()) {
+      data = data.frame(y=dataOutcome(), t=dataTime()) %>% arrange(t)
+      data %<>% group_by(t) %>% summarize(ymin=min(y), ymax=max(y))
+      ggplotly(
+        ggplot(data) +
+        geom_ribbon(aes(x=t, ymin=ymin, ymax=ymax), size=0.1, fill="grey75") +
+        labs(x=NULL, y=NULL) +
+        theme_minimal()
+      ) %>% plotlyOptions()
     } else {
-      ggplotly(ggplot(
-          data.frame(y=dataOutcome(), t=dataTime()) %>% arrange(t)
-        ) +
-          geom_line(aes(x=t, y=y), size=0.1) +
-          labs(x=NULL, y=NULL) +
-          theme_minimal()
+      data = data.frame(y=dataOutcome(), t=dataTime()) %>% arrange(t)
+      ggplotly(
+        ggplot(data) +
+        geom_line(aes(x=t, y=y), size=0.1) +
+        labs(x=NULL, y=NULL) +
+        theme_minimal()
       ) %>% plotlyOptions()
     }
   })
+  outputOptions(output, 'previewPlot', suspendWhenHidden=FALSE)
   
   output$showPreviewPlot = reactive({
-    !is.null(dataOutcome()) && !is.null(dataTime())
+    show = checkNeed(input$dateCol) && checkNeed(input$dateFormat) && checkNeed(input$outcomeCol)
+    toggleClass(id="page", class="plot-on", condition=show)
+    show
   })
   outputOptions(output, 'showPreviewPlot', suspendWhenHidden=FALSE)
   
@@ -158,11 +154,43 @@ shinyServer(function(input, output, session) {
   # Set up reactive input controls
   ############################################################
   
+  output$dateColUI <- renderUI({
+    choices = names(dateColumns(inputData()))
+    if (length(choices) > 1) {
+      choices = c("", choices)
+    }
+    
+    selectInput(
+      inputId = "dateCol",
+      label = "Which variable in your data represents time?",
+      choices = choices
+    )
+  })
+  outputOptions(output, 'dateColUI', suspendWhenHidden=FALSE)
+  
+  output$dateFormatUI <- renderUI({
+    validate(need(input$dateCol, FALSE))
+
+    choices = (inputData() %>% dateColumns())[[input$dateCol]]
+    select = selectInput(
+      inputId = "dateFormat",
+      label = "Date Format:",
+      choices = choices
+    )
+    
+    if (length(choices) == 1) {
+      select = hidden(select)
+    }
+    
+    select
+  })
+  outputOptions(output, 'dateFormatUI', suspendWhenHidden=FALSE)
+  
   output$outcomeColUI <- renderUI({
     selectInput(
       inputId = "outcomeCol",
       label = "Outcome:",
-      choices = c("", names(inputData()))
+      choices = c("", setdiff(names(inputData()), names(dateColumns(inputData()))))
     )
   })
   outputOptions(output, 'outcomeColUI', suspendWhenHidden=FALSE)
@@ -171,57 +199,55 @@ shinyServer(function(input, output, session) {
     selectInput(
       inputId = "denomCol",
       label = "Denominator:",
-      choices = c(`No denominator`="", names(inputData()))
+      choices = c(`No denominator`="", setdiff(names(inputData()), names(dateColumns(inputData()))))
     )
   })
   outputOptions(output, 'denomColUI', suspendWhenHidden=FALSE)
   
-  output$timeColUI <- renderUI({
-    selectInput(
-      inputId = "timeCol",
-      label = "Which variable in your data represents time?",
-      choices = c("", names(inputData()))
-    )
-  })
-  outputOptions(output, 'timeColUI', suspendWhenHidden=FALSE)
-  
-  output$timeFormatUI <- renderUI({
-    selectInput(
-      inputId = "timeFormat",
-      label = "Time Format:",
-      choices = names(timeFormats)
-    )
-  })
-  outputOptions(output, 'timeFormatUI', suspendWhenHidden=FALSE)
-  
   output$groupColUI <- renderUI({
-    selectInput(
-      inputId = "groupCol",
-      label = "Group:",
-      choices = c(`No grouping`="", names(inputData()))
-    )
+    if (dataNeedsGroup()) {
+      selectInput(
+        inputId = "groupCol",
+        label = "Group:",
+        choices = c(`No grouping`="", setdiff(names(inputData()), names(dateColumns(inputData()))))
+      )
+    }
   })
   outputOptions(output, 'groupColUI', suspendWhenHidden=FALSE)
+  
+  output$introDateUI <- renderUI({
+    airMonthpickerInput(
+      inputId = "postStart",
+      label = "When was the vaccine introduced?",
+      view="months",
+      minView="months",
+      minDate=min(dataTime()),
+      maxDate=max(dataTime()) %m-% months(as.numeric(input$postDuration)),
+      addon="none",
+      autoClose=TRUE
+    )
+  })
+  outputOptions(output, 'introDateUI', suspendWhenHidden=FALSE)
   
   ############################################################
   # Set up step enabled / disabled state and next buttons
   ############################################################
   
-  autoTime = reactive({
+  dateCols = reactive({
     if (!is.null(inputData())) {
-      autodetectTime(inputData())
+      dateColumns(inputData())
     }
   })
   
   observe({
-    with(list(timeAvailable=!is.null(autoTime())), {
-      updateButton(session, "nextTime", disabled=!timeAvailable)
-      md_update_stepper_step(session, "steps", "time", enabled=timeAvailable)
+    with(list(dateAvailable=checkNeed(dateCols())), {
+      updateButton(session, "nextDate", disabled=!dateAvailable)
+      md_update_stepper_step(session, "steps", "date", enabled=dateAvailable)
     })
   })
   
-  observeEvent(input$nextTime, {
-    md_update_stepper(session, "steps", value="time")
+  observeEvent(input$nextDate, {
+    md_update_stepper(session, "steps", value="date")
   })
   
   observe({
@@ -236,7 +262,7 @@ shinyServer(function(input, output, session) {
   })
   
   observe({
-    with(list(periodsAvailable=!is.null(dataOutcome())), {
+    with(list(periodsAvailable=checkNeed(dataOutcome()) && (!dataNeedsGroup() || checkNeed(dataGroup()))), {
       updateButton(session, "nextPeriods", disabled=!periodsAvailable)
       md_update_stepper_step(session, "steps", "periods", enabled=periodsAvailable)
     })
@@ -247,7 +273,7 @@ shinyServer(function(input, output, session) {
   })
 
   observe({
-    with(list(analysisAvailable=!is.null(dataPeriods())), {
+    with(list(analysisAvailable=checkNeed(input$postStart) && checkNeed(input$postDuration)), {
       updateButton(session, "nextAnalysis", disabled=!analysisAvailable)
       md_update_stepper_step(session, "steps", "analysis", enabled=analysisAvailable)
       updateButton(session, "analyze", disabled=!analysisAvailable)
@@ -268,9 +294,9 @@ shinyServer(function(input, output, session) {
     ))
   })
   
-  output$timeSummary = renderUI({
+  output$dateSummary = renderUI({
     null2empty(
-      tags$code(input$timeCol)
+      tags$code(input$dateCol)
     )
   })
   
@@ -311,7 +337,14 @@ shinyServer(function(input, output, session) {
   })
   
   output$periodsSummary = renderUI({
-    ""
+    validate(need(input$postStart, FALSE), need(input$postDuration, FALSE))
+    introduced = as.Date(input$postStart, "%Y-%m-%d")
+    established = introduced %m+% months(as.numeric(input$postDuration))
+    sprintf(
+      "Introduced %s, established %s", 
+      strftime(introduced, "%b %Y"), 
+      strftime(established, "%b %Y")
+    )
   })
   
   ############################################################
