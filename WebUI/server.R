@@ -20,7 +20,8 @@ import::from(plotly, ggplotly, renderPlotly)
 import::from(shinyBS, updateButton)
 import::from(shinyjs, hidden, toggleElement, toggleClass)
 import::from(shinyWidgets, airMonthpickerInput)
-import::from(lubridate, "%m+%", "%m-%")
+import::from(lubridate, "%m+%", "%m-%", days)
+import::from(ggplot2, geom_blank, geom_errorbarh)
 
 source("common.R")
 
@@ -94,7 +95,17 @@ shinyServer(function(input, output, session) {
   dataNeedsGroup = reactive({
     length(unique(dataTime())) < length(dataTime())
   })
+  
+  dataPostStart = reactive({
+    validate(need(input$postStart, FALSE))
+    as.Date(input$postStart, "%Y-%m-%d")
+  })
 
+  dataEvalStart = reactive({
+    validate(need(input$postDuration, FALSE))
+    dataPostStart() %m+% months(as.numeric(input$postDuration))
+  })
+  
   ############################################################
   # Set up reactive data display
   ############################################################
@@ -114,11 +125,29 @@ shinyServer(function(input, output, session) {
   }
   
   output$previewPlot = renderPlotly({
+    periods = function() {
+      if (checkNeed(input$postStart) && checkNeed(input$postDuration)) {
+        df = data.frame(
+          xmin=c(min(dataTime()), dataEvalStart()),
+          xmax=c(dataPostStart(), max(dataTime())),
+          y=rep(max(dataOutcome()) * 1.1, 2)
+        )
+        c(
+          geom_segment(data=df, aes(x=xmin, xend=xmax, y=y, yend=y)),
+          geom_point(data=df, aes(x=xmin, y=y)),
+          geom_point(data=df, aes(x=xmax, y=y))
+        )
+      } else {
+        geom_blank()
+      }
+    }
+
     if (!is.null(dataGroup())) {
       ggplotly(ggplot(
           data.frame(y=dataOutcome(), t=dataTime(), g=dataGroup()) %>% arrange(t)
         ) +
           geom_line(aes(x=t, y=y, group=g), size=0.1) +
+          periods() + 
           labs(x=NULL, y=NULL) +
           theme_minimal()
       ) %>% plotlyOptions()
@@ -128,6 +157,7 @@ shinyServer(function(input, output, session) {
       ggplotly(
         ggplot(data) +
         geom_ribbon(aes(x=t, ymin=ymin, ymax=ymax), size=0.1, fill="grey75") +
+        periods() + 
         labs(x=NULL, y=NULL) +
         theme_minimal()
       ) %>% plotlyOptions()
@@ -136,6 +166,7 @@ shinyServer(function(input, output, session) {
       ggplotly(
         ggplot(data) +
         geom_line(aes(x=t, y=y), size=0.1) +
+        periods() + 
         labs(x=NULL, y=NULL) +
         theme_minimal()
       ) %>% plotlyOptions()
@@ -216,6 +247,12 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'groupColUI', suspendWhenHidden=FALSE)
   
   output$introDateUI <- renderUI({
+    oldValue = {
+      if (checkNeed(input$postStart)) {
+        # There is a weird bug in airMonthpickerInput with minView=months that causes the date picker to set itself to one month earlier than value if value is the first day of the month.
+        dataPostStart() %m+% days(15)
+      }
+    }
     airMonthpickerInput(
       inputId = "postStart",
       label = "When was the vaccine introduced?",
@@ -224,7 +261,8 @@ shinyServer(function(input, output, session) {
       minDate=min(dataTime()),
       maxDate=max(dataTime()) %m-% months(as.numeric(input$postDuration)),
       addon="none",
-      autoClose=TRUE
+      autoClose=TRUE,
+      value=oldValue 
     )
   })
   outputOptions(output, 'introDateUI', suspendWhenHidden=FALSE)
@@ -273,7 +311,7 @@ shinyServer(function(input, output, session) {
   })
 
   observe({
-    with(list(analysisAvailable=checkNeed(input$postStart) && checkNeed(input$postDuration)), {
+    with(list(analysisAvailable=checkNeed(dataPostStart()) && checkNeed(dataEvalStart())), {
       updateButton(session, "nextAnalysis", disabled=!analysisAvailable)
       md_update_stepper_step(session, "steps", "analysis", enabled=analysisAvailable)
       updateButton(session, "analyze", disabled=!analysisAvailable)
@@ -337,13 +375,13 @@ shinyServer(function(input, output, session) {
   })
   
   output$periodsSummary = renderUI({
-    validate(need(input$postStart, FALSE), need(input$postDuration, FALSE))
-    introduced = as.Date(input$postStart, "%Y-%m-%d")
-    established = introduced %m+% months(as.numeric(input$postDuration))
+    validate(need(dataPostStart(), FALSE), need(dataEvalStart, FALSE))
     sprintf(
-      "Introduced %s, established %s", 
-      strftime(introduced, "%b %Y"), 
-      strftime(established, "%b %Y")
+      "%s — %s vs. %s — %s", 
+      strftime(min(dataTime()), "%b %Y"), 
+      strftime(dataPostStart(), "%b %Y"), 
+      strftime(dataEvalStart(), "%b %Y"), 
+      strftime(max(dataTime()), "%b %Y")
     )
   })
   
