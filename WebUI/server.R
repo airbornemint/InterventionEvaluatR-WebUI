@@ -314,12 +314,17 @@ shinyServer(function(input, output, session) {
     with(list(analysisAvailable=checkNeed(dataPostStart()) && checkNeed(dataEvalStart())), {
       updateButton(session, "nextAnalysis", disabled=!analysisAvailable)
       md_update_stepper_step(session, "steps", "analysis", enabled=analysisAvailable)
-      updateButton(session, "analyze", disabled=!analysisAvailable)
     })
   })
   
   observeEvent(input$nextAnalysis, {
     md_update_stepper(session, "steps", value="analysis")
+  })
+  
+  observe({
+    with(list(analyzeAvailable=checkNeed(input$analysisTypes)), {
+      updateButton(session, "analyze", disabled=!analyzeAvailable)
+    })
   })
   
   ############################################################
@@ -376,6 +381,7 @@ shinyServer(function(input, output, session) {
   
   output$periodsSummary = renderUI({
     validate(need(dataPostStart(), FALSE), need(dataEvalStart, FALSE))
+    
     sprintf(
       "%s — %s vs. %s — %s", 
       strftime(min(dataTime()), "%b %Y"), 
@@ -401,10 +407,12 @@ shinyServer(function(input, output, session) {
   output$analysisStatus = renderText({
     analysisStatus()
   }) 
+  outputOptions(output, 'analysisStatus', suspendWhenHidden=FALSE)
   
   output$analysisResults = renderTable({
     analysisResults()
   })
+  outputOptions(output, 'analysisResults', suspendWhenHidden=FALSE)
   
   observeEvent(input$analyze, {
     if (analysisStatus() == ANALYSIS_RUNNING) {
