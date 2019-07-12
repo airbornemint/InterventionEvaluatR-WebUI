@@ -131,7 +131,7 @@ md_page(
                         md_stepper_step(
                             title="Run Analysis",
                             value="analysis",
-                            nextButton("analyze", "analyzeSpinner", title="Run Analysis"),
+                            nextButton("analyze", "analyzeSpinner", title="Still Can't Run Analysis"),
                             textOutput("analysisStatus"),
                             tableOutput("analysisResults")
                         )
