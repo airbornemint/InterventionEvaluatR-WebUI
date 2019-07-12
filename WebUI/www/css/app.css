@@ -2,8 +2,16 @@
   background: white;
 }
 
+#plot-container {
+  display: none;
+}
+
+.plot-on #plot-container {
+  display: block;
+}
+
 #previewPlot {
-  margin-top: 10px;
+  margin-top: 1rem;
   background: white;
   box-sizing: content-box;
   box-shadow: 0 1rem 1rem white;
@@ -15,11 +23,16 @@
   display: block;
 }
 
-.container-with-help {
+.main-content {
+  margin-top: 3.5rem; /* 3.5rem for header nav */
   display: flex;
 }
 
-.container-with-help > .container {
+.plot-on .main-content {
+  margin-top: calc(4.5rem + 200px); /* 3.5rem for header nav, 1rem + 200px for plot */
+}
+
+.main-content > .container {
   flex: 1;
   align-items: stretch;
 }

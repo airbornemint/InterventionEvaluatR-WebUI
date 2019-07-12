@@ -30,12 +30,13 @@ nextButton = function(buttonId, spinnerId, title="Next") {
 }
 
 md_page(
+    id="page",
     useShinyjs(),
     singleton(tags$head(
         tags$script(src = "js/app.js")
     )),
     div(
-        class="sticky-top",
+        class="fixed-top",
         id="header",
         md_navbar(
             title="InterventionEvaluatR",
@@ -48,9 +49,9 @@ md_page(
             )
         ) %>% tagAppendAttributes(class="navbar-expand-sm"),
         div(
+            id="plot-container",
             class="container-fluid",
-            hidden(div(
-                id="plotWithSpinner",
+            div(
                 md_row(
                     md_column(
                         id="plotColumn",
@@ -58,11 +59,11 @@ md_page(
                         md_spinner("plotSpinner")
                     )
                 )
-            ))
+            )
         )
     ),
     div(
-        class="container-with-help",
+        class="main-content",
         div(
             class="container",
             md_row(

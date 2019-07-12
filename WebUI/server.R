@@ -18,7 +18,7 @@ library(ggplot2)
 import::from(magrittr, "%>%")
 import::from(plotly, ggplotly, renderPlotly)
 import::from(shinyBS, updateButton)
-import::from(shinyjs, hidden, toggleElement)
+import::from(shinyjs, hidden, toggleElement, toggleClass)
 import::from(shinyWidgets, airMonthpickerInput)
 import::from(lubridate, "%m+%")
 
@@ -144,8 +144,8 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'previewPlot', suspendWhenHidden=FALSE)
   
   output$showPreviewPlot = reactive({
-    show = !is.null(dataOutcome()) && !is.null(dataTime())
-    toggleElement(id="plotWithSpinner", condition=show)
+    show = checkNeed(input$dateCol) && checkNeed(input$dateFormat) && checkNeed(input$outcomeCol)
+    toggleClass(id="page", class="plot-on", condition=show)
     show
   })
   outputOptions(output, 'showPreviewPlot', suspendWhenHidden=FALSE)
