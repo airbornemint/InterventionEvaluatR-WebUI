@@ -15,23 +15,8 @@ postDurations = list(
 )
 
 stockDatasets = list(
-  `Pneumonia, Brazil`="pnas_brazil"  
+  `Pneumonia in Brazil, 2003-2013`="pnas_brazil"  
 )
-
-invert.list = function(l) {
-  listValues = as.character(l)
-  listNames = names(l)
-  as.list(setNames(listNames, listValues))
-}
-
-# Input if non-null, empty string otherwise
-null2empty = function(s) {
-  if (is.null(s)) {
-    ""
-  } else {
-    s
-  }
-}
 
 # TRUE if format is valid date format for v
 # Format is valid if the vector can be converted to dates in that format and if differences between nearby dates are >5
@@ -76,5 +61,5 @@ unspin = function(session, spinner, value) {
 
 # True if expr is valid according to the same criteria as shiny::need
 checkNeed = function(expr) {
-  is.null(need(expr, ""))
+  is.null(need(expr, FALSE))
 }

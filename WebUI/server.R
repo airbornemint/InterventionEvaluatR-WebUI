@@ -20,7 +20,8 @@ import::from(plotly, ggplotly, renderPlotly)
 import::from(shinyBS, updateButton)
 import::from(shinyjs, hidden, toggleElement, toggleClass)
 import::from(shinyWidgets, airMonthpickerInput)
-import::from(lubridate, "%m+%")
+import::from(lubridate, "%m+%", "%m-%", days)
+import::from(ggplot2, geom_blank, geom_errorbarh)
 
 source("common.R")
 
@@ -94,7 +95,17 @@ shinyServer(function(input, output, session) {
   dataNeedsGroup = reactive({
     length(unique(dataTime())) < length(dataTime())
   })
+  
+  dataPostStart = reactive({
+    validate(need(input$postStart, FALSE))
+    as.Date(input$postStart, "%Y-%m-%d")
+  })
 
+  dataEvalStart = reactive({
+    validate(need(input$postDuration, FALSE))
+    dataPostStart() %m+% months(as.numeric(input$postDuration))
+  })
+  
   ############################################################
   # Set up reactive data display
   ############################################################
@@ -114,11 +125,29 @@ shinyServer(function(input, output, session) {
   }
   
   output$previewPlot = renderPlotly({
+    periods = function() {
+      if (checkNeed(input$postStart) && checkNeed(input$postDuration)) {
+        df = data.frame(
+          xmin=c(min(dataTime()), dataEvalStart()),
+          xmax=c(dataPostStart(), max(dataTime())),
+          y=rep(max(dataOutcome()) * 1.1, 2)
+        )
+        c(
+          geom_segment(data=df, aes(x=xmin, xend=xmax, y=y, yend=y)),
+          geom_point(data=df, aes(x=xmin, y=y)),
+          geom_point(data=df, aes(x=xmax, y=y))
+        )
+      } else {
+        geom_blank()
+      }
+    }
+
     if (!is.null(dataGroup())) {
       ggplotly(ggplot(
           data.frame(y=dataOutcome(), t=dataTime(), g=dataGroup()) %>% arrange(t)
         ) +
           geom_line(aes(x=t, y=y, group=g), size=0.1) +
+          periods() + 
           labs(x=NULL, y=NULL) +
           theme_minimal()
       ) %>% plotlyOptions()
@@ -128,6 +157,7 @@ shinyServer(function(input, output, session) {
       ggplotly(
         ggplot(data) +
         geom_ribbon(aes(x=t, ymin=ymin, ymax=ymax), size=0.1, fill="grey75") +
+        periods() + 
         labs(x=NULL, y=NULL) +
         theme_minimal()
       ) %>% plotlyOptions()
@@ -136,6 +166,7 @@ shinyServer(function(input, output, session) {
       ggplotly(
         ggplot(data) +
         geom_line(aes(x=t, y=y), size=0.1) +
+        periods() + 
         labs(x=NULL, y=NULL) +
         theme_minimal()
       ) %>% plotlyOptions()
@@ -216,6 +247,12 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'groupColUI', suspendWhenHidden=FALSE)
   
   output$introDateUI <- renderUI({
+    oldValue = {
+      if (checkNeed(input$postStart)) {
+        # There is a weird bug in airMonthpickerInput with minView=months that causes the date picker to set itself to one month earlier than value if value is the first day of the month.
+        dataPostStart() %m+% days(15)
+      }
+    }
     airMonthpickerInput(
       inputId = "postStart",
       label = "When was the vaccine introduced?",
@@ -224,7 +261,8 @@ shinyServer(function(input, output, session) {
       minDate=min(dataTime()),
       maxDate=max(dataTime()) %m-% months(as.numeric(input$postDuration)),
       addon="none",
-      autoClose=TRUE
+      autoClose=TRUE,
+      value=oldValue 
     )
   })
   outputOptions(output, 'introDateUI', suspendWhenHidden=FALSE)
@@ -273,10 +311,9 @@ shinyServer(function(input, output, session) {
   })
 
   observe({
-    with(list(analysisAvailable=checkNeed(input$postStart) && checkNeed(input$postDuration)), {
+    with(list(analysisAvailable=checkNeed(dataPostStart()) && checkNeed(dataEvalStart())), {
       updateButton(session, "nextAnalysis", disabled=!analysisAvailable)
       md_update_stepper_step(session, "steps", "analysis", enabled=analysisAvailable)
-      updateButton(session, "analyze", disabled=!analysisAvailable)
     })
   })
   
@@ -284,66 +321,72 @@ shinyServer(function(input, output, session) {
     md_update_stepper(session, "steps", value="analysis")
   })
   
+  observe({
+    with(list(analyzeAvailable=checkNeed(input$analysisTypes)), {
+      updateButton(session, "analyze", disabled=!analyzeAvailable)
+    })
+  })
+  
   ############################################################
   # Set up step summaries
   ############################################################
   
   output$loadSummary = reactive({
-    null2empty(unspin(session, "loadSpinner", 
-      invert.list(stockDatasets)[[input$stockDataset]]
-    ))
-  })
-  
-  output$dateSummary = renderUI({
-    null2empty(
-      tags$code(input$dateCol)
+    validate(need(input$stockDataset, FALSE))
+    unspin(
+      session, "loadSpinner", 
+      names(which(stockDatasets == input$stockDataset))
     )
   })
   
+  output$dateSummary = renderUI({
+    validate(need(input$dateCol, FALSE))
+    tags$code(input$dateCol)
+  })
+  
   output$outcomeSummary = renderUI({
-    null2empty({
-      if (is.null(inputData())) {
-        NULL
-      } else if (is.null(input$outcomeCol) || !(input$outcomeCol %in% names(inputData()))) {
-        NULL
-      } else if (is.null(input$denomCol) || !(input$denomCol %in% names(inputData()))) {
-        if (is.null(input$groupCol) || !(input$groupCol %in% names(inputData()))) {
-          tags$code(input$outcomeCol)
-        } else {
-          span(
-            tags$code(input$outcomeCol),
-            " by ",
-            tags$code(input$groupCol)
-          )
-        }
-      } else {
-        if (is.null(input$groupCol) || !(input$groupCol %in% names(inputData()))) {
-          span(
-            tags$code(input$outcomeCol),
-            " / ",
-            tags$code(input$denomCol)
-          )
-        } else {
-          span(
-            tags$code(input$outcomeCol),
-            " / ",
-            tags$code(input$denomCol),
-            " by ",
-            tags$code(input$groupCol)
-          )
-        }
-      }
-    })
+    validate(need(dataOutcome(), FALSE))
+    if (checkNeed(input$denomCol) && checkNeed(input$groupCol)) {
+      span(
+        tags$code(input$outcomeCol),
+        " / ",
+        tags$code(input$denomCol),
+        " by ",
+        tags$code(input$groupCol)
+      )
+    } else if (checkNeed(input$denomCol)) {
+      span(
+        tags$code(input$outcomeCol),
+        " / ",
+        tags$code(input$denomCol)
+      )
+    } else if (checkNeed(input$groupCol)) {
+      span(
+        tags$code(input$outcomeCol),
+        " by ",
+        tags$code(input$groupCol)
+      )
+    } else {
+      tags$code(input$outcomeCol)
+    }
   })
   
   output$periodsSummary = renderUI({
-    validate(need(input$postStart, FALSE), need(input$postDuration, FALSE))
-    introduced = as.Date(input$postStart, "%Y-%m-%d")
-    established = introduced %m+% months(as.numeric(input$postDuration))
-    sprintf(
-      "Introduced %s, established %s", 
-      strftime(introduced, "%b %Y"), 
-      strftime(established, "%b %Y")
+    validate(need(dataPostStart(), FALSE), need(dataEvalStart, FALSE))
+    span(
+      span(
+        class="pre-period",
+        strftime(min(dataTime()), "%b %Y"), 
+        "—",
+        strftime(dataPostStart(), "%b %Y")
+      ),
+      "vs.",
+      span(
+        class="post-period",
+        strftime(dataEvalStart(), "%b %Y"), 
+        "—",
+        strftime(max(dataTime()), "%b %Y")
+      )
     )
   })
   
@@ -363,10 +406,12 @@ shinyServer(function(input, output, session) {
   output$analysisStatus = renderText({
     analysisStatus()
   }) 
+  outputOptions(output, 'analysisStatus', suspendWhenHidden=FALSE)
   
   output$analysisResults = renderTable({
     analysisResults()
   })
+  outputOptions(output, 'analysisResults', suspendWhenHidden=FALSE)
   
   observeEvent(input$analyze, {
     if (analysisStatus() == ANALYSIS_RUNNING) {

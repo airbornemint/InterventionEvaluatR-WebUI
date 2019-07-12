@@ -130,9 +130,16 @@ md_page(
                             summary=uiOutput("periodsSummary")
                         ),
                         md_stepper_step(
-                            title="Run Analysis",
+                            title="Analyze",
                             value="analysis",
-                            nextButton("analyze", "analyzeSpinner", title="Still Can't Run Analysis"),
+                            checkboxGroupInput(
+                                "analysisTypes",
+                                "Which types of analysis do you want to perform?",
+                                c(
+                                    "Univariate Poisson regression"="univariate"
+                                )
+                            ),
+                            nextButton("analyze", "analyzeSpinner", title="Analyze"),
                             textOutput("analysisStatus"),
                             tableOutput("analysisResults")
                         )
