@@ -140,8 +140,17 @@ md_page(
                                 )
                             ),
                             nextButton("analyze", "analyzeSpinner", title="Analyze"),
-                            textOutput("analysisStatus"),
-                            plotlyOutput("resultsUnivariate")
+                            textOutput("analysisStatus")
+                        )
+                    ), tags$hr(),
+                    md_stepper_vertical(
+                        id="results",
+                        selected="univariate",
+                        md_stepper_step(
+                            title="Univariate regression",
+                            value="univariate",
+                            uiOutput("resultsUnivariate"),
+                            enabled=TRUE
                         )
                     )
                 )

@@ -28,6 +28,8 @@ import::from(shinyWidgets, airMonthpickerInput)
 import::from(lubridate, "%m+%", "%m-%", days, "day<-")
 import::from(ggplot2, geom_blank, geom_errorbarh)
 import::from(InterventionEvaluatR, evaluatr.init, evaluatr.univariate, evaluatr.univariate.plot)
+import::from(plyr, llply)
+import::from(dplyr, filter)
 
 plan(multisession)
 
@@ -416,7 +418,7 @@ shinyServer(function(input, output, session) {
   }) 
   outputOptions(output, 'analysisStatus', suspendWhenHidden=FALSE)
   
-  output$resultsUnivariate = reactive({ ggplotly(ggplot()) })
+  output$resultsUnivariate = reactive({})
   outputOptions(output, 'resultsUnivariate', suspendWhenHidden=FALSE)
 
   observeEvent(input$analyze, {
@@ -480,24 +482,20 @@ shinyServer(function(input, output, session) {
         saveRDS(results, "/tmp/wui-results.rds")
         print("Analysis done")
         analysisStatus(ANALYSIS_DONE)
-        output$resultsUnivariate = renderPlotly({
-          # tagList(
-          #   lapply(results$univariate, function(group) {
-          #     renderPlotly(
-          #       ggplotly(
-          #         evaluatr.univariate.plot(group)
-          #       ) %>% plotlyOptions()
-          #     )
-          #   })
-          # )
-          x = ggplotly(
-            evaluatr.univariate.plot(results$univariate[[1]])
-          ) %>% plotlyOptions()
-          print("XXX")
-          print(class(x))
-          print(x)
-          x
+        output$resultsUnivariate = renderUI({
+          md_carousel("carousel-univariate", llply(seq_along(results$univariate), function(idx) {
+            plotlyOutput(sprintf("resultsUnivariate.%d", idx), width="1000px")
+          }))
         })
+        
+        for(idx in seq_along(results$univariate)) {
+          output[[sprintf("resultsUnivariate.%d", idx)]] = renderPlotly({
+            ggplotly(
+              evaluatr.univariate.plot(results$univariate[[idx]])
+            ) %>% plotlyOptions()
+          })
+          outputOptions(output, sprintf("resultsUnivariate.%d", idx), suspendWhenHidden=FALSE)
+        }
       }) %...!% (function(error) {
         print("Analysis failed")
         analysisStatus(ANALYSIS_FAILED)
