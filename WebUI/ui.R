@@ -141,7 +141,7 @@ md_page(
                             ),
                             nextButton("analyze", "analyzeSpinner", title="Analyze"),
                             textOutput("analysisStatus"),
-                            tableOutput("analysisResults")
+                            plotlyOutput("resultsUnivariate")
                         )
                     )
                 )

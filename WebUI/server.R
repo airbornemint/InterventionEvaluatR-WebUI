@@ -15,16 +15,19 @@ library(uuid)
 library(dplyr)
 library(ggplot2)
 
+source("common.R")
+source("worker.R")
+source("results.R")
+
 import::from(magrittr, "%>%")
+import::from(shiny, validate)
 import::from(plotly, ggplotly, renderPlotly)
 import::from(shinyBS, updateButton)
 import::from(shinyjs, hidden, toggleElement, toggleClass)
 import::from(shinyWidgets, airMonthpickerInput)
-import::from(lubridate, "%m+%", "%m-%", days)
+import::from(lubridate, "%m+%", "%m-%", days, "day<-")
 import::from(ggplot2, geom_blank, geom_errorbarh)
-
-source("common.R")
-source("worker.R")
+import::from(InterventionEvaluatR, evaluatr.init, evaluatr.univariate, evaluatr.univariate.plot)
 
 plan(multisession)
 
@@ -99,12 +102,16 @@ shinyServer(function(input, output, session) {
   
   dataPostStart = reactive({
     validate(need(input$postStart, FALSE))
-    as.Date(input$postStart, "%Y-%m-%d")
+    date = as.Date(input$postStart, "%Y-%m-%d")
+    day(date) = 1
+    date
   })
 
   dataEvalStart = reactive({
     validate(need(input$postDuration, FALSE))
-    dataPostStart() %m+% months(as.numeric(input$postDuration))
+    date = dataPostStart() %m+% months(as.numeric(input$postDuration))
+    day(date) = 1
+    date
   })
   
   ############################################################
@@ -248,22 +255,23 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'groupColUI', suspendWhenHidden=FALSE)
   
   output$introDateUI <- renderUI({
-    oldValue = {
-      if (checkNeed(input$postStart)) {
-        # There is a weird bug in airMonthpickerInput with minView=months that causes the date picker to set itself to one month earlier than value if value is the first day of the month.
-        dataPostStart() %m+% days(15)
-      }
-    }
+    # oldValue = {
+    #   if (checkNeed(input$postStart)) {
+    #     # There is a weird bug in airMonthpickerInput with minView=months that causes the date picker to set itself to one month earlier than value if value is the first day of the month.
+    #     # dataPostStart() %m+% days(15)
+    #   }
+    # }
     airMonthpickerInput(
       inputId = "postStart",
       label = "When was the vaccine introduced?",
       view="months",
       minView="months",
       minDate=min(dataTime()),
-      maxDate=max(dataTime()) %m-% months(as.numeric(input$postDuration)),
+      maxDate=max(dataTime()),
+#      maxDate=max(dataTime()) %m-% months(as.numeric(input$postDuration)),
       addon="none",
-      autoClose=TRUE,
-      value=oldValue 
+      autoClose=TRUE#,
+      #value=oldValue 
     )
   })
   outputOptions(output, 'introDateUI', suspendWhenHidden=FALSE)
@@ -373,7 +381,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$periodsSummary = renderUI({
-    validate(need(dataPostStart(), FALSE), need(dataEvalStart, FALSE))
+    validate(need(dataPostStart(), FALSE), need(dataEvalStart(), FALSE))
     span(
       span(
         class="pre-period",
@@ -402,25 +410,54 @@ shinyServer(function(input, output, session) {
   ANALYSIS_CANCELED = "canceled"
   
   analysisStatus <- reactiveVal(ANALYSIS_READY)
-  analysisResults <- reactiveVal(NULL)
-  
+
   output$analysisStatus = renderText({
     analysisStatus()
   }) 
   outputOptions(output, 'analysisStatus', suspendWhenHidden=FALSE)
   
-  output$analysisResults = renderTable({
-    analysisResults()
-  })
-  outputOptions(output, 'analysisResults', suspendWhenHidden=FALSE)
-  
+  output$resultsUnivariate = reactive({ ggplotly(ggplot()) })
+  outputOptions(output, 'resultsUnivariate', suspendWhenHidden=FALSE)
+
   observeEvent(input$analyze, {
     if (analysisStatus() == ANALYSIS_RUNNING) {
       return()
     } else {
       analysisStatus(ANALYSIS_RUNNING)
       
-      result = future({
+      # Detect whether we are using monthly or quarterly observations by looking at the average interval between observations
+      obsPerYear = 365 / as.numeric(diff(range(dataTime()))) * length(unique(dataTime()))
+      obsPerYear = ifelse(obsPerYear > 8, 12, 4)
+      
+      analysisData = inputData()
+      analysisData[[input$dateCol]] = dataTime()
+
+      analysisParams = list(
+        post_period_start=dataPostStart(),
+        eval_period_start=dataEvalStart(),
+        eval_period_end=max(dataTime()),
+        n_seasons=obsPerYear,
+        year_def="cal_year",
+        group_name=input$groupCol,
+        date_name=input$dateCol,
+        outcome_name=input$outcomeCol,
+        denom_name=input$denomCol
+      )
+      
+      print("Analysis setup:")
+      print(analysisParams)
+      
+      analysisParams = c(
+        analysisParams,
+        list(
+          country="Placeholder",
+          data=analysisData
+        )
+      )
+      
+      saveRDS(analysisParams, "/tmp/wui-params.rds")
+
+      future({
         worker = setupWorker()
         oplan = workerPlan(worker)
         on.exit(plan(oplan), add=TRUE)
@@ -430,20 +467,45 @@ shinyServer(function(input, output, session) {
         }, add=TRUE)
         
         future({
-          k = names(Sys.getenv())
-          v = Sys.getenv(k)
-          data.frame(name=k, value=v)
+          withLogErrors({
+            analysis = do.call(
+              evaluatr.init,
+              analysisParams
+            )
+            evaluatr.univariate(analysis)
+            analysis$results
+          })
         }) %>% value()
-      }) %...>% (function(result) {
+      }) %...>% (function(results) {
+        saveRDS(results, "/tmp/wui-results.rds")
+        print("Analysis done")
         analysisStatus(ANALYSIS_DONE)
-        analysisResults(result)
+        output$resultsUnivariate = renderPlotly({
+          # tagList(
+          #   lapply(results$univariate, function(group) {
+          #     renderPlotly(
+          #       ggplotly(
+          #         evaluatr.univariate.plot(group)
+          #       ) %>% plotlyOptions()
+          #     )
+          #   })
+          # )
+          x = ggplotly(
+            evaluatr.univariate.plot(results$univariate[[1]])
+          ) %>% plotlyOptions()
+          print("XXX")
+          print(class(x))
+          print(x)
+          x
+        })
       }) %...!% (function(error) {
+        print("Analysis failed")
         analysisStatus(ANALYSIS_FAILED)
-        analysisResults(NULL)
         print(error$message)
         showNotification(error$message)
       })
-      
+
+      # By constructing a future but returning a NULL, shiny server will continue updating the UI while the future is being computed, which allows us to give progress updates
       NULL
     }
   })
