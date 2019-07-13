@@ -1,11 +1,14 @@
 import::from(plyr, compact)
 import::from(shinyBS, bsButton)
+import::from(magrittr, "%<>%")
 
 md_page = function(...) {
   tags$html(
     singleton(tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "mdb/css/bootstrap.min.css"),
-      tags$link(rel = "stylesheet", type = "text/css", href = "mdb/css/mdb.min.css"),
+      tags$link(rel = "stylesheet", type = "text/css", href = "mdb/css/mdb.css"),
+      tags$script(src = "mdb/js/mdb.js"),
+      tags$script(src = "mdb/js/bootstrap.js"),
       tags$link(rel = "stylesheet", type = "text/css", href = "css/app.css"),
       tags$link(rel = "stylesheet", type = "text/css", href = "css/mdbootstrap.css"),
       tags$script(src = "js/mdbootstrap.js")
@@ -103,4 +106,70 @@ md_button_spinner = function(id, visible=FALSE) {
 # hidden vs visible = CSS display vs CSS visible
 md_update_spinner = function(session, spinner, hidden=NULL, visible=NULL) {
   session$sendCustomMessage("md_update_spinner", list(spinner=spinner, hidden=hidden, visible=visible) %>% compact())
+}
+
+md_carousel = function(id, slides) {
+  div(
+    id=id,
+    class="carousel slide",
+    tags$ol(
+      class="carousel-indicators",
+      tagList(llply(seq_along(slides), function(idx) {
+        item = tags$li(
+          class="primary-color",
+          "data-target"=sprintf("#%s", id),
+          "data-slide-to"=idx-1
+        )
+        if (idx == 1) {
+          item %<>% tagAppendAttributes(class="active")
+        }
+        item
+      }))
+    ),
+    div(
+      class="carousel-inner",
+      role="listbox",
+      tagList(llply(seq_along(slides), function(idx) {
+        item = div(
+          class="carousel-item",
+          div(
+            class="d-block w-100",
+            slides[[idx]]
+          )
+        )
+        if (idx == 1) {
+          item %<>% tagAppendAttributes(class="active")
+        }
+        item
+      }))
+    ),
+    tags$a(
+      class="carousel-control-prev",
+      href=sprintf("#%s", id),
+      role="button",
+      "data-slide"="prev",
+      span(
+        class="carousel-control-prev-icon primary-color",
+        "aria-hidden"="true"
+      ),
+      span(
+        class="sr-only",
+        "Previous"
+      )
+    ),
+    tags$a(
+      class="carousel-control-next",
+      href=sprintf("#%s", id),
+      role="button",
+      "data-slide"="next",
+      span(
+        class="carousel-control-next-icon primary-color",
+        "aria-hidden"="true"
+      ),
+      span(
+        class="sr-only",
+        "Next"
+      )
+    )
+  )
 }
