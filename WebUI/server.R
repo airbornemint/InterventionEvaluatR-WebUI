@@ -148,7 +148,16 @@ shinyServer(function(input, output, session) {
           geom_point(data=df, aes(x=xmax, y=y))
         )
       } else {
-        geom_blank()
+        df = data.frame(
+          xmin=min(dataTime()),
+          xmax=max(dataTime()),
+          y=max(dataOutcome()) * 1.1
+        )
+        c(
+          geom_segment(data=df, aes(x=xmin, xend=xmax, y=y, yend=y), color="#FFFFFF00"),
+          geom_point(data=df, aes(x=xmin, y=y), color="#FFFFFF00"),
+          geom_point(data=df, aes(x=xmax, y=y), color="#FFFFFF00")
+        )
       }
     }
 
