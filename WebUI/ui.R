@@ -74,10 +74,13 @@ md_page(
                         md_stepper_step(
                             title="Load Data",
                             value="load",
-                            fileInput(
-                                inputId = "userDataset",
-                                label = "Load your data:",
-                                buttonLabel = "Choose a file…"
+                            div(
+                                class="file-input",
+                                fileInput(
+                                    inputId = "userDataset",
+                                    label = "Load your data:",
+                                    buttonLabel = "Choose a file"
+                                )
                             ),
                             selectInput(
                                 inputId = "stockDataset",

@@ -58,17 +58,45 @@ shinyServer(function(input, output, session) {
   # Set up reactive data inputs
   ############################################################
   
-  inputData = reactive({
-    if (!is.null(input$stockDataset) && input$stockDataset != "") {
-      md_update_spinner(session, "loadSpinner", visible=TRUE)
-    }
-    switch(
-      input$stockDataset,
-      pnas_brazil = {
-        data("pnas_brazil", package="InterventionEvaluatR")
-        pnas_brazil
-      }
+  userInput = reactiveVal() # Will be list(name, input, params, results)
+  
+  observe({
+    validate(need(input$stockDataset, FALSE))
+    md_update_spinner(session, "loadSpinner", visible=TRUE)
+    userInput(list(
+      name=names(which(stockDatasets == input$stockDataset)),
+      input=switch(
+        input$stockDataset,
+        pnas_brazil = {
+          data("pnas_brazil", package="InterventionEvaluatR")
+          pnas_brazil
+        }
+      )
+    ))
+  })
+  
+  observe({
+    validate(need(input$userDataset, FALSE))
+    md_update_spinner(session, "loadSpinner", visible=TRUE)
+    updateSelectInput(session, "stockDataset", selected="")
+    upload = input$userDataset[1,]
+    # We accept rds and csv input. Try rds first.
+    userInput(c(
+      readRDS(upload$datapath),
+      name=upload$name)
     )
+  })
+  
+  # This is the input data for analysis  
+  inputData = reactive({
+    validate(need(userInput(), FALSE))
+    userInput()$input
+  })
+  
+  # Pre-computed results, if uploaded by the user
+  inputResults = reactive({
+    validate(need(userInput(), FALSE))
+    userInput()$results
   })
   
   dataDateColumns = reactive({
@@ -352,11 +380,9 @@ shinyServer(function(input, output, session) {
   ############################################################
   
   output$loadSummary = reactive({
-    validate(need(input$stockDataset, FALSE))
-    unspin(
-      session, "loadSpinner", 
-      names(which(stockDatasets == input$stockDataset))
-    )
+    validate(need(userInput()$name, FALSE))
+    md_update_spinner(session, "loadSpinner", hidden=checkNeed(userInput()$name))
+    userInput()$name
   })
   
   output$dateSummary = renderUI({
@@ -411,6 +437,24 @@ shinyServer(function(input, output, session) {
   })
   
   ############################################################
+  # Download analysis results
+  ############################################################
+  
+  output$download <- downloadHandler(
+    filename = function() {
+      sprintf("InterventionEvaluatR Analysis %s.rds", Sys.Date())
+    },
+    content = function(file) {
+      saveRDS(list(
+        input = inputData(),
+        params = analysisParams(),
+        results = analysisResults()
+      ), file)
+    }
+  )
+  outputOptions(output, 'download', suspendWhenHidden=FALSE)
+  
+  ############################################################
   # Analysis
   ############################################################
   
@@ -420,8 +464,10 @@ shinyServer(function(input, output, session) {
   ANALYSIS_FAILED = "failed"
   ANALYSIS_CANCELED = "canceled"
   
-  analysisStatus <- reactiveVal(ANALYSIS_READY)
-
+  analysisStatus = reactiveVal(ANALYSIS_READY)
+  analysisResults = reactiveVal(NULL)
+  analysisParams = reactiveVal(NULL)
+  
   output$analysisStatus = renderText({
     analysisStatus()
   }) 
@@ -431,90 +477,130 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'resultsUnivariate', suspendWhenHidden=FALSE)
 
   observeEvent(input$analyze, {
-    if (analysisStatus() == ANALYSIS_RUNNING) {
-      return()
-    } else {
-      analysisStatus(ANALYSIS_RUNNING)
-      
-      # Detect whether we are using monthly or quarterly observations by looking at the average interval between observations
-      obsPerYear = 365 / as.numeric(diff(range(dataTime()))) * length(unique(dataTime()))
-      obsPerYear = ifelse(obsPerYear > 8, 12, 4)
-      
-      analysisData = inputData()
-      analysisData[[input$dateCol]] = dataTime()
-
-      analysisParams = list(
-        post_period_start=dataPostStart(),
-        eval_period_start=dataEvalStart(),
-        eval_period_end=max(dataTime()),
-        n_seasons=obsPerYear,
-        year_def="cal_year",
-        group_name=input$groupCol,
-        date_name=input$dateCol,
-        outcome_name=input$outcomeCol,
-        denom_name=input$denomCol
-      )
-      
-      print("Analysis setup:")
-      print(analysisParams)
-      
-      analysisParams = c(
-        analysisParams,
-        list(
-          country="Placeholder",
-          data=analysisData
+    withLogErrors({
+      if (analysisStatus() == ANALYSIS_RUNNING) {
+        return()
+      } else {
+        analysisStatus(ANALYSIS_RUNNING)
+        
+        # Detect whether we are using monthly or quarterly observations by looking at the average interval between observations
+        obsPerYear = 365 / as.numeric(diff(range(dataTime()))) * length(unique(dataTime()))
+        obsPerYear = ifelse(obsPerYear > 8, 12, 4)
+        
+        analysisData = inputData()
+        analysisData[[input$dateCol]] = dataTime()
+  
+        params = list(
+          post_period_start=dataPostStart(),
+          eval_period_start=dataEvalStart(),
+          eval_period_end=max(dataTime()),
+          n_seasons=obsPerYear,
+          year_def="cal_year",
+          group_name=input$groupCol,
+          date_name=input$dateCol,
+          outcome_name=input$outcomeCol,
+          denom_name=input$denomCol
         )
-      )
-      
-      saveRDS(analysisParams, "/tmp/wui-params.rds")
-
-      future({
-        worker = setupWorker()
-        oplan = workerPlan(worker)
-        on.exit(plan(oplan), add=TRUE)
         
-        on.exit({
-          dismissWorker(worker)
-        }, add=TRUE)
+        print("Analysis setup:")
+        print(params)
         
+        params = c(
+          params,
+          list(
+            country="Placeholder",
+            data=analysisData
+          )
+        )
+        
+        analysisParams(params)
+        
+        premadeResults = inputResults()
+  
         future({
           withLogErrors({
-            analysis = do.call(
-              evaluatr.init,
-              analysisParams
-            )
-            evaluatr.univariate(analysis)
-            analysis$results
+            # If the user uploaded precomputed results, use them
+            # TODO: only do this if params are unchanged
+            if (checkNeed(premadeResults)) {
+              premadeResults
+            } 
+            # Otherwise set up the computation worker and run the analysis
+            else {
+              worker = setupWorker()
+              oplan = workerPlan(worker)
+              on.exit(plan(oplan), add=TRUE)
+              
+              on.exit({
+                dismissWorker(worker)
+              }, add=TRUE)
+              
+              future({
+                withLogErrors({
+                  app.analyze(params)
+                })
+              }) %>% value()
+            }
           })
-        }) %>% value()
-      }) %...>% (function(results) {
-        saveRDS(results, "/tmp/wui-results.rds")
-        print("Analysis done")
-        analysisStatus(ANALYSIS_DONE)
-        output$resultsUnivariate = renderUI({
-          md_carousel("carousel-univariate", llply(seq_along(results$univariate), function(idx) {
-            plotlyOutput(sprintf("resultsUnivariate.%d", idx), width="1000px")
-          }))
-        })
-        
-        for(idx in seq_along(results$univariate)) {
-          output[[sprintf("resultsUnivariate.%d", idx)]] = renderPlotly({
-            ggplotly(
-              evaluatr.univariate.plot(results$univariate[[idx]])
-            ) %>% plotlyOptions()
-          })
-          outputOptions(output, sprintf("resultsUnivariate.%d", idx), suspendWhenHidden=FALSE)
-        }
-      }) %...!% (function(error) {
-        print("Analysis failed")
-        analysisStatus(ANALYSIS_FAILED)
-        print(error$message)
-        showNotification(error$message)
-      })
+        }) %...>% (function(results) {
+          print("Analysis done")
+          analysisStatus(ANALYSIS_DONE)
+          analysisResults(results)
 
-      # By constructing a future but returning a NULL, shiny server will continue updating the UI while the future is being computed, which allows us to give progress updates
-      NULL
-    }
+          plots = app.plot(results)
+          
+          output$resultsUI = renderUI({
+            # One stepper step for each analysis group
+            steps = llply(seq_along(plots), function(idx) {
+              groupName = names(plots)[idx]
+              md_stepper_step(
+                title=sprintf("Group %s", groupName),
+                value=sprintf("result-group-%s", idx),
+                enabled=TRUE,
+                md_carousel(
+                  sprintf("carousel-results-group-%s", idx), 
+                  list(
+                    plotlyOutput(sprintf("results.group%d.univariate", idx), width="800px"),
+                    plotlyOutput(sprintf("results.group%d.univariate2", idx), width="800px")
+                  )
+                )
+              )
+            })
+            
+            do.call(md_stepper_vertical, c(
+              steps, list(
+                md_stepper_step(
+                  title="Save results",
+                  value="save",
+                  downloadButton('download', "Download analysis results"),
+                  enabled=TRUE
+                ),
+                id="results",
+                selected="univariate"
+              )
+            ))
+          })
+          
+          for(idx in seq_along(plots)) {
+            output[[sprintf("results.group%d.univariate", idx)]] = renderPlotly({
+              plots[[idx]]$univariate %>% plotlyOptions()
+            })
+            outputOptions(output, sprintf("results.group%d.univariate", idx), suspendWhenHidden=FALSE)
+            output[[sprintf("results.group%d.univariate2", idx)]] = renderPlotly({
+              plots[[idx]]$univariate %>% plotlyOptions()
+            })
+            outputOptions(output, sprintf("results.group%d.univariate2", idx), suspendWhenHidden=FALSE)
+          }
+        }) %...!% (function(error) {
+          print("Analysis failed")
+          analysisStatus(ANALYSIS_FAILED)
+          print(error$message)
+          showNotification(error$message)
+        })
+  
+        # By constructing a future but returning a NULL, shiny server will continue updating the UI while the future is being computed, which allows us to give progress updates
+        NULL
+      }
+    })
   })
 })
 
