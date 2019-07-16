@@ -7,12 +7,18 @@ app.analyze = function(params) {
     params
   )
   evaluatr.univariate(analysis)
-  analysis$results
+  # Only keep what we need so we aren't shipping large amounts of unused data between worker and UI
+  c(
+    analysis$results,
+    list(
+      groups=analysis$groups
+    )
+  )
 }
 
 # Create plots and organize them by analysis group
 app.plot = function(results) {
-  groups = seq_along(results$univariate)
+  groups = results$groups
   setNames(llply(seq_along(results$univariate), function(idx) {
     list(
       univariate=ggplotly(
