@@ -142,6 +142,7 @@ md_page(
                                     "Univariate Poisson regression"="univariate"
                                 )
                             ),
+                            uiOutput("analysisGroupsUI"),
                             nextButton("analyze", "analyzeSpinner", title="Analyze"),
                             textOutput("analysisStatus")
                         )

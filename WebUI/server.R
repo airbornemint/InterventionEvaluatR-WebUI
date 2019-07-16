@@ -131,6 +131,11 @@ shinyServer(function(input, output, session) {
     length(unique(dataTime())) < length(dataTime())
   })
   
+  dataGroupValues = reactive({
+    validate(need(dataGroup, FALSE))
+    factor(dataGroup())
+  })
+
   dataPostStart = reactive({
     validate(need(input$postStart, FALSE))
     date = as.Date(input$postStart, "%Y-%m-%d")
@@ -316,6 +321,21 @@ shinyServer(function(input, output, session) {
   })
   outputOptions(output, 'introDateUI', suspendWhenHidden=FALSE)
   
+  output$analysisGroupsUI = renderUI({
+    validate(need(dataGroupValues(), FALSE), need(input$groupCol, FALSE))
+    groupValues = levels(dataGroupValues())
+    groupNames = sprintf("%s %s", input$groupCol, groupValues)
+    
+    checkboxGroupInput(
+      "analysisGroups",
+      "Which groups do you want to include in analysis?",
+      choiceNames = groupNames,
+      choiceValues = groupValues,
+      selected = groupValues
+    )
+  })
+  outputOptions(output, 'analysisGroupsUI', suspendWhenHidden=FALSE)
+  
   ############################################################
   # Set up step enabled / disabled state and next buttons
   ############################################################
@@ -490,6 +510,10 @@ shinyServer(function(input, output, session) {
         
         analysisData = inputData()
         analysisData[[input$dateCol]] = dataTime()
+        
+        if (checkNeed(input$analysisGroups)) {
+          analysisData %<>% filter_at(input$groupCol, function(group) group %in% input$analysisGroups)
+        }
   
         params = list(
           post_period_start=dataPostStart(),
