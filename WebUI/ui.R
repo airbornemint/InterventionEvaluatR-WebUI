@@ -146,16 +146,7 @@ md_page(
                             textOutput("analysisStatus")
                         )
                     ), tags$hr(),
-                    md_stepper_vertical(
-                        id="results",
-                        selected="univariate",
-                        md_stepper_step(
-                            title="Univariate regression",
-                            value="univariate",
-                            uiOutput("resultsUnivariate"),
-                            enabled=TRUE
-                        )
-                    )
+                    uiOutput("resultsUI")
                 )
             )
         )

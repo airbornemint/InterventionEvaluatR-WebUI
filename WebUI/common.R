@@ -53,12 +53,6 @@ dateColumns = function(data) {
     compact() 
 }
 
-# Turn of spinner if value is non-null
-unspin = function(session, spinner, value) {
-  md_update_spinner(session, spinner, hidden=!is.null(value))
-  value
-}
-
 # True if expr is valid according to the same criteria as shiny::need
 checkNeed = function(expr) {
   is.null(need(expr, FALSE))

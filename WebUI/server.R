@@ -15,6 +15,7 @@ library(uuid)
 library(dplyr)
 library(ggplot2)
 
+source("analysis.R")
 source("common.R")
 source("worker.R")
 source("results.R")
