@@ -17,13 +17,19 @@ app.analyze = function(params) {
 }
 
 # Create plots and organize them by analysis group
-app.plot = function(params, results) {
-  groups = sprintf("%s %s", params$group_name, results$groups)
-  setNames(llply(seq_along(results$univariate), function(idx) {
+app.plot = function(params, groups, results) {
+  if (is.null(groups)) {
+    groups=results$groups
+  }
+  groupNames = sprintf("%s %s", params$group_name, groups)
+  setNames(llply(seq_along(groups), function(group) {
     list(
       univariate=ggplotly(
-        evaluatr.univariate.plot(results$univariate[[idx]])
+        evaluatr.univariate.plot(results$univariate[[group]])
       )
     )
-  }), groups)
+  }), groupNames)
 }
+
+# This is the version number for the "download results" rds file. Change if making incompatible changes.
+CURRENT_SAVE_VERSION = 1

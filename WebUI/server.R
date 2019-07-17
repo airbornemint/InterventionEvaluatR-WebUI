@@ -108,6 +108,11 @@ shinyServer(function(input, output, session) {
     userInput()$results
   })
   
+  inputParams = reactive({
+    validate(need(userInput(), FALSE))
+    userInput()$params
+  })
+
   dataDateColumns = reactive({
     dateColumns(inputData())
   })
@@ -243,6 +248,55 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'showPreviewPlot', suspendWhenHidden=FALSE)
   
   ############################################################
+  # Precomputed results
+  ############################################################
+  
+  analysisParams = reactive({
+    validate(need(dataTime(), FALSE))
+    validate(need(dataPostStart(), FALSE))
+    validate(need(dataEvalStart(), FALSE))
+    validate(need(input$groupCol, FALSE))
+    validate(need(input$dateCol, FALSE))
+    validate(need(input$outcomeCol, FALSE))
+    validate(need(input$denomCol, FALSE))
+    # Detect whether we are using monthly or quarterly observations by looking at the average interval between observations
+    obsPerYear = 365 / as.numeric(diff(range(dataTime()))) * length(unique(dataTime()))
+    obsPerYear = ifelse(obsPerYear > 8, 12, 4)
+    
+    list(
+      country="Placeholder",
+      post_period_start=dataPostStart(),
+      eval_period_start=dataEvalStart(),
+      eval_period_end=max(dataTime()),
+      n_seasons=obsPerYear,
+      year_def="cal_year",
+      group_name=input$groupCol,
+      date_name=input$dateCol,
+      outcome_name=input$outcomeCol,
+      denom_name=input$denomCol
+    )    
+  })
+  
+  precomputedResults = reactive({
+    # Precomputed results are only valid if inputParams match current analysis params and if groups previously analyzed include all groups currently selected
+    validate(need(inputResults(), FALSE))
+    validate(need(inputParams(), FALSE))
+    validate(need(analysisParams(), FALSE))
+
+    missingGroups = setdiff(input$analysisGroups, inputResults()$groups)
+    
+    paramsAgree = analysisParams() %>% as.data.frame() %>% 
+      rbind(inputParams() %>% as.data.frame()) %>%
+      summarize_all(function(col) length(unique(col)) == 1) %>%
+      as.logical() %>%
+      all()
+
+    if (paramsAgree && length(missingGroups) == 0) {
+      inputResults()
+    }
+  })
+  
+  ############################################################
   # Set up reactive input controls
   ############################################################
   
@@ -343,6 +397,15 @@ shinyServer(function(input, output, session) {
     )
   })
   outputOptions(output, 'analysisGroupsUI', suspendWhenHidden=FALSE)
+  
+  output$analyzeButtonUI = renderUI({
+    if (checkNeed(precomputedResults())) {
+      nextButton("analyze", "analyzeSpinner", title="Show Results")
+    } else {
+      nextButton("analyze", "analyzeSpinner", title="Analyze")
+    }
+  })
+  outputOptions(output, 'analyzeButtonUI', suspendWhenHidden=FALSE)
   
   ############################################################
   # Set up step enabled / disabled state and next buttons
@@ -474,7 +537,9 @@ shinyServer(function(input, output, session) {
       sprintf("InterventionEvaluatR Analysis %s.rds", Sys.Date())
     },
     content = function(file) {
+      # Note: save all data even if only a subset of groups was analyzed, so that we can come back later and analyze other groups
       saveRDS(list(
+        version = CURRENT_SAVE_VERSION,
         input = inputData(),
         params = analysisParams(),
         results = analysisResults()
@@ -495,8 +560,7 @@ shinyServer(function(input, output, session) {
   
   analysisStatus = reactiveVal(ANALYSIS_READY)
   analysisResults = reactiveVal(NULL)
-  analysisParams = reactiveVal(NULL)
-  
+
   output$analysisStatus = renderText({
     analysisStatus()
   }) 
@@ -512,28 +576,17 @@ shinyServer(function(input, output, session) {
       } else {
         analysisStatus(ANALYSIS_RUNNING)
         
-        # Detect whether we are using monthly or quarterly observations by looking at the average interval between observations
-        obsPerYear = 365 / as.numeric(diff(range(dataTime()))) * length(unique(dataTime()))
-        obsPerYear = ifelse(obsPerYear > 8, 12, 4)
-        
         analysisData = inputData()
         analysisData[[input$dateCol]] = dataTime()
         
         if (checkNeed(input$analysisGroups)) {
           analysisData %<>% filter_at(input$groupCol, function(group) group %in% input$analysisGroups)
+          groups = input$analysisGroups
+        } else {
+          groups = NULL
         }
   
-        params = list(
-          post_period_start=dataPostStart(),
-          eval_period_start=dataEvalStart(),
-          eval_period_end=max(dataTime()),
-          n_seasons=obsPerYear,
-          year_def="cal_year",
-          group_name=input$groupCol,
-          date_name=input$dateCol,
-          outcome_name=input$outcomeCol,
-          denom_name=input$denomCol
-        )
+        params = analysisParams()
         
         print("Analysis setup:")
         print(params)
@@ -541,21 +594,20 @@ shinyServer(function(input, output, session) {
         params = c(
           params,
           list(
-            country="Placeholder",
             data=analysisData
           )
         )
+        if (checkNeed(precomputedResults())) {
+          precomputedResults = precomputedResults()
+        } else {
+          precomputedResults = NULL
+        }
         
-        analysisParams(params)
-        
-        premadeResults = inputResults()
-  
         future({
           withLogErrors({
-            # If the user uploaded precomputed results, use them
-            # TODO: only do this if params are unchanged
-            if (checkNeed(premadeResults)) {
-              premadeResults
+            # If the user uploaded precomputed results, and their current analysis settings are compatible with them, use them
+            if (checkNeed(precomputedResults)) {
+              precomputedResults
             } 
             # Otherwise set up the computation worker and run the analysis
             else {
@@ -578,8 +630,8 @@ shinyServer(function(input, output, session) {
           print("Analysis done")
           analysisStatus(ANALYSIS_DONE)
           analysisResults(results)
-
-          plots = app.plot(params, results)
+          
+          plots = app.plot(params, groups, results)
           
           output$resultsUI = renderUI({
             # One stepper step for each analysis group
@@ -629,7 +681,7 @@ shinyServer(function(input, output, session) {
           print(error$message)
           showNotification(error$message)
         })
-  
+
         # By constructing a future but returning a NULL, shiny server will continue updating the UI while the future is being computed, which allows us to give progress updates
         NULL
       }

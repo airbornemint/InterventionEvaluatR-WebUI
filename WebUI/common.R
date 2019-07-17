@@ -55,5 +55,25 @@ dateColumns = function(data) {
 
 # True if expr is valid according to the same criteria as shiny::need
 checkNeed = function(expr) {
-  is.null(need(expr, FALSE))
+  tryCatch(
+    is.null(need(expr, FALSE)), 
+    error=function(e) if (!inherits(e, "shiny.silent.error")) {
+      stop(e)
+    } else {
+      FALSE
+    }
+  )
 }
+
+nextButton = function(buttonId, spinnerId, title="Next") {
+  div(
+    class="button-next",
+    md_button(
+      buttonId,
+      span(class="title", title), 
+      md_button_spinner(spinnerId), 
+      style="primary", disabled=TRUE
+    )
+  )
+}
+

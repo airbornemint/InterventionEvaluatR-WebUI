@@ -17,18 +17,6 @@ import::from(shinyjs, useShinyjs, hidden)
 source("common.R")
 source("mdbootstrap.R")
 
-nextButton = function(buttonId, spinnerId, title="Next") {
-    div(
-        class="button-next",
-        md_button(
-            buttonId,
-            span(class="title", title), 
-            md_button_spinner(spinnerId), 
-            style="primary", disabled=TRUE
-        )
-    )
-}
-
 md_page(
     id="page",
     useShinyjs(),
@@ -143,7 +131,7 @@ md_page(
                                 )
                             ),
                             uiOutput("analysisGroupsUI"),
-                            nextButton("analyze", "analyzeSpinner", title="Analyze"),
+                            uiOutput("analyzeButtonUI"),
                             textOutput("analysisStatus")
                         )
                     ), tags$hr(),
