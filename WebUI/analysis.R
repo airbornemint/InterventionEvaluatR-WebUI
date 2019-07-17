@@ -17,8 +17,8 @@ app.analyze = function(params) {
 }
 
 # Create plots and organize them by analysis group
-app.plot = function(results) {
-  groups = results$groups
+app.plot = function(params, results) {
+  groups = sprintf("%s %s", params$group_name, results$groups)
   setNames(llply(seq_along(results$univariate), function(idx) {
     list(
       univariate=ggplotly(

@@ -579,14 +579,14 @@ shinyServer(function(input, output, session) {
           analysisStatus(ANALYSIS_DONE)
           analysisResults(results)
 
-          plots = app.plot(results)
+          plots = app.plot(params, results)
           
           output$resultsUI = renderUI({
             # One stepper step for each analysis group
             steps = llply(seq_along(plots), function(idx) {
               groupName = names(plots)[idx]
               md_stepper_step(
-                title=sprintf("Group %s", groupName),
+                title=groupName,
                 value=sprintf("result-group-%s", idx),
                 enabled=TRUE,
                 md_carousel(
