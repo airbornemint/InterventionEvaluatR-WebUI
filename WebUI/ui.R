@@ -127,7 +127,8 @@ md_page(
                                 "analysisTypes",
                                 "Which types of analysis do you want to perform?",
                                 c(
-                                    "Univariate Poisson regression"="univariate"
+                                    "Univariate Poisson regression"="univariate",
+                                    "Synthetic control impact analysis"="impact"
                                 )
                             ),
                             uiOutput("analysisGroupsUI"),

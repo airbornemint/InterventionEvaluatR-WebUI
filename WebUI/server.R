@@ -603,6 +603,8 @@ shinyServer(function(input, output, session) {
           precomputedResults = NULL
         }
         
+        analysisTypes = input$analysisTypes
+        
         future({
           withLogErrors({
             # If the user uploaded precomputed results, and their current analysis settings are compatible with them, use them
@@ -621,7 +623,7 @@ shinyServer(function(input, output, session) {
               
               future({
                 withLogErrors({
-                  app.analyze(params)
+                  app.analyze(params, analysisTypes)
                 })
               }) %>% value()
             }

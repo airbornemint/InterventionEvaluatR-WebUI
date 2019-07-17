@@ -1,13 +1,20 @@
 import::from(plyr, llply)
 
 # Run the relevant pieces of evaluatr analysis
-app.analyze = function(params) {
+app.analyze = function(params, types) {
   analysis = do.call(
     evaluatr.init,
     params
   )
-  evaluatr.univariate(analysis)
-  # Only keep what we need so we aren't shipping large amounts of unused data between worker and UI
+  
+  if ('univariate' %in% types) {
+    evaluatr.univariate(analysis)
+  }
+  if ('impact' %in% types) {
+    evaluatr.impact(analysis)
+  }
+
+    # Only keep what we need so we aren't shipping large amounts of unused data between worker and UI
   c(
     analysis$results,
     list(
