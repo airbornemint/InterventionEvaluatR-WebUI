@@ -82,9 +82,17 @@ shinyServer(function(input, output, session) {
     updateSelectInput(session, "stockDataset", selected="")
     upload = input$userDataset[1,]
     # We accept rds and csv input. Try rds first.
-    userInput(c(
-      readRDS(upload$datapath),
-      name=upload$name)
+    tryCatch(
+      userInput(c(
+        readRDS(upload$datapath),
+        name=upload$name)
+      ),
+      error = function(e) {
+        userInput(list(
+          input=read.csv(upload$datapath),
+          name=upload$name
+        ))
+      }
     )
   })
   
