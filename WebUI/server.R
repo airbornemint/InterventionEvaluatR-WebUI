@@ -646,8 +646,14 @@ shinyServer(function(input, output, session) {
                 md_carousel(
                   sprintf("carousel-results-group-%s", idx), 
                   list(
-                    plotlyOutput(sprintf("results.group%d.univariate", idx), width="800px"),
-                    plotlyOutput(sprintf("results.group%d.univariate2", idx), width="800px")
+                    list(
+                      item=plotlyOutput(sprintf("results.group%d.univariate", idx), width="800px"),
+                      caption="Univariate analysis"
+                    ),
+                    list(
+                      item=plotlyOutput(sprintf("results.group%d.univariate2", idx), width="800px"),
+                      caption="More univariate analysis"
+                    )
                   )
                 )
               )

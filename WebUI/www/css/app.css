@@ -124,6 +124,28 @@ ul.stepper li a .summary {
   margin-bottom: 2rem;
 }
 
+.file-input .input-group label.input-group-btn {
+  width: 100%;
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+}
+
+.file-input .input-group label.input-group-btn .btn-file {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+#results > li > div.step-body .carousel-caption {
+  color: black;
+  top: 10px;
+  font-weight: 600;
+}
+
+#results > li > div.step-body .carousel-item .view > .d-block {
+  padding-top: 40px;
+}
+
 @media print {
   nav.navbar,
   ul.stepper > li::after,

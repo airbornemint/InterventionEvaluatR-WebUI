@@ -108,39 +108,59 @@ md_update_spinner = function(session, spinner, hidden=NULL, visible=NULL) {
   session$sendCustomMessage("md_update_spinner", list(spinner=spinner, hidden=hidden, visible=visible) %>% compact())
 }
 
-md_carousel = function(id, slides) {
+md_carousel = function(id, items) {
   div(
     id=id,
     class="carousel slide",
+    "data-interval"="false",
     tags$ol(
       class="carousel-indicators",
-      tagList(llply(seq_along(slides), function(idx) {
-        item = tags$li(
+      tagList(llply(seq_along(items), function(idx) {
+        content = tags$li(
           class="primary-color",
           "data-target"=sprintf("#%s", id),
           "data-slide-to"=idx-1
         )
         if (idx == 1) {
-          item %<>% tagAppendAttributes(class="active")
+          content %<>% tagAppendAttributes(class="active")
         }
-        item
+        content
       }))
     ),
     div(
       class="carousel-inner",
       role="listbox",
-      tagList(llply(seq_along(slides), function(idx) {
-        item = div(
-          class="carousel-item",
-          div(
-            class="d-block w-100",
-            slides[[idx]]
-          )
-        )
-        if (idx == 1) {
-          item %<>% tagAppendAttributes(class="active")
+      tagList(llply(seq_along(items), function(idx) {
+        item = items[[idx]]
+        if (class(item) != "list") {
+          item = list(caption="", "item"=item)
         }
-        item
+
+        content = div(
+          class="d-block w-100",
+          item$item
+        )
+
+        if (checkNeed(item$caption)) {
+          content = div(
+            class="view",
+            content,
+            div(
+              class="carousel-caption",
+              p(item$caption)
+            )
+          )
+        }
+        
+        content = div(
+          class="carousel-item",
+          content
+        )
+
+        if (idx == 1) {
+          content %<>% tagAppendAttributes(class="active")
+        }
+        content
       }))
     ),
     tags$a(
