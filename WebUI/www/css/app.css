@@ -113,3 +113,61 @@ ul.stepper li a .label {
 ul.stepper li a .summary {
   text-align: right;
 }
+
+.file-input input.form-control {
+  display: none;
+}
+
+.carousel-item .plotly {
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 2rem;
+}
+
+@media print {
+  nav.navbar,
+  ul.stepper > li::after,
+  #steps > li > .step-body, #steps > li > a span.circle, #steps > li#analysis,
+  #results > li#save,
+  ol.carousel-indicators, a.carousel-control-prev, a.carousel-control-next {
+    display: none;
+  }
+  
+  .fixed-top {
+    position: static;
+  }
+  
+  .main-content, .row, ul.stepper, ul.stepper > li {
+    display: block;
+  }
+
+  ul.stepper > li > a {
+    text-decoration: none;
+    padding: .5rem;
+  }
+  
+  #results > li > div.step-body {
+    display: block;
+  }
+  
+  #results > li > div.step-body .step-content .carousel-item {
+    display: block;
+    float: none;
+  }
+  
+  ul.stepper > li > a {
+    page-break-after: avoid;
+    break-after: avoid-page;
+  }
+  
+  ul.stepper > li > div.step-body, ul.stepper > li > div.step-body .step-content {
+    page-break-before: avoid;
+    break-before: avoid-page;
+  }
+  
+  .carousel-item {
+    page-break-inside: avoid;
+    break-inside: avoid-page;
+  }
+}
+

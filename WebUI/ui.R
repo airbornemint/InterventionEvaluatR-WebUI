@@ -17,18 +17,6 @@ import::from(shinyjs, useShinyjs, hidden)
 source("common.R")
 source("mdbootstrap.R")
 
-nextButton = function(buttonId, spinnerId, title="Next") {
-    div(
-        class="button-next",
-        md_button(
-            buttonId,
-            span(class="title", title), 
-            md_button_spinner(spinnerId), 
-            style="primary", disabled=TRUE
-        )
-    )
-}
-
 md_page(
     id="page",
     useShinyjs(),
@@ -74,10 +62,13 @@ md_page(
                         md_stepper_step(
                             title="Load Data",
                             value="load",
-                            fileInput(
-                                inputId = "userDataset",
-                                label = "Load your data:",
-                                buttonLabel = "Choose a file…"
+                            div(
+                                class="file-input",
+                                fileInput(
+                                    inputId = "userDataset",
+                                    label = "Load your data:",
+                                    buttonLabel = "Choose a file"
+                                )
                             ),
                             selectInput(
                                 inputId = "stockDataset",
@@ -139,11 +130,12 @@ md_page(
                                     "Univariate Poisson regression"="univariate"
                                 )
                             ),
-                            nextButton("analyze", "analyzeSpinner", title="Analyze"),
-                            textOutput("analysisStatus"),
-                            tableOutput("analysisResults")
+                            uiOutput("analysisGroupsUI"),
+                            uiOutput("analyzeButtonUI"),
+                            textOutput("analysisStatus")
                         )
-                    )
+                    ), tags$hr(),
+                    uiOutput("resultsUI")
                 )
             )
         )

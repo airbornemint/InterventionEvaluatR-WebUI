@@ -1162,7 +1162,7 @@
 .rgba-stylish-strong {
   background-color: rgba(62, 69, 81, 0.7); }
 
-.primary-color, ul.stepper li.active a .circle, ul.stepper li.completed a .circle {
+.primary-color, ul.stepper > li.active > a .circle, ul.stepper > li.completed > a .circle {
   background-color: #4285f4 !important; }
 
 .primary-color-dark {
@@ -1198,7 +1198,7 @@
 .warning-color-dark {
   background-color: #ff8800 !important; }
 
-.danger-color, ul.stepper li.warning a .circle {
+.danger-color, ul.stepper > li.warning > a .circle {
   background-color: #ff3547 !important; }
 
 .danger-color-dark {
@@ -8601,10 +8601,10 @@ ul.stepper {
   margin: 1em -1.5rem;
   padding: 0 1.5rem;
   padding: 1.5rem; }
-  ul.stepper li a {
+  ul.stepper > li > a {
     padding: 1.5rem;
     text-align: center; }
-    ul.stepper li a .circle {
+    ul.stepper > li > a .circle {
       display: inline-block;
       color: #fff;
       -webkit-border-radius: 50%;
@@ -8615,10 +8615,10 @@ ul.stepper {
       text-align: center;
       line-height: 1.7rem;
       margin-right: 0.5rem; }
-    ul.stepper li a .label {
+    ul.stepper > li > a .label {
       display: inline-block;
       color: rgba(0, 0, 0, 0.38); }
-  ul.stepper li.active a .label, ul.stepper li.completed a .label {
+  ul.stepper > li.active > a .label, ul.stepper > li.completed > a .label {
     font-weight: 600;
     color: rgba(0, 0, 0, 0.87); }
 
@@ -8726,7 +8726,7 @@ ul.stepper {
   -webkit-justify-content: space-between;
   -ms-flex-pack: justify;
   justify-content: space-between; }
-  .stepper-vertical li {
+  .stepper-vertical > li {
     display: -webkit-box;
     display: -webkit-flex;
     display: -ms-flexbox;
@@ -8745,7 +8745,7 @@ ul.stepper {
     -ms-flex-direction: column;
     flex-direction: column;
     position: relative; }
-    .stepper-vertical li a {
+    .stepper-vertical > li > a {
       -webkit-align-self: flex-start;
       -ms-flex-item-align: start;
       align-self: flex-start;
@@ -8754,12 +8754,12 @@ ul.stepper {
       display: -ms-flexbox;
       display: flex;
       position: relative; }
-      .stepper-vertical li a .circle {
+      .stepper-vertical > li > a .circle {
         -webkit-box-ordinal-group: 2;
         -webkit-order: 1;
         -ms-flex-order: 1;
         order: 1; }
-      .stepper-vertical li a .label {
+      .stepper-vertical > li > a .label {
         -webkit-box-orient: vertical;
         -webkit-box-direction: normal;
         -webkit-flex-flow: column nowrap;
@@ -8770,16 +8770,16 @@ ul.stepper {
         -ms-flex-order: 2;
         order: 2;
         margin-top: 0.2rem; }
-    .stepper-vertical li.completed a .label {
+    .stepper-vertical > li.completed > a .label {
       font-weight: 500; }
-    .stepper-vertical li .step-content {
+    .stepper-vertical > li .step-content {
       display: block;
       margin-top: 0;
       margin-left: 3.13rem;
       padding: 0.94rem; }
-      .stepper-vertical li .step-content p {
+      .stepper-vertical > li .step-content p {
         font-size: 0.88rem; }
-    .stepper-vertical li:not(:last-child):after {
+    .stepper-vertical > li:not(:last-child):after {
       content: "";
       position: absolute;
       width: 1px;

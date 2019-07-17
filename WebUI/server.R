@@ -15,15 +15,22 @@ library(uuid)
 library(dplyr)
 library(ggplot2)
 
+source("analysis.R")
+source("common.R")
+source("worker.R")
+source("results.R")
+
 import::from(magrittr, "%>%")
+import::from(shiny, validate)
 import::from(plotly, ggplotly, renderPlotly)
 import::from(shinyBS, updateButton)
 import::from(shinyjs, hidden, toggleElement, toggleClass)
 import::from(shinyWidgets, airMonthpickerInput)
-import::from(lubridate, "%m+%", "%m-%", days)
+import::from(lubridate, "%m+%", "%m-%", days, "day<-")
 import::from(ggplot2, geom_blank, geom_errorbarh)
-
-source("common.R")
+import::from(InterventionEvaluatR, evaluatr.init, evaluatr.univariate, evaluatr.univariate.plot)
+import::from(plyr, llply)
+import::from(dplyr, filter)
 
 plan(multisession)
 
@@ -52,19 +59,60 @@ shinyServer(function(input, output, session) {
   # Set up reactive data inputs
   ############################################################
   
-  inputData = reactive({
-    if (!is.null(input$stockDataset) && input$stockDataset != "") {
-      md_update_spinner(session, "loadSpinner", visible=TRUE)
-    }
-    switch(
-      input$stockDataset,
-      pnas_brazil = {
-        data("pnas_brazil", package="InterventionEvaluatR")
-        pnas_brazil
+  userInput = reactiveVal() # Will be list(name, input, params, results)
+  
+  observe({
+    validate(need(input$stockDataset, FALSE))
+    md_update_spinner(session, "loadSpinner", visible=TRUE)
+    userInput(list(
+      name=names(which(stockDatasets == input$stockDataset)),
+      input=switch(
+        input$stockDataset,
+        pnas_brazil = {
+          data("pnas_brazil", package="InterventionEvaluatR")
+          pnas_brazil
+        }
+      )
+    ))
+  })
+  
+  observe({
+    validate(need(input$userDataset, FALSE))
+    md_update_spinner(session, "loadSpinner", visible=TRUE)
+    updateSelectInput(session, "stockDataset", selected="")
+    upload = input$userDataset[1,]
+    # We accept rds and csv input. Try rds first.
+    tryCatch(
+      userInput(c(
+        readRDS(upload$datapath),
+        name=upload$name)
+      ),
+      error = function(e) {
+        userInput(list(
+          input=read.csv(upload$datapath),
+          name=upload$name
+        ))
       }
     )
   })
   
+  # This is the input data for analysis  
+  inputData = reactive({
+    validate(need(userInput(), FALSE))
+    userInput()$input
+  })
+  
+  # Pre-computed results, if uploaded by the user
+  inputResults = reactive({
+    validate(need(userInput(), FALSE))
+    userInput()$results
+  })
+  
+  inputParams = reactive({
+    validate(need(userInput(), FALSE))
+    userInput()$params
+  })
+
   dataDateColumns = reactive({
     dateColumns(inputData())
   })
@@ -96,14 +144,23 @@ shinyServer(function(input, output, session) {
     length(unique(dataTime())) < length(dataTime())
   })
   
+  dataGroupValues = reactive({
+    validate(need(dataGroup, FALSE))
+    factor(dataGroup())
+  })
+
   dataPostStart = reactive({
     validate(need(input$postStart, FALSE))
-    as.Date(input$postStart, "%Y-%m-%d")
+    date = as.Date(input$postStart, "%Y-%m-%d")
+    day(date) = 1
+    date
   })
 
   dataEvalStart = reactive({
     validate(need(input$postDuration, FALSE))
-    dataPostStart() %m+% months(as.numeric(input$postDuration))
+    date = dataPostStart() %m+% months(as.numeric(input$postDuration))
+    day(date) = 1
+    date
   })
   
   ############################################################
@@ -138,7 +195,16 @@ shinyServer(function(input, output, session) {
           geom_point(data=df, aes(x=xmax, y=y))
         )
       } else {
-        geom_blank()
+        df = data.frame(
+          xmin=min(dataTime()),
+          xmax=max(dataTime()),
+          y=max(dataOutcome()) * 1.1
+        )
+        c(
+          geom_segment(data=df, aes(x=xmin, xend=xmax, y=y, yend=y), color="#FFFFFF00"),
+          geom_point(data=df, aes(x=xmin, y=y), color="#FFFFFF00"),
+          geom_point(data=df, aes(x=xmax, y=y), color="#FFFFFF00")
+        )
       }
     }
 
@@ -180,6 +246,55 @@ shinyServer(function(input, output, session) {
     show
   })
   outputOptions(output, 'showPreviewPlot', suspendWhenHidden=FALSE)
+  
+  ############################################################
+  # Precomputed results
+  ############################################################
+  
+  analysisParams = reactive({
+    validate(need(dataTime(), FALSE))
+    validate(need(dataPostStart(), FALSE))
+    validate(need(dataEvalStart(), FALSE))
+    validate(need(input$groupCol, FALSE))
+    validate(need(input$dateCol, FALSE))
+    validate(need(input$outcomeCol, FALSE))
+    validate(need(input$denomCol, FALSE))
+    # Detect whether we are using monthly or quarterly observations by looking at the average interval between observations
+    obsPerYear = 365 / as.numeric(diff(range(dataTime()))) * length(unique(dataTime()))
+    obsPerYear = ifelse(obsPerYear > 8, 12, 4)
+    
+    list(
+      country="Placeholder",
+      post_period_start=dataPostStart(),
+      eval_period_start=dataEvalStart(),
+      eval_period_end=max(dataTime()),
+      n_seasons=obsPerYear,
+      year_def="cal_year",
+      group_name=input$groupCol,
+      date_name=input$dateCol,
+      outcome_name=input$outcomeCol,
+      denom_name=input$denomCol
+    )    
+  })
+  
+  precomputedResults = reactive({
+    # Precomputed results are only valid if inputParams match current analysis params and if groups previously analyzed include all groups currently selected
+    validate(need(inputResults(), FALSE))
+    validate(need(inputParams(), FALSE))
+    validate(need(analysisParams(), FALSE))
+
+    missingGroups = setdiff(input$analysisGroups, inputResults()$groups)
+    
+    paramsAgree = analysisParams() %>% as.data.frame() %>% 
+      rbind(inputParams() %>% as.data.frame()) %>%
+      summarize_all(function(col) length(unique(col)) == 1) %>%
+      as.logical() %>%
+      all()
+
+    if (paramsAgree && length(missingGroups) == 0) {
+      inputResults()
+    }
+  })
   
   ############################################################
   # Set up reactive input controls
@@ -247,25 +362,50 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'groupColUI', suspendWhenHidden=FALSE)
   
   output$introDateUI <- renderUI({
-    oldValue = {
-      if (checkNeed(input$postStart)) {
-        # There is a weird bug in airMonthpickerInput with minView=months that causes the date picker to set itself to one month earlier than value if value is the first day of the month.
-        dataPostStart() %m+% days(15)
-      }
-    }
+    # oldValue = {
+    #   if (checkNeed(input$postStart)) {
+    #     # There is a weird bug in airMonthpickerInput with minView=months that causes the date picker to set itself to one month earlier than value if value is the first day of the month.
+    #     # dataPostStart() %m+% days(15)
+    #   }
+    # }
     airMonthpickerInput(
       inputId = "postStart",
       label = "When was the vaccine introduced?",
       view="months",
       minView="months",
       minDate=min(dataTime()),
-      maxDate=max(dataTime()) %m-% months(as.numeric(input$postDuration)),
+      maxDate=max(dataTime()),
+#      maxDate=max(dataTime()) %m-% months(as.numeric(input$postDuration)),
       addon="none",
-      autoClose=TRUE,
-      value=oldValue 
+      autoClose=TRUE#,
+      #value=oldValue 
     )
   })
   outputOptions(output, 'introDateUI', suspendWhenHidden=FALSE)
+  
+  output$analysisGroupsUI = renderUI({
+    validate(need(dataGroupValues(), FALSE), need(input$groupCol, FALSE))
+    groupValues = levels(dataGroupValues())
+    groupNames = sprintf("%s %s", input$groupCol, groupValues)
+    
+    checkboxGroupInput(
+      "analysisGroups",
+      "Which groups do you want to include in analysis?",
+      choiceNames = groupNames,
+      choiceValues = groupValues,
+      selected = groupValues
+    )
+  })
+  outputOptions(output, 'analysisGroupsUI', suspendWhenHidden=FALSE)
+  
+  output$analyzeButtonUI = renderUI({
+    if (checkNeed(precomputedResults())) {
+      nextButton("analyze", "analyzeSpinner", title="Show Results")
+    } else {
+      nextButton("analyze", "analyzeSpinner", title="Analyze")
+    }
+  })
+  outputOptions(output, 'analyzeButtonUI', suspendWhenHidden=FALSE)
   
   ############################################################
   # Set up step enabled / disabled state and next buttons
@@ -332,11 +472,9 @@ shinyServer(function(input, output, session) {
   ############################################################
   
   output$loadSummary = reactive({
-    validate(need(input$stockDataset, FALSE))
-    unspin(
-      session, "loadSpinner", 
-      names(which(stockDatasets == input$stockDataset))
-    )
+    validate(need(userInput()$name, FALSE))
+    md_update_spinner(session, "loadSpinner", hidden=checkNeed(userInput()$name))
+    userInput()$name
   })
   
   output$dateSummary = renderUI({
@@ -372,7 +510,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$periodsSummary = renderUI({
-    validate(need(dataPostStart(), FALSE), need(dataEvalStart, FALSE))
+    validate(need(dataPostStart(), FALSE), need(dataEvalStart(), FALSE))
     span(
       span(
         class="pre-period",
@@ -391,6 +529,26 @@ shinyServer(function(input, output, session) {
   })
   
   ############################################################
+  # Download analysis results
+  ############################################################
+  
+  output$download <- downloadHandler(
+    filename = function() {
+      sprintf("InterventionEvaluatR Analysis %s.rds", Sys.Date())
+    },
+    content = function(file) {
+      # Note: save all data even if only a subset of groups was analyzed, so that we can come back later and analyze other groups
+      saveRDS(list(
+        version = CURRENT_SAVE_VERSION,
+        input = inputData(),
+        params = analysisParams(),
+        results = analysisResults()
+      ), file)
+    }
+  )
+  outputOptions(output, 'download', suspendWhenHidden=FALSE)
+  
+  ############################################################
   # Analysis
   ############################################################
   
@@ -400,173 +558,136 @@ shinyServer(function(input, output, session) {
   ANALYSIS_FAILED = "failed"
   ANALYSIS_CANCELED = "canceled"
   
-  analysisStatus <- reactiveVal(ANALYSIS_READY)
-  analysisResults <- reactiveVal(NULL)
-  
+  analysisStatus = reactiveVal(ANALYSIS_READY)
+  analysisResults = reactiveVal(NULL)
+
   output$analysisStatus = renderText({
     analysisStatus()
   }) 
   outputOptions(output, 'analysisStatus', suspendWhenHidden=FALSE)
   
-  output$analysisResults = renderTable({
-    analysisResults()
-  })
-  outputOptions(output, 'analysisResults', suspendWhenHidden=FALSE)
-  
+  output$resultsUnivariate = reactive({})
+  outputOptions(output, 'resultsUnivariate', suspendWhenHidden=FALSE)
+
   observeEvent(input$analyze, {
-    if (analysisStatus() == ANALYSIS_RUNNING) {
-      return()
-    } else {
-      analysisStatus(ANALYSIS_RUNNING)
-      
-      result = future({
-        worker = setupWorker()
-        oplan = workerPlan(worker)
-        on.exit(plan(oplan), add=TRUE)
+    withLogErrors({
+      if (analysisStatus() == ANALYSIS_RUNNING) {
+        return()
+      } else {
+        analysisStatus(ANALYSIS_RUNNING)
         
-        on.exit({
-          dismissWorker(worker)
-        }, add=TRUE)
+        analysisData = inputData()
+        analysisData[[input$dateCol]] = dataTime()
+        
+        if (checkNeed(input$analysisGroups)) {
+          analysisData %<>% filter_at(input$groupCol, function(group) group %in% input$analysisGroups)
+          groups = input$analysisGroups
+        } else {
+          groups = NULL
+        }
+  
+        params = analysisParams()
+        
+        print("Analysis setup:")
+        print(params)
+        
+        params = c(
+          params,
+          list(
+            data=analysisData
+          )
+        )
+        if (checkNeed(precomputedResults())) {
+          precomputedResults = precomputedResults()
+        } else {
+          precomputedResults = NULL
+        }
         
         future({
-          k = names(Sys.getenv())
-          v = Sys.getenv(k)
-          data.frame(name=k, value=v)
-        }) %>% value()
-      }) %...>% (function(result) {
-        analysisStatus(ANALYSIS_DONE)
-        analysisResults(result)
-      }) %...!% (function(error) {
-        analysisStatus(ANALYSIS_FAILED)
-        analysisResults(NULL)
-        print(error$message)
-        showNotification(error$message)
-      })
-      
-      NULL
-    }
+          withLogErrors({
+            # If the user uploaded precomputed results, and their current analysis settings are compatible with them, use them
+            if (checkNeed(precomputedResults)) {
+              precomputedResults
+            } 
+            # Otherwise set up the computation worker and run the analysis
+            else {
+              worker = setupWorker()
+              oplan = workerPlan(worker)
+              on.exit(plan(oplan), add=TRUE)
+              
+              on.exit({
+                dismissWorker(worker)
+              }, add=TRUE)
+              
+              future({
+                withLogErrors({
+                  app.analyze(params)
+                })
+              }) %>% value()
+            }
+          })
+        }) %...>% (function(results) {
+          print("Analysis done")
+          analysisStatus(ANALYSIS_DONE)
+          analysisResults(results)
+          
+          plots = app.plot(params, groups, results)
+          
+          output$resultsUI = renderUI({
+            # One stepper step for each analysis group
+            steps = llply(seq_along(plots), function(idx) {
+              groupName = names(plots)[idx]
+              md_stepper_step(
+                title=groupName,
+                value=sprintf("result-group-%s", idx),
+                enabled=TRUE,
+                md_carousel(
+                  sprintf("carousel-results-group-%s", idx), 
+                  list(
+                    plotlyOutput(sprintf("results.group%d.univariate", idx), width="800px"),
+                    plotlyOutput(sprintf("results.group%d.univariate2", idx), width="800px")
+                  )
+                )
+              )
+            })
+            
+            do.call(md_stepper_vertical, c(
+              steps, list(
+                md_stepper_step(
+                  title="Save results",
+                  value="save",
+                  downloadButton('download', "Download analysis results"),
+                  enabled=TRUE
+                ),
+                id="results",
+                selected="univariate"
+              )
+            ))
+          })
+          
+          for(idx in seq_along(plots)) {
+            output[[sprintf("results.group%d.univariate", idx)]] = renderPlotly({
+              plots[[idx]]$univariate %>% plotlyOptions()
+            })
+            outputOptions(output, sprintf("results.group%d.univariate", idx), suspendWhenHidden=FALSE)
+            output[[sprintf("results.group%d.univariate2", idx)]] = renderPlotly({
+              plots[[idx]]$univariate %>% plotlyOptions()
+            })
+            outputOptions(output, sprintf("results.group%d.univariate2", idx), suspendWhenHidden=FALSE)
+          }
+        }) %...!% (function(error) {
+          print("Analysis failed")
+          analysisStatus(ANALYSIS_FAILED)
+          print(error$message)
+          showNotification(error$message)
+        })
+
+        # By constructing a future but returning a NULL, shiny server will continue updating the UI while the future is being computed, which allows us to give progress updates
+        NULL
+      }
+    })
   })
 })
-
-# Set up a worker for evaluation of InterventionEvaluatR
-setupWorker = function() {
-  if(getOption("ie.worker.local", TRUE)) {
-    setupLocalWorker()
-  } else {
-    setupRemoteWorker()
-  }
-}
-
-setupLocalWorker = function() {
-  list(local=TRUE)
-}
-
-setupRemoteWorker = function() {
-  # TODO generate ephemeral SSH key
-  
-  machineName = sprintf("iew-%s", UUIDgenerate())
-  
-  # First provision a DigitalOcean droplet
-  analysisStatusDetail("Provisioning DO droplet")
-  check.call(
-    c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "create",
-      "--driver", "digitalocean",
-      "--digitalocean-access-token", getOption("ie.digitalocean.access.token"),
-      "--digitalocean-size", getOption("ie.worker.digitalocean-droplet-size", "s-2vcpu-4gb"),
-      "--digitalocean-userdata", "worker/cloud-config.yml",
-      machineName
-    )
-  )
-  
-  workerConfig = check.output(
-    c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "config",
-      machineName
-    )
-  )
-  
-  workerIp = check.output(
-    c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "ip",
-      machineName
-    )
-  ) %>% trimws()
-  
-  # Copy the worker image
-  analysisStatusDetail("Copying worker image")
-  check.call(
-    c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "scp",
-      "worker/image.tar.xz", sprintf("%s:/tmp/worker-image.tar.xz", machineName)
-    )
-  )
-  
-  # Load the worker image into docker
-  analysisStatusDetail("Unarchiving worker image")
-  check.call(
-    c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "ssh",
-      machineName, "/usr/bin/unxz", "/tmp/worker-image.tar.xz"
-    )
-  )
-  
-  analysisStatusDetail("Loading worker image")
-  check.call(
-    c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "ssh",
-      machineName, sprintf("%s/docker", getOption("ie.worker.docker.bindir")), "load", "--input", "/tmp/worker-image.tar"
-    )
-  )
-  
-  # Make a single-worker cluster 
-  workerCluster = makeClusterPSOCK(
-    workers=workerIp,
-    rshopts=c("-i", "worker/id_rsa", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"),
-    user="evaluatr",
-    rscript="/usr/local/bin/Rscript-docker"
-  )
-  
-  list(local=FALSE, cluster=workerCluster, machineName=machineName)
-}
-
-# Generate a future evaluation plan for our worker
-workerPlan = function(worker) {
-  if(worker$local) {
-    localWorkerPlan(worker)
-  } else {
-    remoteWorkerPlan(worker)
-  }
-}
-
-localWorkerPlan = function(worker) {
-  plan()
-}
-
-remoteWorkerPlan = function(worker) {
-  plan(cluster, workers=worker$cluster)
-}
-
-# Shut down the worker
-dismissWorker = function(worker) {
-  if(worker$local) {
-    dismissLocalWorker(worker)
-  } else {
-    dismissRemoteWorker(worker)
-  }
-}
-
-dismissLocalWorker = function(worker) {
-}
-
-dismissRemoteWorker = function(worker) {
-  check.call(
-    c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "rm", "--force",
-      worker$machineName
-    )
-  )
-}
 
 analysisStatusDetail <- function(text) {
   print(text)
