@@ -28,7 +28,6 @@ import::from(shinyjs, hidden, toggleElement, toggleClass)
 import::from(shinyWidgets, airMonthpickerInput)
 import::from(lubridate, "%m+%", "%m-%", days, "day<-")
 import::from(ggplot2, geom_blank, geom_errorbarh)
-import::from(InterventionEvaluatR, evaluatr.init, evaluatr.univariate, evaluatr.univariate.plot)
 import::from(plyr, llply)
 import::from(dplyr, filter)
 
@@ -76,6 +75,24 @@ shinyServer(function(input, output, session) {
     ))
   })
   
+  userInputRDS = function(upload) {
+    input = c(
+      readRDS(upload$datapath),
+      name=upload$name
+    )
+    if (!is.numeric(input$version) || input$version < SAVE_VERSION_COMPATIBLE) {
+      input$results = NULL
+    }
+    input
+  }
+  
+  userInputCSV = function(upload) {
+    list(
+      input=read.csv(upload$datapath),
+      name=upload$name
+    )
+  }
+  
   observe({
     validate(need(input$userDataset, FALSE))
     md_update_spinner(session, "loadSpinner", visible=TRUE)
@@ -83,15 +100,9 @@ shinyServer(function(input, output, session) {
     upload = input$userDataset[1,]
     # We accept rds and csv input. Try rds first.
     tryCatch(
-      userInput(c(
-        readRDS(upload$datapath),
-        name=upload$name)
-      ),
+      userInput(userInputRDS(upload)),
       error = function(e) {
-        userInput(list(
-          input=read.csv(upload$datapath),
-          name=upload$name
-        ))
+        userInput(userInputCSV(upload))
       }
     )
   })
@@ -539,7 +550,7 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       # Note: save all data even if only a subset of groups was analyzed, so that we can come back later and analyze other groups
       saveRDS(list(
-        version = CURRENT_SAVE_VERSION,
+        version = SAVE_VERSION_CURRENT,
         input = inputData(),
         params = analysisParams(),
         results = analysisResults()
@@ -629,60 +640,72 @@ shinyServer(function(input, output, session) {
             }
           })
         }) %...>% (function(results) {
-          print("Analysis done")
-          analysisStatus(ANALYSIS_DONE)
-          analysisResults(results)
+          plotId = function(type, idx) {
+            sprintf("%sResults%d", type, idx)
+          }
           
-          plots = app.plot(params, groups, results)
-          
-          output$resultsUI = renderUI({
-            # One stepper step for each analysis group
-            steps = llply(seq_along(plots), function(idx) {
-              groupName = names(plots)[idx]
-              md_stepper_step(
-                title=groupName,
-                value=sprintf("result-group-%s", idx),
-                enabled=TRUE,
-                md_carousel(
-                  sprintf("carousel-results-group-%s", idx), 
-                  list(
+          withLogErrors({
+            print("Analysis done")
+            analysisStatus(ANALYSIS_DONE)
+            analysisResults(results)
+            
+            output$resultsUI = renderUI({
+              # One stepper step for each analysis group
+              steps = llply(seq_along(results$plots), function(idx) {
+                groupName = names(results$plots)[idx]
+                md_stepper_step(
+                  title=groupName,
+                  value=sprintf("result-group-%s", idx),
+                  enabled=TRUE,
+                  md_carousel(
+                    sprintf("carousel-results-group-%s", idx), 
                     list(
-                      item=plotlyOutput(sprintf("results.group%d.univariate", idx), width="800px"),
-                      caption="Univariate analysis"
-                    ),
-                    list(
-                      item=plotlyOutput(sprintf("results.group%d.univariate2", idx), width="800px"),
-                      caption="More univariate analysis"
+                      list(
+                        item=plotlyOutput(plotId("univariate", idx), width="800px"),
+                        caption="Univariate analysis"
+                      ),
+                      list(
+                        item=plotlyOutput(plotId("prevented", idx), width="800px"),
+                        caption="Cases prevented"
+                      )
                     )
                   )
                 )
-              )
+              })
+              
+              do.call(md_stepper_vertical, c(
+                steps, list(
+                  md_stepper_step(
+                    title="Save results",
+                    value="save",
+                    downloadButton('download', "Download analysis results"),
+                    enabled=TRUE
+                  ),
+                  id="results",
+                  selected="univariate"
+                )
+              ))
             })
             
-            do.call(md_stepper_vertical, c(
-              steps, list(
-                md_stepper_step(
-                  title="Save results",
-                  value="save",
-                  downloadButton('download', "Download analysis results"),
-                  enabled=TRUE
-                ),
-                id="results",
-                selected="univariate"
+            for(idx in seq_along(results$plots)) {
+              # Need separate environment because renderPlotly is lazy and therefore without a separate environment all plots end up being evaluated in the last group
+              plotlyEnv = env(
+                plots=results$plots[[idx]]
               )
-            ))
+
+              output[[plotId("univariate", idx)]] = renderPlotly(
+                plots$univariate %>% plotlyOptions(),
+                env=plotlyEnv
+              )
+              outputOptions(output, plotId("univariate", idx), suspendWhenHidden=FALSE)
+              
+              output[[plotId("prevented", idx)]] = renderPlotly(
+                plots$prevented %>% plotlyOptions(),
+                env=plotlyEnv
+              )
+              outputOptions(output, plotId("prevented", idx), suspendWhenHidden=FALSE)
+            }
           })
-          
-          for(idx in seq_along(plots)) {
-            output[[sprintf("results.group%d.univariate", idx)]] = renderPlotly({
-              plots[[idx]]$univariate %>% plotlyOptions()
-            })
-            outputOptions(output, sprintf("results.group%d.univariate", idx), suspendWhenHidden=FALSE)
-            output[[sprintf("results.group%d.univariate2", idx)]] = renderPlotly({
-              plots[[idx]]$univariate %>% plotlyOptions()
-            })
-            outputOptions(output, sprintf("results.group%d.univariate2", idx), suspendWhenHidden=FALSE)
-          }
         }) %...!% (function(error) {
           print("Analysis failed")
           analysisStatus(ANALYSIS_FAILED)

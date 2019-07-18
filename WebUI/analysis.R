@@ -1,42 +1,66 @@
 import::from(plyr, llply)
+import::from(InterventionEvaluatR, evaluatr.init, evaluatr.univariate, evaluatr.univariate.plot, evaluatr.plots)
 
 # Run the relevant pieces of evaluatr analysis
-app.analyze = function(params, types) {
+app.analyze = function(params, analysisTypes) {
   analysis = do.call(
     evaluatr.init,
     params
   )
   
-  if ('univariate' %in% types) {
-    evaluatr.univariate(analysis)
-  }
-  if ('impact' %in% types) {
-    evaluatr.impact(analysis)
+  # Only keep what we need so we aren't shipping large amounts of never-to-be-used data between worker and UI
+  if ('univariate' %in% analysisTypes) {
+    univariateResults = evaluatr.univariate(analysis)
   }
 
-    # Only keep what we need so we aren't shipping large amounts of unused data between worker and UI
-  c(
-    analysis$results,
-    list(
-      groups=analysis$groups
-    )
-  )
-}
-
-# Create plots and organize them by analysis group
-app.plot = function(params, groups, results) {
-  if (is.null(groups)) {
-    groups=results$groups
+  if ('impact' %in% analysisTypes) {
+    impactResults = evaluatr.impact(analysis)
   }
-  groupNames = sprintf("%s %s", params$group_name, groups)
-  setNames(llply(seq_along(groups), function(group) {
-    list(
-      univariate=ggplotly(
-        evaluatr.univariate.plot(results$univariate[[group]])
-      )
-    )
-  }), groupNames)
+
+  groupNames = sprintf("%s %s", analysis$group_name, analysis$groups)
+  
+  if ('univariate' %in% analysisTypes) {
+    univariatePlots = setNames(llply(seq_along(analysis$groups), function(idx) 
+      evaluatr.univariate.plot(analysis$results$univariate[[idx]])
+    ), groupNames)
+  } else {
+    univariatePlots = NULL
+  }
+  
+  if ('impact' %in% analysisTypes) {
+    impactPlots = evaluatr.plots(analysis)
+  } else {
+    impactPlots = NULL
+  }
+  
+  list(
+    plots=setNames(llply(seq_along(analysis$groups), function(group) {
+      if (!is.null(univariatePlots)) {
+        univariate = list(
+          univariate=ggplotly(
+            univariatePlots[[group]]
+          )
+        )
+      } else {
+        univariate = list()
+      }
+      
+      if (!is.null(impactPlots)) {
+        impact = list(
+          prevented=ggplotly(
+            impactPlots$groups[[group]]$cumsum_prevented
+          )
+        )
+      } else {
+        impact = list()
+      }
+      
+      c(univariate, impact)
+    }), groupNames)
+  )  
 }
 
 # This is the version number for the "download results" rds file. Change if making incompatible changes.
-CURRENT_SAVE_VERSION = 1
+SAVE_VERSION_CURRENT = 3
+# This is oldest version number for the "download results" rds file that we still accept. Change when dropping support for loading older files.
+SAVE_VERSION_COMPATIBLE = 3
