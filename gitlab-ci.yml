@@ -12,12 +12,13 @@ variables:
   stage: build
   tags:
     - dind
-  image: docker:dind
+  image: docker:18-dind
   services:
     - docker:dind
   variables:
     DOCKER_DRIVER: overlay2
     DOCKER_HOST: tcp://docker:2375/
+    DOCKER_TLS_CERTDIR: ""
   script:
     - docker login -u gitlab-ci-token -p "${CI_BUILD_TOKEN}" "${CI_REGISTRY_IMAGE}"
     - docker build --rm=false -t "${DOCKER_IMAGE_WEBUI}" WebUI
