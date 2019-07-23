@@ -1,5 +1,6 @@
 import::from(plyr, llply)
-import::from(InterventionEvaluatR, evaluatr.init, evaluatr.univariate, evaluatr.univariate.plot, evaluatr.plots)
+import::from(InterventionEvaluatR, evaluatr.init, evaluatr.univariate, evaluatr.univariate.plot, evaluatr.plots, evaluatr.prune)
+import::from(ggplot2, ggtitle)
 
 # Run the relevant pieces of evaluatr analysis
 app.analyze = function(params, analysisTypes) {
@@ -8,7 +9,6 @@ app.analyze = function(params, analysisTypes) {
     params
   )
   
-  # Only keep what we need so we aren't shipping large amounts of never-to-be-used data between worker and UI
   if ('univariate' %in% analysisTypes) {
     univariateResults = evaluatr.univariate(analysis)
   }
@@ -17,6 +17,12 @@ app.analyze = function(params, analysisTypes) {
     impactResults = evaluatr.impact(analysis)
   }
 
+  # Only keep what we need so we aren't shipping large amounts of never-to-be-used data between worker and UI
+  evaluatr.prune(analysis)
+}
+
+app.plot = function(analysis, analysisTypes) {
+  saveRDS(list(analysis=analysis, analysisTypes=analysisTypes), "/tmp/app.plot.rds")
   groupNames = sprintf("%s %s", analysis$group_name, analysis$groups)
   
   if ('univariate' %in% analysisTypes) {
@@ -48,7 +54,7 @@ app.analyze = function(params, analysisTypes) {
       if (!is.null(impactPlots)) {
         impact = list(
           prevented=ggplotly(
-            impactPlots$groups[[group]]$cumsum_prevented
+            impactPlots$groups[[group]]$cumsum_prevented + ggtitle(NULL)
           )
         )
       } else {
@@ -61,6 +67,6 @@ app.analyze = function(params, analysisTypes) {
 }
 
 # This is the version number for the "download results" rds file. Change if making incompatible changes.
-SAVE_VERSION_CURRENT = 3
+SAVE_VERSION_CURRENT = 4
 # This is oldest version number for the "download results" rds file that we still accept. Change when dropping support for loading older files.
-SAVE_VERSION_COMPATIBLE = 3
+SAVE_VERSION_COMPATIBLE = 4

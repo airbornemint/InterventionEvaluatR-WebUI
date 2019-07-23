@@ -639,15 +639,16 @@ shinyServer(function(input, output, session) {
               }) %>% value()
             }
           })
-        }) %...>% (function(results) {
+        }) %...>% (function(analysis) {
           plotId = function(type, idx) {
             sprintf("%sResults%d", type, idx)
           }
           
           withLogErrors({
+            results = app.plot(analysis, analysisTypes)
             print("Analysis done")
             analysisStatus(ANALYSIS_DONE)
-            analysisResults(results)
+            analysisResults(analysis)
             
             output$resultsUI = renderUI({
               # One stepper step for each analysis group
