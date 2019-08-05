@@ -40,6 +40,9 @@ app.plot = function(analysis, analysisTypes) {
   }
   
   list(
+    best=llply(seq_along(analysis$groups), function(group) {
+      analysis$results$impact$best$variant[[group]]
+    }),
     plots=setNames(llply(seq_along(analysis$groups), function(group) {
       if (!is.null(univariatePlots)) {
         univariate = list(
@@ -53,6 +56,12 @@ app.plot = function(analysis, analysisTypes) {
       
       if (!is.null(impactPlots)) {
         impact = list(
+          tsMonthly=ggplotly(
+            impactPlots$groups[[group]]$pred_best + ggtitle(NULL)
+          ),
+          tsYearly=ggplotly(
+            impactPlots$groups[[group]]$pred_best_agg + ggtitle(NULL)
+          ),
           prevented=ggplotly(
             impactPlots$groups[[group]]$cumsum_prevented + ggtitle(NULL)
           )
@@ -67,6 +76,6 @@ app.plot = function(analysis, analysisTypes) {
 }
 
 # This is the version number for the "download results" rds file. Change if making incompatible changes.
-SAVE_VERSION_CURRENT = 4
+SAVE_VERSION_CURRENT = 5
 # This is oldest version number for the "download results" rds file that we still accept. Change when dropping support for loading older files.
-SAVE_VERSION_COMPATIBLE = 4
+SAVE_VERSION_COMPATIBLE = 5
