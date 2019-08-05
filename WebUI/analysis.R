@@ -1,6 +1,7 @@
 import::from(plyr, llply)
 import::from(InterventionEvaluatR, evaluatr.init, evaluatr.univariate, evaluatr.univariate.plot, evaluatr.plots, evaluatr.prune)
 import::from(ggplot2, ggtitle)
+import::from(tibble, rownames_to_column)
 
 # Run the relevant pieces of evaluatr analysis
 app.analyze = function(params, analysisTypes) {
@@ -21,7 +22,7 @@ app.analyze = function(params, analysisTypes) {
   evaluatr.prune(analysis)
 }
 
-app.plot = function(analysis, analysisTypes) {
+app.vis = function(analysis, analysisTypes) {
   saveRDS(list(analysis=analysis, analysisTypes=analysisTypes), "/tmp/app.plot.rds")
   groupNames = sprintf("%s %s", analysis$group_name, analysis$groups)
   
@@ -39,10 +40,7 @@ app.plot = function(analysis, analysisTypes) {
     impactPlots = NULL
   }
   
-  list(
-    best=llply(seq_along(analysis$groups), function(group) {
-      analysis$results$impact$best$variant[[group]]
-    }),
+  vis = list(
     plots=setNames(llply(seq_along(analysis$groups), function(group) {
       if (!is.null(univariatePlots)) {
         univariate = list(
@@ -72,7 +70,35 @@ app.plot = function(analysis, analysisTypes) {
       
       c(univariate, impact)
     }), groupNames)
-  )  
+  )
+  
+  if ("impact" %in% analysisTypes) {
+    normRR = function(rr, variant) {
+      rr %>% data.frame() %>% setNames(c("lcl", "median", "ucl")) %>% rownames_to_column("group") %>% mutate(variant=variant)
+    }
+    
+    rr = rbind(
+      analysis$results$impact$best$rr_mean %>% normRR(variant="best"), 
+      analysis$results$impact$full$rr_mean %>% normRR(variant="full"),
+      analysis$results$impact$time$rr_mean %>% normRR(variant="time"), 
+      analysis$results$impact$time_no_offset$rr_mean %>% normRR(variant="time_no_offset"), 
+      analysis$results$impact$its$rr_end %>% normRR(variant="its"), 
+      analysis$results$impact$pca$rr_mean %>% normRR(variant="pca")
+    )
+
+    vis = c(vis, list(
+      rateRatios=llply(seq_along(analysis$groups), function(idx) {
+        rr %>% filter(group==analysis$groups[[idx]]) %>% mutate(
+          rr=sprintf("%.2f (%.2f - %.2f)", median, lcl, ucl),
+          variant.name=variant
+        ) %>%
+        select(variant.name, rr)
+      }),
+      best=llply(seq_along(analysis$groups), function(group) {
+        analysis$results$impact$best$variant[[group]]
+      })
+    ))
+  }
 }
 
 # This is the version number for the "download results" rds file. Change if making incompatible changes.

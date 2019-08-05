@@ -124,6 +124,16 @@ ul.stepper li a .summary {
   margin-bottom: 2rem;
 }
 
+.carousel-item .table-wrap {
+  margin-bottom: 2rem;
+  height: 400px;
+}
+
+.carousel-item table {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .file-input .input-group label.input-group-btn {
   width: 100%;
   padding-left: 0.375rem;
@@ -143,7 +153,7 @@ ul.stepper li a .summary {
 }
 
 #results > li > div.step-body .carousel-item .view > .d-block {
-  padding-top: 40px;
+  padding-top: 60px;
 }
 
 @media print {

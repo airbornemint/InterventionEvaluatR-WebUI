@@ -30,6 +30,7 @@ import::from(lubridate, "%m+%", "%m-%", days, "day<-")
 import::from(ggplot2, geom_blank, geom_errorbarh)
 import::from(plyr, llply)
 import::from(dplyr, filter)
+import::from(htmltools, tagAppendAttributes)
 
 plan(multisession)
 
@@ -640,12 +641,12 @@ shinyServer(function(input, output, session) {
             }
           })
         }) %...>% (function(analysis) {
-          plotId = function(type, idx) {
+          visId = function(type, idx) {
             sprintf("%sResults%d", type, idx)
           }
           
           withLogErrors({
-            results = app.plot(analysis, analysisTypes)
+            results = app.vis(analysis, analysisTypes)
             print("Analysis done")
             analysisStatus(ANALYSIS_DONE)
             analysisResults(analysis)
@@ -656,34 +657,38 @@ shinyServer(function(input, output, session) {
                 groupName = names(results$plots)[idx]
                 
                 if ("univariate" %in% analysisTypes) {
-                  univariatePlots = list(
+                  univariateVis = list(
                     list(
-                      item=plotlyOutput(plotId("univariate", idx), width="800px"),
+                      item=plotlyOutput(visId("univariate", idx), width="800px"),
                       caption="Univariate analysis"
                     )
                   )
                 } else {
-                  univariatePlots = list()
+                  univariateVis = list()
                 }
                 
                 if ("impact" %in% analysisTypes) {
                   best = list(full="synthetic controls", pca="STL with PCA")[[results$best[[idx]]]]
-                  impactPlots = list(
+                  impactVis = list(
                     list(
-                      item=plotlyOutput(plotId("tsMonthly", idx), width="800px"),
+                      item=tableOutput(visId("rateRatios", idx)) %>% tagAppendAttributes(class="table-wrap"),
+                      caption="Rate ratios"
+                    ),
+                    list(
+                      item=plotlyOutput(visId("tsMonthly", idx), width="800px"),
                       caption=sprintf("Observed vs. predicted, monthly best estimate (%s)", best)
                     ),
                     list(
-                      item=plotlyOutput(plotId("tsYearly", idx), width="800px"),
+                      item=plotlyOutput(visId("tsYearly", idx), width="800px"),
                       caption=sprintf("Observed vs. predicted, yearly best estimate (%s)", best)
                     ),
                     list(
-                      item=plotlyOutput(plotId("prevented", idx), width="800px"),
+                      item=plotlyOutput(visId("prevented", idx), width="800px"),
                       caption="Cases prevented"
                     )
                   )
                 } else {
-                  impactPlots = list()
+                  impactVis = list()
                 }
                 
                 md_stepper_step(
@@ -692,7 +697,7 @@ shinyServer(function(input, output, session) {
                   enabled=TRUE,
                   md_carousel(
                     sprintf("carousel-results-group-%s", idx), 
-                    c(univariatePlots, impactPlots)
+                    c(univariateVis, impactVis)
                   )
                 )
               })
@@ -718,31 +723,36 @@ shinyServer(function(input, output, session) {
               )
 
               if ("univariate" %in% analysisTypes) {
-                output[[plotId("univariate", idx)]] = renderPlotly(
+                output[[visId("univariate", idx)]] = renderPlotly(
                   plots$univariate %>% plotlyOptions(),
                   env=plotlyEnv
                 )
-                outputOptions(output, plotId("univariate", idx), suspendWhenHidden=FALSE)
+                outputOptions(output, visId("univariate", idx), suspendWhenHidden=FALSE)
               }
               
               if ("impact" %in% analysisTypes) {
-                output[[plotId("tsMonthly", idx)]] = renderPlotly(
+                output[[visId("rateRatios", idx)]] = renderTable(
+                  results$rateRatios[[idx]]
+                )
+                outputOptions(output, visId("rateRatios", idx), suspendWhenHidden=FALSE)
+                
+                output[[visId("tsMonthly", idx)]] = renderPlotly(
                   plots$tsMonthly %>% plotlyOptions(),
                   env=plotlyEnv
                 )
-                outputOptions(output, plotId("tsMonthly", idx), suspendWhenHidden=FALSE)
+                outputOptions(output, visId("tsMonthly", idx), suspendWhenHidden=FALSE)
   
-                output[[plotId("tsYearly", idx)]] = renderPlotly(
+                output[[visId("tsYearly", idx)]] = renderPlotly(
                   plots$tsYearly %>% plotlyOptions(),
                   env=plotlyEnv
                 )
-                outputOptions(output, plotId("tsYearly", idx), suspendWhenHidden=FALSE)
+                outputOptions(output, visId("tsYearly", idx), suspendWhenHidden=FALSE)
                 
-                output[[plotId("prevented", idx)]] = renderPlotly(
+                output[[visId("prevented", idx)]] = renderPlotly(
                   plots$prevented %>% plotlyOptions(),
                   env=plotlyEnv
                 )
-                outputOptions(output, plotId("prevented", idx), suspendWhenHidden=FALSE)
+                outputOptions(output, visId("prevented", idx), suspendWhenHidden=FALSE)
               }
             }
           })
