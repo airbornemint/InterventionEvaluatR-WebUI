@@ -405,17 +405,20 @@ shinyServer(function(input, output, session) {
       "Which groups do you want to include in analysis?",
       choiceNames = groupNames,
       choiceValues = groupValues,
-      selected = groupValues
+      selected = groupValues,
+      inline = TRUE
     )
   })
   outputOptions(output, 'analysisGroupsUI', suspendWhenHidden=FALSE)
   
   output$analyzeButtonUI = renderUI({
-    if (checkNeed(precomputedResults())) {
-      nextButton("analyze", "analyzeSpinner", title="Show Results")
-    } else {
-      nextButton("analyze", "analyzeSpinner", title="Analyze")
-    }
+    with(list(analyzeAvailable=checkNeed(input$analysisTypes)), {
+      if (checkNeed(precomputedResults())) {
+        nextButton("analyze", "analyzeSpinner", title="Show Results", disabled=!analyzeAvailable)
+      } else {
+        nextButton("analyze", "analyzeSpinner", title="Analyze", disabled=!analyzeAvailable)
+      }
+    })
   })
   outputOptions(output, 'analyzeButtonUI', suspendWhenHidden=FALSE)
   
@@ -725,7 +728,10 @@ shinyServer(function(input, output, session) {
                       class="navbar results-heading justify-content-center primary-color",
                       p(class="h3 p-2 m-0 text-white", "Save results")
                     ),
-                    downloadButton('download', "Download analysis results")
+                    div(
+                      class="col-12 mb-3 mt-3",
+                      downloadButton('download', "Download analysis results")
+                    )
                   )
                 )
               ))

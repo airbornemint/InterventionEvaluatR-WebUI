@@ -179,6 +179,16 @@ ul.stepper li a .summary {
   right: 1rem;
 }
 
+.shiny-options-group {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.shiny-options-group > .checkbox-inline, .shiny-options-group > .checkbox {
+  white-space: nowrap;
+  margin: .5rem;
+}
+
 @media print {
   nav.navbar,
   ul.stepper > li::after,

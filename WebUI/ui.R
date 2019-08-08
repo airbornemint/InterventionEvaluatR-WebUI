@@ -148,14 +148,16 @@ md_page(
                             md_stepper_step(
                                 title="Analyze",
                                 value="analysis",
-                                checkboxGroupInput(
+                                hidden(checkboxGroupInput(
                                     "analysisTypes",
                                     "Which types of analysis do you want to perform?",
                                     c(
                                         "Univariate Poisson regression"="univariate",
                                         "Synthetic control impact analysis"="impact"
-                                    )
-                                ),
+                                    ),
+                                    selected = c("univariate", "impact"),
+                                    inline=TRUE
+                                )),
                                 uiOutput("analysisGroupsUI"),
                                 uiOutput("analyzeButtonUI")
                             )

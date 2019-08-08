@@ -65,14 +65,14 @@ checkNeed = function(expr) {
   )
 }
 
-nextButton = function(buttonId, spinnerId, title="Next") {
+nextButton = function(buttonId, spinnerId, title="Next", disabled=TRUE) {
   div(
     class="button-next",
     md_button(
       buttonId,
       span(class="title", title), 
       md_button_spinner(spinnerId), 
-      style="primary", disabled=TRUE
+      style="primary", disabled=disabled
     )
   )
 }
