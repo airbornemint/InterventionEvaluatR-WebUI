@@ -23,7 +23,7 @@ app.analyze = function(params, analysisTypes) {
 }
 
 app.vis = function(analysis, analysisTypes) {
-  saveRDS(list(analysis=analysis, analysisTypes=analysisTypes), "/tmp/app.plot.rds")
+  # saveRDS(list(analysis=analysis, analysisTypes=analysisTypes), "/tmp/app.plot.rds")
   groupNames = sprintf("%s %s", analysis$group_name, analysis$groups)
   
   if ('univariate' %in% analysisTypes) {
@@ -44,9 +44,7 @@ app.vis = function(analysis, analysisTypes) {
     plots=setNames(llply(seq_along(analysis$groups), function(group) {
       if (!is.null(univariatePlots)) {
         univariate = list(
-          univariate=ggplotly(
-            univariatePlots[[group]]
-          )
+          univariate=univariatePlots[[group]]
         )
       } else {
         univariate = list()
@@ -54,15 +52,9 @@ app.vis = function(analysis, analysisTypes) {
       
       if (!is.null(impactPlots)) {
         impact = list(
-          tsMonthly=ggplotly(
-            impactPlots$groups[[group]]$pred_best + ggtitle(NULL)
-          ),
-          tsYearly=ggplotly(
-            impactPlots$groups[[group]]$pred_best_agg + ggtitle(NULL)
-          ),
-          prevented=ggplotly(
-            impactPlots$groups[[group]]$cumsum_prevented + ggtitle(NULL)
-          )
+          tsMonthly=impactPlots$groups[[group]]$pred_best + ggtitle(NULL),
+          tsYearly=impactPlots$groups[[group]]$pred_best_agg + ggtitle(NULL),
+          prevented=impactPlots$groups[[group]]$cumsum_prevented + ggtitle(NULL)
         )
       } else {
         impact = list()

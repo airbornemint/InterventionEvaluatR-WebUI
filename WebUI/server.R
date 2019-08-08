@@ -31,6 +31,7 @@ import::from(ggplot2, geom_blank, geom_errorbarh)
 import::from(plyr, llply)
 import::from(dplyr, filter)
 import::from(htmltools, tagAppendAttributes)
+import::from(uuid, UUIDgenerate)
 
 plan(multisession)
 
@@ -374,12 +375,6 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'groupColUI', suspendWhenHidden=FALSE)
   
   output$introDateUI <- renderUI({
-    # oldValue = {
-    #   if (checkNeed(input$postStart)) {
-    #     # There is a weird bug in airMonthpickerInput with minView=months that causes the date picker to set itself to one month earlier than value if value is the first day of the month.
-    #     # dataPostStart() %m+% days(15)
-    #   }
-    # }
     airMonthpickerInput(
       inputId = "postStart",
       label = "When was the vaccine introduced?",
@@ -387,7 +382,6 @@ shinyServer(function(input, output, session) {
       minView="months",
       minDate=min(dataTime()),
       maxDate=max(dataTime()),
-#      maxDate=max(dataTime()) %m-% months(as.numeric(input$postDuration)),
       addon="none",
       autoClose=TRUE#,
       #value=oldValue 
@@ -547,21 +541,62 @@ shinyServer(function(input, output, session) {
   # Download analysis results
   ############################################################
   
-  output$download <- downloadHandler(
+  output$downloadResults <- downloadHandler(
     filename = function() {
-      sprintf("InterventionEvaluatR Analysis %s.rds", Sys.Date())
+      sprintf("InterventionEvaluatR Report %s.zip", Sys.Date())
     },
     content = function(file) {
+      # Output files to a temporary directory
+      tempDir = sprintf("%s/%s", tempdir(), UUIDgenerate())
+      oldWD <- getwd()
+      on.exit({
+        setwd(oldWD)
+        # Clean up temporary directory
+        unlink(tempDir, recursive = TRUE, force = TRUE)
+      })
+      dir.create(tempDir, recursive=TRUE)
+      setwd(tempDir)
+
+      # Save data in RDS
       # Note: save all data even if only a subset of groups was analyzed, so that we can come back later and analyze other groups
       saveRDS(list(
         version = SAVE_VERSION_CURRENT,
         input = inputData(),
         params = analysisParams(),
         results = analysisResults()
-      ), file)
+      ), "results.rds")
+
+      # Render each plot to a PDF file
+      results = analysisVis()
+      for (idx in seq_along(results$plots)) {
+        groupName = names(results$plots)[idx]
+        groupFileName = gsub("[^a-zA-Z0-9_.-]", "-", groupName)
+        dir.create(sprintf("plots/%s", groupFileName), recursive=TRUE)
+        ggsave(
+          sprintf("plots/%s/prevented-cases.pdf", groupFileName), 
+          results$plots[[groupName]]$prevented,
+          width = 4, height = 3
+        )
+        ggsave(
+          sprintf("plots/%s/cases-yearly.pdf", groupFileName), 
+          results$plots[[groupName]]$tsYearly,
+          width = 4, height = 3
+        )
+        ggsave(
+          sprintf("plots/%s/cases-monthly.pdf", groupFileName), 
+          results$plots[[groupName]]$tsMonthly,
+          width = 4, height = 3
+        )
+        ggsave(
+          sprintf("plots/%s/covariate-comparison.pdf", groupFileName), 
+          results$plots[[groupName]]$univariate,
+          width = 4, height = 3
+        )
+      }
+      zip(file, ".")
     }
   )
-  outputOptions(output, 'download', suspendWhenHidden=FALSE)
+  outputOptions(output, 'downloadResults', suspendWhenHidden=FALSE)
   
   ############################################################
   # Analysis
@@ -575,7 +610,8 @@ shinyServer(function(input, output, session) {
   
   analysisStatus = reactiveVal(ANALYSIS_READY)
   analysisResults = reactiveVal(NULL)
-
+  analysisVis = reactiveVal(NULL)
+  
   output$analysisStatus = renderText({
     analysisStatus()
   }) 
@@ -669,10 +705,11 @@ shinyServer(function(input, output, session) {
             print("Analysis done")
             analysisStatus(ANALYSIS_DONE)
             analysisResults(analysis)
+            analysisVis(results)
             
             output$resultsUI = renderUI({
               # One stepper step for each analysis group
-              groups = llply(seq_along(results$plots), function(idx) {
+              tagList(llply(seq_along(results$plots), function(idx) {
                 groupName = names(results$plots)[idx]
                 
 # item=tableOutput(visId("rateRatios", idx)) %>% tagAppendAttributes(class="table-wrap"),
@@ -719,22 +756,7 @@ shinyServer(function(input, output, session) {
                     )
                   ) %>% tagAppendAttributes(class="mb-3 mt-3 col-12")
                 )
-              })
-              
-              do.call(tagList, c(
-                groups, list(
-                  tags$section(
-                    div(
-                      class="navbar results-heading justify-content-center primary-color",
-                      p(class="h3 p-2 m-0 text-white", "Save results")
-                    ),
-                    div(
-                      class="col-12 mb-3 mt-3",
-                      downloadButton('download', "Download analysis results")
-                    )
-                  )
-                )
-              ))
+              }))
             })
             
             for(idx in seq_along(results$plots)) {
@@ -745,7 +767,7 @@ shinyServer(function(input, output, session) {
 
               if ("univariate" %in% analysisTypes) {
                 output[[visId("univariate", idx)]] = renderPlotly(
-                  plots$univariate %>% plotlyOptions(),
+                  ggplotly(plots$univariate) %>% plotlyOptions(),
                   env=plotlyEnv
                 )
                 outputOptions(output, visId("univariate", idx), suspendWhenHidden=FALSE)
@@ -758,19 +780,19 @@ shinyServer(function(input, output, session) {
                 outputOptions(output, visId("rateRatios", idx), suspendWhenHidden=FALSE)
                 
                 output[[visId("tsMonthly", idx)]] = renderPlotly(
-                  plots$tsMonthly %>% plotlyOptions(),
+                  ggplotly(plots$tsMonthly) %>% plotlyOptions(),
                   env=plotlyEnv
                 )
                 outputOptions(output, visId("tsMonthly", idx), suspendWhenHidden=FALSE)
   
                 output[[visId("tsYearly", idx)]] = renderPlotly(
-                  plots$tsYearly %>% plotlyOptions(),
+                  ggplotly(plots$tsYearly) %>% plotlyOptions(),
                   env=plotlyEnv
                 )
                 outputOptions(output, visId("tsYearly", idx), suspendWhenHidden=FALSE)
                 
                 output[[visId("prevented", idx)]] = renderPlotly(
-                  plots$prevented %>% plotlyOptions(),
+                  ggplotly(plots$prevented) %>% plotlyOptions(),
                   env=plotlyEnv
                 )
                 outputOptions(output, visId("prevented", idx), suspendWhenHidden=FALSE)
