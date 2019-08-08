@@ -4,6 +4,7 @@ stages:
   
 variables:
   DOCKER_IMAGE_WEBUI: "${CI_REGISTRY_IMAGE}/interventionevaluatr-web-ui-ci:ci-${CI_PIPELINE_IID}"
+  DOCKER_IMAGE_WEBUI_LATEST: "${CI_REGISTRY_IMAGE}/interventionevaluatr-web-ui-ci:ci-latest"
   DOCKER_SAVE_WEBUI: "docker/interventionevaluatr-web-ui-${CI_PIPELINE_IID}.tar.xz"
   APP_WEBUI: "app/interventionevaluatr-web-ui-${CI_PIPELINE_IID}.tar.xz"
   DOCKER_CONTAINER_WEBUI: "interventionevaluatr-web-ui"
@@ -21,8 +22,10 @@ variables:
     DOCKER_TLS_CERTDIR: ""
   script:
     - docker login -u gitlab-ci-token -p "${CI_BUILD_TOKEN}" "${CI_REGISTRY_IMAGE}"
-    - docker build --rm=false -t "${DOCKER_IMAGE_WEBUI}" WebUI
-    - docker push "${DOCKER_IMAGE_WEBUI}"
+    - docker pull "${DOCKER_IMAGE_WEBUI_LATEST}" || true
+    - docker build --rm=false -t "${DOCKER_IMAGE_WEBUI}" -t "${DOCKER_IMAGE_WEBUI_LATEST}" WebUI
+    - docker push "${DOCKER_IMAGE_WEBUI}" 
+    - docker push "${DOCKER_IMAGE_WEBUI_LATEST}"
     - mkdir -p "app"
     - tar -cvzf "${APP_WEBUI}" WebUI
   artifacts:
