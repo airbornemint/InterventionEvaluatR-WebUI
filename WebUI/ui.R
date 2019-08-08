@@ -173,7 +173,6 @@ md_page(
                 class="container",
                 md_row(
                     md_column(
-                        textOutput("analysisStatus"),
                         uiOutput("resultsUI")
                     )
                 )

@@ -582,6 +582,21 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'resultsUnivariate', suspendWhenHidden=FALSE)
 
   observeEvent(input$analyze, {
+    # Loading progress UI
+    output$resultsUI = renderUI({
+      groups = llply(seq_along(input$analysisGroups), function(idx) {
+        groupName = input$analysisGroups[idx]
+        
+        tags$section(
+          div(
+            class="navbar results-heading mb-3 mt-3 justify-content-center primary-color",
+            p(class="h3 p-2 m-0 text-white", sprintf("%s %s", input$groupCol, groupName)),
+            md_spinner(sprintf("spinner-results-group-%s", idx)) %>% tagAppendAttributes(class="text-white")
+          )
+        )
+      })
+    })
+
     withLogErrors({
       session$sendCustomMessage("activate_tab", list(tab="nav-results-tab"))
       if (analysisStatus() == ANALYSIS_RUNNING) {
@@ -657,41 +672,8 @@ shinyServer(function(input, output, session) {
               groups = llply(seq_along(results$plots), function(idx) {
                 groupName = names(results$plots)[idx]
                 
-                if ("univariate" %in% analysisTypes) {
-                  univariateVis = list(
-                    list(
-                      item=plotlyOutput(visId("univariate", idx), width="800px"),
-                      caption="Univariate analysis"
-                    )
-                  )
-                } else {
-                  univariateVis = list()
-                }
-                
-                if ("impact" %in% analysisTypes) {
-                  best = list(full="synthetic controls", pca="STL with PCA")[[results$best[[idx]]]]
-                  impactVis = list(
-                    list(
-                      item=tableOutput(visId("rateRatios", idx)) %>% tagAppendAttributes(class="table-wrap"),
-                      caption="Rate ratios"
-                    ),
-                    list(
-                      item=plotlyOutput(visId("tsMonthly", idx), width="800px"),
-                      caption=sprintf("Observed vs. predicted, monthly best estimate (%s)", best)
-                    ),
-                    list(
-                      item=plotlyOutput(visId("tsYearly", idx), width="800px"),
-                      caption=sprintf("Observed vs. predicted, yearly best estimate (%s)", best)
-                    ),
-                    list(
-                      item=plotlyOutput(visId("prevented", idx), width="800px"),
-                      caption="Cases prevented"
-                    )
-                  )
-                } else {
-                  impactVis = list()
-                }
-                
+# item=tableOutput(visId("rateRatios", idx)) %>% tagAppendAttributes(class="table-wrap"),
+
                 tags$section(
                   div(
                     class="navbar results-heading mt-3 mb-3 justify-content-center primary-color",
@@ -732,7 +714,7 @@ shinyServer(function(input, output, session) {
                         plotlyOutput(visId("univariate", idx), width="800px")
                       )
                     )
-                  ) %>% tagAppendAttributes(class="mb-5 mt-3 col-12")
+                  ) %>% tagAppendAttributes(class="mb-3 mt-3 col-12")
                 )
               })
               
