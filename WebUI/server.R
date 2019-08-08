@@ -694,7 +694,7 @@ shinyServer(function(input, output, session) {
                 
                 tags$section(
                   div(
-                    class="navbar results-heading justify-content-center primary-color-dark",
+                    class="navbar results-heading mt-3 mb-3 justify-content-center primary-color",
                     p(class="h3 p-2 m-0 text-white", groupName)
                   ),
                   md_accordion(
@@ -740,7 +740,7 @@ shinyServer(function(input, output, session) {
                 groups, list(
                   tags$section(
                     div(
-                      class="navbar results-heading justify-content-center primary-color-dark",
+                      class="navbar results-heading justify-content-center primary-color",
                       p(class="h3 p-2 m-0 text-white", "Save results")
                     ),
                     downloadButton('download', "Download analysis results")

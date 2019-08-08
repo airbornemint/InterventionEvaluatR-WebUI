@@ -27,7 +27,7 @@ md_navbar = function(..., title=NULL, class=NULL) {
       href="#"
     ),
     ...,
-    class="navbar navbar-dark primary-color"
+    class="navbar navbar-dark primary-color-dark"
   )
   if (!is.null(class)) {
     result %>% tagAppendAttributes(class=class)
