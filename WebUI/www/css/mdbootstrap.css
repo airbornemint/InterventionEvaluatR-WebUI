@@ -28,3 +28,16 @@ ul.stepper > li > .step-body {
 .spinner.invisible {
   visibility: hidden;
 }
+
+.accordion > .card > .card-header > a > h5 {
+  display: flex;
+  justify-content: space-between;
+}
+
+.accordion > .card > .card-header > a > h5 > svg {
+  fill: #007bff
+}
+
+.accordion > .card > .card-header > a.collapsed > h5 > svg {
+  transform: rotate(180deg)
+}

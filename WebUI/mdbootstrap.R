@@ -20,7 +20,7 @@ md_page = function(...) {
 }
 
 md_navbar = function(..., title=NULL, class=NULL) {
-  tags$nav(
+  result = tags$nav(
     tags$a(
       title,
       class="navbar-brand",
@@ -28,7 +28,11 @@ md_navbar = function(..., title=NULL, class=NULL) {
     ),
     ...,
     class="navbar navbar-dark primary-color"
-  ) %>% tagAppendAttributes(class=class)
+  )
+  if (!is.null(class)) {
+    result %>% tagAppendAttributes(class=class)
+  }
+  result
 }
 
 md_row = function(...) {
@@ -191,5 +195,64 @@ md_carousel = function(id, items) {
         "Next"
       )
     )
+  )
+}
+
+md_accordion_card = function(id, title, content, expanded=FALSE) {
+  list(id=id, title=title, content=content, expanded=expanded)
+}
+
+md_accordion = function(id, ...) {
+  cards = list(...)
+
+  div(
+    class="accordion",
+    id=id,
+    tagList(lapply(seq_along(cards), function(idx) {
+      card = cards[[idx]]
+      buttonId = sprintf("%s-button", card$id)
+      targetId = sprintf("%s-target", card$id)
+      
+      if (card$expanded) {
+        buttonClass = ""
+        ariaExpanded = "true"
+        targetClass = "collapse show"
+      } else {
+        buttonClass = "collapsed"
+        ariaExpanded = "false"
+        targetClass = "collapse"
+      }
+      
+      div(
+        class="card",
+        div(
+          class="card-header",
+          id=buttonId,
+          a(
+            "aria-controls"=targetId,
+            "aria-expanded"=ariaExpanded,
+            class=buttonClass,
+            "data-parent"=sprintf("#%s", id),
+            "data-toggle"="collapse",
+            href=sprintf("#%s", targetId),
+            tags$h5(
+              class="mb-0",
+              card$title,
+              fa("angle-up")
+            )
+          )
+        ),
+        div(
+          id=targetId,
+          class=targetClass,
+          "aria-labelledby"=buttonId,
+          "data-parent"=sprintf("#%s", id),
+          div(
+            class="card-body",
+            card$content
+          )
+        )
+      )
+    }))
   )
 }

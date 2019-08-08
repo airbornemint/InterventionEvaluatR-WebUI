@@ -583,6 +583,7 @@ shinyServer(function(input, output, session) {
 
   observeEvent(input$analyze, {
     withLogErrors({
+      session$sendCustomMessage("activate_tab", list(tab="nav-results-tab"))
       if (analysisStatus() == ANALYSIS_RUNNING) {
         return()
       } else {
@@ -653,7 +654,7 @@ shinyServer(function(input, output, session) {
             
             output$resultsUI = renderUI({
               # One stepper step for each analysis group
-              steps = llply(seq_along(results$plots), function(idx) {
+              groups = llply(seq_along(results$plots), function(idx) {
                 groupName = names(results$plots)[idx]
                 
                 if ("univariate" %in% analysisTypes) {
@@ -691,27 +692,59 @@ shinyServer(function(input, output, session) {
                   impactVis = list()
                 }
                 
-                md_stepper_step(
-                  title=groupName,
-                  value=sprintf("result-group-%s", idx),
-                  enabled=TRUE,
-                  md_carousel(
-                    sprintf("carousel-results-group-%s", idx), 
-                    c(univariateVis, impactVis)
-                  )
+                tags$section(
+                  div(
+                    class="navbar results-heading justify-content-center primary-color-dark",
+                    p(class="h3 p-2 m-0 text-white", groupName)
+                  ),
+                  md_accordion(
+                    id=sprintf("acc-results-group-%s", idx),
+                    md_accordion_card(
+                      visId("prevented", idx),
+                      "Prevented cases",
+                      div(
+                        class="d-flex justify-content-center", 
+                        plotlyOutput(visId("prevented", idx), width="800px")
+                      ),
+                      expanded=TRUE
+                    ),
+                    md_accordion_card(
+                      visId("tsYearly", idx),
+                      "Total cases (yearly)",
+                      div(
+                        class="d-flex justify-content-center", 
+                        plotlyOutput(visId("tsYearly", idx), width="800px")
+                      )
+                    ),
+                    md_accordion_card(
+                      visId("tsMonthly", idx),
+                      "Total cases (monthly)",
+                      div(
+                        class="d-flex justify-content-center", 
+                        plotlyOutput(visId("tsMonthly", idx), width="800px")
+                      )
+                    ),
+                    md_accordion_card(
+                      visId("card-univariate", idx),
+                      "Covariate comparison",
+                      div(
+                        class="d-flex justify-content-center", 
+                        plotlyOutput(visId("univariate", idx), width="800px")
+                      )
+                    )
+                  ) %>% tagAppendAttributes(class="mb-5 mt-3 col-12")
                 )
               })
               
-              do.call(md_stepper_vertical, c(
-                steps, list(
-                  md_stepper_step(
-                    title="Save results",
-                    value="save",
-                    downloadButton('download', "Download analysis results"),
-                    enabled=TRUE
-                  ),
-                  id="results",
-                  selected=NULL
+              do.call(tagList, c(
+                groups, list(
+                  tags$section(
+                    div(
+                      class="navbar results-heading justify-content-center primary-color-dark",
+                      p(class="h3 p-2 m-0 text-white", "Save results")
+                    ),
+                    downloadButton('download', "Download analysis results")
+                  )
                 )
               ))
             })

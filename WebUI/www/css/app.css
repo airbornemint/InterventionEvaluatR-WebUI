@@ -2,8 +2,17 @@
   background: white;
 }
 
+#header .navbar > * {
+  flex: 1 0;
+}
+
 #plot-container {
   display: none;
+  position: -webkit-sticky;
+  position: sticky;
+  top: 3.5rem;
+  z-index: 1020;
+  background: white;
 }
 
 .plot-on #plot-container {
@@ -25,14 +34,12 @@
 
 .main-content {
   display: flex;
+  flex-direction: column;
+  transition: padding-right 0.5s ease;
 }
 
 .main-content, #help-toggle {
   padding-top: 3.5rem; /* 3.5rem for header nav */
-}
-
-.plot-on .main-content, .plot-on #help-toggle {
-  padding-top: calc(4.5rem + 200px); /* 3.5rem for header nav, 1rem + 200px for plot */
 }
 
 .help-on .main-content {
@@ -42,6 +49,10 @@
 .main-content > .container {
   flex: 1;
   align-items: stretch;
+}
+
+#resultsUI .accordion > .card > .card-header button.btn {
+  text-transform: none;
 }
 
 #help-toggle {
@@ -154,6 +165,13 @@ ul.stepper li a .summary {
 
 #results > li > div.step-body .carousel-item .view > .d-block {
   padding-top: 60px;
+}
+
+.results-heading {
+  position: sticky;
+  position: -webkit-sticky;
+  top: 3.5rem;
+  z-index: 1020;
 }
 
 @media print {
