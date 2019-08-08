@@ -20,15 +20,19 @@ md_page = function(...) {
 }
 
 md_navbar = function(..., title=NULL, class=NULL) {
-  tags$nav(
+  result = tags$nav(
     tags$a(
       title,
       class="navbar-brand",
       href="#"
     ),
     ...,
-    class="navbar navbar-dark primary-color"
-  ) %>% tagAppendAttributes(class=class)
+    class="navbar navbar-dark primary-color-dark"
+  )
+  if (!is.null(class)) {
+    result %>% tagAppendAttributes(class=class)
+  }
+  result
 }
 
 md_row = function(...) {
@@ -108,39 +112,59 @@ md_update_spinner = function(session, spinner, hidden=NULL, visible=NULL) {
   session$sendCustomMessage("md_update_spinner", list(spinner=spinner, hidden=hidden, visible=visible) %>% compact())
 }
 
-md_carousel = function(id, slides) {
+md_carousel = function(id, items) {
   div(
     id=id,
     class="carousel slide",
+    "data-interval"="false",
     tags$ol(
       class="carousel-indicators",
-      tagList(llply(seq_along(slides), function(idx) {
-        item = tags$li(
+      tagList(llply(seq_along(items), function(idx) {
+        content = tags$li(
           class="primary-color",
           "data-target"=sprintf("#%s", id),
           "data-slide-to"=idx-1
         )
         if (idx == 1) {
-          item %<>% tagAppendAttributes(class="active")
+          content %<>% tagAppendAttributes(class="active")
         }
-        item
+        content
       }))
     ),
     div(
       class="carousel-inner",
       role="listbox",
-      tagList(llply(seq_along(slides), function(idx) {
-        item = div(
-          class="carousel-item",
-          div(
-            class="d-block w-100",
-            slides[[idx]]
-          )
-        )
-        if (idx == 1) {
-          item %<>% tagAppendAttributes(class="active")
+      tagList(llply(seq_along(items), function(idx) {
+        item = items[[idx]]
+        if (class(item) != "list") {
+          item = list(caption="", "item"=item)
         }
-        item
+
+        content = div(
+          class="d-block w-100",
+          item$item
+        )
+
+        if (checkNeed(item$caption)) {
+          content = div(
+            class="view",
+            content,
+            div(
+              class="carousel-caption",
+              p(item$caption)
+            )
+          )
+        }
+        
+        content = div(
+          class="carousel-item",
+          content
+        )
+
+        if (idx == 1) {
+          content %<>% tagAppendAttributes(class="active")
+        }
+        content
       }))
     ),
     tags$a(
@@ -171,5 +195,64 @@ md_carousel = function(id, slides) {
         "Next"
       )
     )
+  )
+}
+
+md_accordion_card = function(id, title, content, expanded=FALSE) {
+  list(id=id, title=title, content=content, expanded=expanded)
+}
+
+md_accordion = function(id, ...) {
+  cards = list(...)
+
+  div(
+    class="accordion",
+    id=id,
+    tagList(lapply(seq_along(cards), function(idx) {
+      card = cards[[idx]]
+      buttonId = sprintf("%s-button", card$id)
+      targetId = sprintf("%s-target", card$id)
+      
+      if (card$expanded) {
+        buttonClass = ""
+        ariaExpanded = "true"
+        targetClass = "collapse show"
+      } else {
+        buttonClass = "collapsed"
+        ariaExpanded = "false"
+        targetClass = "collapse"
+      }
+      
+      div(
+        class="card",
+        div(
+          class="card-header",
+          id=buttonId,
+          a(
+            "aria-controls"=targetId,
+            "aria-expanded"=ariaExpanded,
+            class=buttonClass,
+            "data-parent"=sprintf("#%s", id),
+            "data-toggle"="collapse",
+            href=sprintf("#%s", targetId),
+            tags$h5(
+              class="mb-0",
+              card$title,
+              fa("angle-up")
+            )
+          )
+        ),
+        div(
+          id=targetId,
+          class=targetClass,
+          "aria-labelledby"=buttonId,
+          "data-parent"=sprintf("#%s", id),
+          div(
+            class="card-body",
+            card$content
+          )
+        )
+      )
+    }))
   )
 }

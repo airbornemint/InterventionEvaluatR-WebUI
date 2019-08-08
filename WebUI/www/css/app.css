@@ -2,8 +2,17 @@
   background: white;
 }
 
+#header .navbar > * {
+  flex: 1 0;
+}
+
 #plot-container {
   display: none;
+  position: -webkit-sticky;
+  position: sticky;
+  top: 3.5rem;
+  z-index: 1020;
+  background: white;
 }
 
 .plot-on #plot-container {
@@ -25,14 +34,12 @@
 
 .main-content {
   display: flex;
+  flex-direction: column;
+  transition: padding-right 0.5s ease;
 }
 
 .main-content, #help-toggle {
   padding-top: 3.5rem; /* 3.5rem for header nav */
-}
-
-.plot-on .main-content, .plot-on #help-toggle {
-  padding-top: calc(4.5rem + 200px); /* 3.5rem for header nav, 1rem + 200px for plot */
 }
 
 .help-on .main-content {
@@ -42,6 +49,10 @@
 .main-content > .container {
   flex: 1;
   align-items: stretch;
+}
+
+#resultsUI .accordion > .card > .card-header button.btn {
+  text-transform: none;
 }
 
 #help-toggle {
@@ -122,6 +133,60 @@ ul.stepper li a .summary {
   margin-left: auto;
   margin-right: auto;
   margin-bottom: 2rem;
+}
+
+.carousel-item .table-wrap {
+  margin-bottom: 2rem;
+  height: 400px;
+}
+
+.carousel-item table {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.file-input .input-group label.input-group-btn {
+  width: 100%;
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+}
+
+.file-input .input-group label.input-group-btn .btn-file {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+#results > li > div.step-body .carousel-caption {
+  color: black;
+  top: 10px;
+  font-weight: 600;
+}
+
+#results > li > div.step-body .carousel-item .view > .d-block {
+  padding-top: 60px;
+}
+
+.results-heading {
+  position: sticky;
+  position: -webkit-sticky;
+  top: 3.5rem;
+  z-index: 1020;
+}
+
+.results-heading .spinner-border {
+  position: absolute;
+  right: 1rem;
+}
+
+.shiny-options-group {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.shiny-options-group > .checkbox-inline, .shiny-options-group > .checkbox {
+  white-space: nowrap;
+  margin: .5rem;
 }
 
 @media print {
