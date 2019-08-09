@@ -4,7 +4,8 @@ stages:
   
 variables:
   DOCKER_IMAGE_WEBUI: "${CI_REGISTRY_IMAGE}/interventionevaluatr-web-ui-ci:ci-${CI_PIPELINE_IID}"
-  DOCKER_IMAGE_WEBUI_LATEST: "${CI_REGISTRY_IMAGE}/interventionevaluatr-web-ui-ci:ci-latest"
+  DOCKER_IMAGE_WEBUI_REF: "${CI_REGISTRY_IMAGE}/interventionevaluatr-web-ui-ci:ci-${CI_COMMIT_REF_SLUG}"
+  DOCKER_IMAGE_WEBUI_MASTER: "${CI_REGISTRY_IMAGE}/interventionevaluatr-web-ui-ci:ci-master"
   DOCKER_SAVE_WEBUI: "docker/interventionevaluatr-web-ui-${CI_PIPELINE_IID}.tar.xz"
   APP_WEBUI: "app/interventionevaluatr-web-ui-${CI_PIPELINE_IID}.tar.xz"
   DOCKER_CONTAINER_WEBUI: "interventionevaluatr-web-ui"
@@ -22,10 +23,11 @@ variables:
     DOCKER_TLS_CERTDIR: ""
   script:
     - docker login -u gitlab-ci-token -p "${CI_BUILD_TOKEN}" "${CI_REGISTRY_IMAGE}"
-    - docker pull "${DOCKER_IMAGE_WEBUI_LATEST}" || true
-    - docker build --rm=false -t "${DOCKER_IMAGE_WEBUI}" -t "${DOCKER_IMAGE_WEBUI_LATEST}" WebUI
+    - docker pull "${DOCKER_IMAGE_WEBUI_REF}" || true
+    - docker pull "${DOCKER_IMAGE_WEBUI_MASTER}" || true
+    - docker build --cache-from "${DOCKER_IMAGE_WEBUI_REF}" --cache-from "${DOCKER_IMAGE_WEBUI_MASTER}" -t "${DOCKER_IMAGE_WEBUI}" -t "${DOCKER_IMAGE_WEBUI_REF}" WebUI
     - docker push "${DOCKER_IMAGE_WEBUI}" 
-    - docker push "${DOCKER_IMAGE_WEBUI_LATEST}"
+    - docker push "${DOCKER_IMAGE_WEBUI_REF}"
     - mkdir -p "app"
     - tar -cvzf "${APP_WEBUI}" WebUI
   artifacts:
