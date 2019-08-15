@@ -1,3 +1,6 @@
+import::from(future, cluster, makeClusterPSOCK)
+
+
 # Set up a worker for evaluation of InterventionEvaluatR
 setupWorker = function() {
   if(getOption("ie.worker.local", TRUE)) {
@@ -13,9 +16,9 @@ setupLocalWorker = function() {
 
 setupRemoteWorker = function() {
   # TODO generate ephemeral SSH key
-  
+
   machineName = sprintf("iew-%s", UUIDgenerate())
-  
+
   # First provision a DigitalOcean droplet
   analysisStatusDetail("Provisioning DO droplet")
   check.call(
@@ -28,21 +31,21 @@ setupRemoteWorker = function() {
       machineName
     )
   )
-  
+
   workerConfig = check.output(
     c(
       sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "config",
       machineName
     )
   )
-  
+
   workerIp = check.output(
     c(
       sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "ip",
       machineName
     )
   ) %>% trimws()
-  
+
   # Copy the worker image
   analysisStatusDetail("Copying worker image")
   check.call(
@@ -51,7 +54,7 @@ setupRemoteWorker = function() {
       "worker/image.tar.xz", sprintf("%s:/tmp/worker-image.tar.xz", machineName)
     )
   )
-  
+
   # Load the worker image into docker
   analysisStatusDetail("Unarchiving worker image")
   check.call(
@@ -60,7 +63,7 @@ setupRemoteWorker = function() {
       machineName, "/usr/bin/unxz", "/tmp/worker-image.tar.xz"
     )
   )
-  
+
   analysisStatusDetail("Loading worker image")
   check.call(
     c(
@@ -68,15 +71,15 @@ setupRemoteWorker = function() {
       machineName, sprintf("%s/docker", getOption("ie.worker.docker.bindir")), "load", "--input", "/tmp/worker-image.tar"
     )
   )
-  
-  # Make a single-worker cluster 
+
+  # Make a single-worker cluster
   workerCluster = makeClusterPSOCK(
     workers=workerIp,
     rshopts=c("-i", "worker/id_rsa", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"),
     user="evaluatr",
     rscript="/usr/local/bin/Rscript-docker"
   )
-  
+
   list(local=FALSE, cluster=workerCluster, machineName=machineName)
 }
 

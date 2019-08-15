@@ -9,9 +9,8 @@ md_page = function(...) {
       tags$link(rel = "stylesheet", type = "text/css", href = "mdb/css/mdb.css"),
       tags$script(src = "mdb/js/mdb.js"),
       tags$script(src = "mdb/js/bootstrap.js"),
-      tags$link(rel = "stylesheet", type = "text/css", href = "css/app.css"),
-      tags$link(rel = "stylesheet", type = "text/css", href = "css/mdbootstrap.css"),
-      tags$script(src = "js/mdbootstrap.js")
+      tags$link(rel = "stylesheet", type = "text/css", href = "mdbootstrap/mdbootstrap.css"),
+      tags$script(src = "mdbootstrap/mdbootstrap.js")
     )),
     tags$body(
       div(...)
@@ -155,7 +154,7 @@ md_carousel = function(id, items) {
             )
           )
         }
-        
+
         content = div(
           class="carousel-item",
           content
@@ -212,7 +211,7 @@ md_accordion = function(id, ...) {
       card = cards[[idx]]
       buttonId = sprintf("%s-button", card$id)
       targetId = sprintf("%s-target", card$id)
-      
+
       if (card$expanded) {
         buttonClass = ""
         ariaExpanded = "true"
@@ -222,7 +221,7 @@ md_accordion = function(id, ...) {
         ariaExpanded = "false"
         targetClass = "collapse"
       }
-      
+
       div(
         class="card",
         div(

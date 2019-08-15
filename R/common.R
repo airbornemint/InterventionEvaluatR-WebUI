@@ -1,4 +1,5 @@
 import::from(plyr, compact)
+import::from(shiny, need)
 
 dateFormats = list(
   `YYYY-MM-DD`="%Y-%m-%d",
@@ -15,7 +16,7 @@ postDurations = list(
 )
 
 stockDatasets = list(
-  `Pneumonia in Brazil, 2003-2013`="pnas_brazil"  
+  `Pneumonia in Brazil, 2003-2013`="pnas_brazil"
 )
 
 # TRUE if format is valid date format for v
@@ -34,15 +35,15 @@ validFormat = function(v, format) {
 
 # Auto-detect viable time columns and their formats. Empty list if none are found, NULL if data is NULL
 dateColumns = function(data) {
-  names(data) %>% 
+  names(data) %>%
     sapply(function(name) {
       # List of viable formats for named column; NULL if none
-      dateFormats %>% 
+      dateFormats %>%
         lapply(function(format) {
           if(validFormat(data[[name]], format)) {
             format
           }
-        }) %>% 
+        }) %>%
         compact() %>%
         (function(x) {
           if (length(x) > 0) {
@@ -50,13 +51,13 @@ dateColumns = function(data) {
           }
         })
     }, simplify = FALSE, USE.NAMES = TRUE) %>%
-    compact() 
+    compact()
 }
 
 # True if expr is valid according to the same criteria as shiny::need
 checkNeed = function(expr) {
   tryCatch(
-    is.null(need(expr, FALSE)), 
+    is.null(need(expr, FALSE)),
     error=function(e) if (!inherits(e, "shiny.silent.error")) {
       stop(e)
     } else {
@@ -70,8 +71,8 @@ nextButton = function(buttonId, spinnerId, title="Next", disabled=TRUE) {
     class="button-next",
     md_button(
       buttonId,
-      span(class="title", title), 
-      md_button_spinner(spinnerId), 
+      span(class="title", title),
+      md_button_spinner(spinnerId),
       style="primary", disabled=disabled
     )
   )

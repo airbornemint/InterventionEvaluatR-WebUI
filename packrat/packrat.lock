@@ -1,6 +1,6 @@
 PackratFormat: 1.4
 PackratVersion: 0.5.0.8
-RVersion: 3.6.0
+RVersion: 3.6.1
 Repos: CRAN=https://cran.rstudio.com/
 
 Package: BH
@@ -16,19 +16,19 @@ Hash: abf9c9b233a449b298d7e069d168c303
 Package: InterventionEvaluatR
 Source: github
 Version: 0.1
-Hash: 8676e414854f8fa9336aecec75ca5ad1
-Requires: HDInterval, RcppRoll, dummies, future, ggplot2, htmlTable,
-    listenv, lme4, loo, lubridate, pbapply, plyr, pogit, pomp, reshape,
-    xtable
+Hash: d4e96b1a951f5e96b0d9d888b5537431
+Requires: HDInterval, RcppRoll, dummies, future, future.apply, ggplot2,
+    htmlTable, listenv, lme4, loo, lubridate, plyr, pogit, pomp,
+    progress, reshape, xtable
 GithubRepo: InterventionEvaluatR
 GithubUsername: weinbergerlab
 GithubRef: web-ui
-GithubSha1: 4f25bbfb5e02096a5e0a2b27a2ea507c1c26a4fe
+GithubSha1: 8cba9dfb12538714437b87776215067c561f0695
 RemoteHost: api.github.com
 RemoteRepo: InterventionEvaluatR
 RemoteUsername: weinbergerlab
 RemoteRef: web-ui
-RemoteSha: 4f25bbfb5e02096a5e0a2b27a2ea507c1c26a4fe
+RemoteSha: 8cba9dfb12538714437b87776215067c561f0695
 
 Package: R6
 Source: CRAN
@@ -90,12 +90,6 @@ Hash: 2c1abd749c826a39101a156ed0afc9be
 Requires: backports, dplyr, generics, purrr, reshape2, stringr, tibble,
     tidyr
 
-Package: callr
-Source: CRAN
-Version: 3.3.1
-Hash: 5611f2e7617b9ea6737cb083135f7615
-Requires: R6, processx
-
 Package: checkmate
 Source: CRAN
 Version: 1.9.4
@@ -136,8 +130,8 @@ Requires: R6, ggplot2, htmltools, jsonlite, lazyeval, shiny
 
 Package: curl
 Source: CRAN
-Version: 3.3
-Hash: b201f64e6e1469e8a3571c746ffa9059
+Version: 4.0
+Hash: 43ba5c33f68914a98361fb056d32872d
 
 Package: data.table
 Source: CRAN
@@ -204,6 +198,12 @@ Version: 1.14.0
 Hash: be5e13b4f7a76297c720059f04845aeb
 Requires: digest, globals, listenv
 
+Package: future.apply
+Source: CRAN
+Version: 1.3.0
+Hash: 4e8552f0e940e94ccb400e73bdfb8d20
+Requires: future, globals
+
 Package: generics
 Source: CRAN
 Version: 0.0.2
@@ -211,8 +211,8 @@ Hash: 4aaf002dd434e8c854611c5d11a1d58e
 
 Package: ggplot2
 Source: CRAN
-Version: 3.2.0
-Hash: 3f9c63b2e40ea80716bbf249d9eeb9f4
+Version: 3.2.1
+Hash: 7cf3f9df0089475f133ec23befca1032
 Requires: digest, gtable, lazyeval, reshape2, rlang, scales, tibble,
     viridisLite, withr
 
@@ -280,8 +280,8 @@ Requires: BH, R6, Rcpp, later, promises
 
 Package: httr
 Source: CRAN
-Version: 1.4.0
-Hash: 62d62d3ffcc9a34411b6e35a813f72dd
+Version: 1.4.1
+Hash: cc16de93eaabd3c6d0785cb8e6d059ab
 Requires: R6, curl, jsonlite, mime, openssl
 
 Package: import
@@ -300,17 +300,10 @@ Source: CRAN
 Version: 1.6
 Hash: 5f969e213e966135393e3e304abf3f49
 
-Package: kableExtra
-Source: CRAN
-Version: 1.1.0
-Hash: 653aaaf9b80417823e9c8a5c39fe7134
-Requires: digest, glue, htmltools, knitr, magrittr, readr, rmarkdown,
-    rstudioapi, rvest, scales, stringr, viridisLite, webshot, xml2
-
 Package: knitr
 Source: CRAN
-Version: 1.23
-Hash: 97e380b89b7561ff23821e60296b394c
+Version: 1.24
+Hash: 6f49966079cf15bce4f8a94aff3c0313
 Requires: evaluate, highr, markdown, stringr, xfun, yaml
 
 Package: labeling
@@ -365,9 +358,9 @@ Hash: bdc4d48c3135e8f3b399536ddf160df4
 
 Package: markdown
 Source: CRAN
-Version: 1.0
-Hash: fe604255cb83cac629aed0569c9df922
-Requires: mime
+Version: 1.1
+Hash: 1b6a18fd395589425e338a47b999099f
+Requires: mime, xfun
 
 Package: matrixStats
 Source: CRAN
@@ -420,8 +413,8 @@ Hash: 4655a089f4d8b80268adaf83d6cd5fb2
 
 Package: openssl
 Source: CRAN
-Version: 1.3
-Hash: 7235e0ada86fbb386b7e2e3046cda46e
+Version: 1.4.1
+Hash: b01fe6ae05ec2a30a777dc338af5bf69
 Requires: askpass
 
 Package: ordinal
@@ -492,22 +485,23 @@ Version: 2.2
 Hash: e3a35cf235b2daf13dfd57791fa8534d
 Requires: coda, deSolve, digest, magrittr, mvtnorm, plyr, reshape2
 
-Package: processx
+Package: prettyunits
 Source: CRAN
-Version: 3.4.1
-Hash: 5c1f432b290b26ccc2aaaa8ff1fd2f62
-Requires: R6, ps
+Version: 1.0.2
+Hash: 49286102a855640daaa38eafe8b1ec30
+Requires: assertthat, magrittr
+
+Package: progress
+Source: CRAN
+Version: 1.2.2
+Hash: 209280eb751acf5899f7c69366e14bd3
+Requires: R6, crayon, hms, prettyunits
 
 Package: promises
 Source: CRAN
 Version: 1.0.1
 Hash: e1ac352d25f1cee847e7cd0984b10dc1
 Requires: R6, Rcpp, later, magrittr, rlang
-
-Package: ps
-Source: CRAN
-Version: 1.3.0
-Hash: 1d4cae95887ffe5b1a22bea5994476cd
 
 Package: purrr
 Source: CRAN
@@ -538,35 +532,16 @@ Source: CRAN
 Version: 0.4.0
 Hash: eabda67321fe1d477ea641ddd5d84f00
 
-Package: rmarkdown
-Source: CRAN
-Version: 1.14
-Hash: 3ef48feba7356d078d9d2eb36e2c4bdd
-Requires: base64enc, evaluate, htmltools, jsonlite, knitr, mime,
-    stringr, tinytex, xfun, yaml
-
 Package: rstudioapi
 Source: CRAN
 Version: 0.10
 Hash: 63f43c6ff14d92e1d65ca6c21d45a1eb
-
-Package: rvest
-Source: CRAN
-Version: 0.3.4
-Hash: f183d7dabd2bf9d967bfa53a777955f4
-Requires: httr, magrittr, selectr, xml2
 
 Package: scales
 Source: CRAN
 Version: 1.0.0
 Hash: f4f1b13b6774ee3122a36466d1bc50b8
 Requires: R6, RColorBrewer, Rcpp, labeling, munsell, viridisLite
-
-Package: selectr
-Source: CRAN
-Version: 0.4-1
-Hash: b12802c11e35dec9d16a74d30ed0f3ed
-Requires: R6, stringr
 
 Package: shiny
 Source: CRAN
@@ -642,12 +617,6 @@ Version: 0.2.5
 Hash: 9ab4ed03f4b7bbdbd1db9d7a920aae1a
 Requires: Rcpp, glue, purrr, rlang
 
-Package: tinytex
-Source: CRAN
-Version: 0.14
-Hash: b1e0f4a00fb5f5887581d3d70ca672e3
-Requires: xfun
-
 Package: ucminf
 Source: CRAN
 Version: 1.1-4
@@ -674,13 +643,6 @@ Source: CRAN
 Version: 0.3.0
 Hash: 78bb072c4f9e729a283d4c40ec93f9c6
 
-Package: webshot
-Source: CRAN
-Version: 0.5.1
-Hash: c95b36acba37ea1d6cd6e1c6fe2c2ecc
-Requires: callr, jsonlite, magrittr
-
-
 Package: withr
 Source: CRAN
 Version: 2.1.2
@@ -690,12 +652,6 @@ Package: xfun
 Source: CRAN
 Version: 0.8
 Hash: 159d3d619aa501f4d507f12b07fe0b15
-
-Package: xml2
-Source: CRAN
-Version: 1.2.1
-Hash: 3bf93aa7213e2d94ff94a682c46584c6
-Requires: Rcpp
 
 Package: xtable
 Source: CRAN

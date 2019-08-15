@@ -1,7 +1,10 @@
 import::from(plyr, llply)
-import::from(InterventionEvaluatR, evaluatr.init, evaluatr.univariate, evaluatr.univariate.plot, evaluatr.plots, evaluatr.prune)
+import::from(InterventionEvaluatR, evaluatr.init, evaluatr.univariate, evaluatr.univariate.plot, evaluatr.plots, evaluatr.prune, evaluatr.impact, evaluatr.config)
 import::from(ggplot2, ggtitle)
 import::from(tibble, rownames_to_column)
+import::from(stats, setNames)
+import::from(dplyr, mutate)
+
 
 # Run the relevant pieces of evaluatr analysis
 app.analyze = function(params, analysisTypes) {
@@ -9,7 +12,9 @@ app.analyze = function(params, analysisTypes) {
     evaluatr.init,
     params
   )
-  
+
+  evaluatr.config(analysis, plan.user=TRUE)
+
   if ('univariate' %in% analysisTypes) {
     univariateResults = evaluatr.univariate(analysis)
   }
@@ -25,21 +30,21 @@ app.analyze = function(params, analysisTypes) {
 app.vis = function(analysis, analysisTypes) {
   # saveRDS(list(analysis=analysis, analysisTypes=analysisTypes), "/tmp/app.plot.rds")
   groupNames = sprintf("%s %s", analysis$group_name, analysis$groups)
-  
+
   if ('univariate' %in% analysisTypes) {
-    univariatePlots = setNames(llply(seq_along(analysis$groups), function(idx) 
+    univariatePlots = setNames(llply(seq_along(analysis$groups), function(idx)
       evaluatr.univariate.plot(analysis$results$univariate[[idx]])
     ), groupNames)
   } else {
     univariatePlots = NULL
   }
-  
+
   if ('impact' %in% analysisTypes) {
     impactPlots = evaluatr.plots(analysis)
   } else {
     impactPlots = NULL
   }
-  
+
   vis = list(
     plots=setNames(llply(seq_along(analysis$groups), function(group) {
       if (!is.null(univariatePlots)) {
@@ -49,7 +54,7 @@ app.vis = function(analysis, analysisTypes) {
       } else {
         univariate = list()
       }
-      
+
       if (!is.null(impactPlots)) {
         impact = list(
           tsMonthly=impactPlots$groups[[group]]$pred_best + ggtitle(NULL),
@@ -59,22 +64,22 @@ app.vis = function(analysis, analysisTypes) {
       } else {
         impact = list()
       }
-      
+
       c(univariate, impact)
     }), groupNames)
   )
-  
+
   if ("impact" %in% analysisTypes) {
     normRR = function(rr, variant) {
       rr %>% data.frame() %>% setNames(c("lcl", "median", "ucl")) %>% rownames_to_column("group") %>% mutate(variant=variant)
     }
-    
+
     rr = rbind(
-      analysis$results$impact$best$rr_mean %>% normRR(variant="best"), 
+      analysis$results$impact$best$rr_mean %>% normRR(variant="best"),
       analysis$results$impact$full$rr_mean %>% normRR(variant="full"),
-      analysis$results$impact$time$rr_mean %>% normRR(variant="time"), 
-      analysis$results$impact$time_no_offset$rr_mean %>% normRR(variant="time_no_offset"), 
-      analysis$results$impact$its$rr_end %>% normRR(variant="its"), 
+      analysis$results$impact$time$rr_mean %>% normRR(variant="time"),
+      analysis$results$impact$time_no_offset$rr_mean %>% normRR(variant="time_no_offset"),
+      analysis$results$impact$its$rr_end %>% normRR(variant="its"),
       analysis$results$impact$pca$rr_mean %>% normRR(variant="pca")
     )
 
@@ -84,7 +89,7 @@ app.vis = function(analysis, analysisTypes) {
           rr=sprintf("%.2f (%.2f - %.2f)", median, lcl, ucl),
           variant.name=variant
         ) %>%
-        select(variant.name, rr)
+        select("variant.name", "rr")
       }),
       best=llply(seq_along(analysis$groups), function(group) {
         analysis$results$impact$best$variant[[group]]
