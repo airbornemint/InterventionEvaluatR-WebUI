@@ -32,6 +32,8 @@ import::from(plyr, llply)
 import::from(dplyr, filter)
 import::from(htmltools, tagAppendAttributes)
 import::from(uuid, UUIDgenerate)
+import::from(brew, brew)
+import::from(tools, texi2pdf)
 
 plan(multisession)
 
@@ -564,36 +566,51 @@ shinyServer(function(input, output, session) {
         input = inputData(),
         params = analysisParams(),
         results = analysisResults()
-      ), "results.rds")
+      ), "Results.rds")
 
       # Render each plot to a PDF file
       results = analysisVis()
       for (idx in seq_along(results$plots)) {
         groupName = names(results$plots)[idx]
         groupFileName = gsub("[^a-zA-Z0-9_.-]", "-", groupName)
-        dir.create(sprintf("plots/%s", groupFileName), recursive=TRUE)
+        dir.create(sprintf("Plots/%s", groupFileName), recursive=TRUE)
         ggsave(
-          sprintf("plots/%s/prevented-cases.pdf", groupFileName), 
+          sprintf("Plots/%s/prevented-cases.pdf", groupFileName), 
           results$plots[[groupName]]$prevented,
           width = 4, height = 3
         )
         ggsave(
-          sprintf("plots/%s/cases-yearly.pdf", groupFileName), 
+          sprintf("Plots/%s/cases-yearly.pdf", groupFileName), 
           results$plots[[groupName]]$tsYearly,
           width = 4, height = 3
         )
         ggsave(
-          sprintf("plots/%s/cases-monthly.pdf", groupFileName), 
+          sprintf("Plots/%s/cases-monthly.pdf", groupFileName), 
           results$plots[[groupName]]$tsMonthly,
           width = 4, height = 3
         )
         ggsave(
-          sprintf("plots/%s/covariate-comparison.pdf", groupFileName), 
+          sprintf("Plots/%s/covariate-comparison.pdf", groupFileName), 
           results$plots[[groupName]]$univariate,
           width = 4, height = 3
         )
       }
-      zip(file, ".")
+      
+      print(tempDir)
+      print("brew")
+      brew(
+        file=sprintf("%s/Report.template.tex", oldWD), 
+        output="Report.tex"
+      )
+      
+      print("tex")
+      texi2pdf(
+        file="Report.tex",
+        quiet=FALSE
+      )
+      
+      # Zip what we want (the rest is LaTeX garbage)
+      zip(file, c("Plots", "Report.pdf", "Results.rds"))
     }
   )
   outputOptions(output, 'downloadResults', suspendWhenHidden=FALSE)

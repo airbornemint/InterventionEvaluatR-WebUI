@@ -28,6 +28,10 @@ ARG BUILD_APT_DEPENDENCIES="tzdata locales"
 #ARG BUILD_APT_DEPENDENCIES="tzdata locales qpdf pandoc pandoc-citeproc"
 RUN apt-get install -y -qq --no-install-recommends ${BUILD_APT_DEPENDENCIES}
 
+### Setup packages needed to run our app
+ARG APT_DEPENDENCIES="texinfo texlive"
+RUN apt-get install -y -qq --no-install-recommends ${APT_DEPENDENCIES}
+
 ### Install required R packages. Doing it this way allows docker to cache packrat state and not rebuild everything when app source changes in a way that doesn't affect package dependencies
 COPY --chown=shiny packrat/packrat.lock packrat/packrat.opts /srv/shiny-server/WebUI/packrat/
 RUN install2.r packrat

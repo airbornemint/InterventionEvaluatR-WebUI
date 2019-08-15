@@ -1,0 +1,44 @@
+\documentclass[11pt]{scrreprt}
+
+\usepackage{graphicx}
+
+\begin{document}
+
+<%
+for(idx in seq_along(results$plots)) { 
+  groupName = names(results$plots)[idx]
+  groupNameL = kableExtra:::escape_latex(groupName)
+  groupFileName = gsub("[^a-zA-Z0-9_.-]", "-", groupName)
+%>
+
+\chapter*{<%= groupNameL %>}
+
+\section*{Prevented Cases}
+
+\begin{center}
+\includegraphics{Plots/<%= groupFileName %>/prevented-cases}
+\end{center}
+
+\section*{Total cases (yearly)}
+
+\begin{center}
+\includegraphics{Plots/<%= groupFileName %>/cases-yearly}
+\end{center}
+
+\section*{Total cases (monthly)}
+
+\begin{center}
+\includegraphics{Plots/<%= groupFileName %>/cases-monthly}
+\end{center}
+
+\section*{Covariate Comparison}
+
+\begin{center}
+\includegraphics{Plots/<%= groupFileName %>/covariate-comparison}
+\end{center}
+
+<%
+}
+%>
+
+\end{document}
