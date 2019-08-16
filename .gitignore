@@ -1,8 +1,9 @@
+**/.Rproj.user
+**/.Rhistory
+**/.RData
+**/.Ruserdata
+**/packrat/lib
+**/packrat/lib-R
+**/packrat/src
+**/packrat/lib-ext
 .Rproj.user
-.Rhistory
-.RData
-.Ruserdata
-packrat/lib
-packrat/lib-R
-packrat/src
-packrat/lib-ext
