@@ -16,6 +16,7 @@ library(htmltools)
 library(uuid)
 library(brew)
 library(tools)
+library(rlang)
 
 
 source("analysis.R")
