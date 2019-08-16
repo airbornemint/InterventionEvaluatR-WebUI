@@ -7,14 +7,14 @@ md_page = function(...) {
     singleton(tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "mdb/css/bootstrap.min.css"),
       tags$link(rel = "stylesheet", type = "text/css", href = "mdb/css/mdb.css"),
-      tags$script(src = "mdb/js/mdb.js"),
-      tags$script(src = "mdb/js/bootstrap.js"),
       tags$link(rel = "stylesheet", type = "text/css", href = "css/app.css"),
-      tags$link(rel = "stylesheet", type = "text/css", href = "css/mdbootstrap.css"),
-      tags$script(src = "js/mdbootstrap.js")
+      tags$link(rel = "stylesheet", type = "text/css", href = "css/mdbootstrap.css")
     )),
     tags$body(
-      div(...)
+      div(...),
+      tags$script(src = "mdb/js/mdb.js"),
+      tags$script(src = "mdb/js/bootstrap.js"),
+      tags$script(src = "js/mdbootstrap.js")
     )
   )
 }
