@@ -1,5 +1,5 @@
-import::from(plyr, compact)
-import::from(shiny, need)
+#' @importFrom plyr compact
+#' @importFrom shiny need
 
 dateFormats = list(
   `YYYY-MM-DD`="%Y-%m-%d",

@@ -7,11 +7,11 @@
 #    http://shiny.rstudio.com/
 #
 
-import::from(shiny, uiOutput, textOutput)
-import::from(magrittr, "%>%")
-import::from(plotly, plotlyOutput)
-import::from(fontawesome, fa)
-import::from(shinyjs, useShinyjs, hidden)
+#' @importFrom shiny uiOutput textOutput
+#' @importFrom magrittr "%>%"
+#' @importFrom plotly plotlyOutput
+#' @importFrom fontawesome fa
+#' @importFrom shinyjs useShinyjs hidden
 
 .onLoad <- function(...) {
     # Create link to javascript and css files for package

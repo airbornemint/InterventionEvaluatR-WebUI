@@ -1,9 +1,9 @@
-import::from(plyr, llply)
-import::from(InterventionEvaluatR, evaluatr.init, evaluatr.univariate, evaluatr.univariate.plot, evaluatr.plots, evaluatr.prune, evaluatr.impact, evaluatr.config)
-import::from(ggplot2, ggtitle)
-import::from(tibble, rownames_to_column)
-import::from(stats, setNames)
-import::from(dplyr, mutate)
+#' @importFrom plyr llply
+#' @importFrom InterventionEvaluatR evaluatr.init evaluatr.univariate evaluatr.univariate.plot evaluatr.plots evaluatr.prune evaluatr.impact evaluatr.config
+#' @importFrom ggplot2 ggtitle
+#' @importFrom tibble rownames_to_column
+#' @importFrom stats setNames
+#' @importFrom dplyr mutate
 
 
 # Run the relevant pieces of evaluatr analysis

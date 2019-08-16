@@ -1,6 +1,6 @@
-import::from(plyr, compact)
-import::from(shinyBS, bsButton)
-import::from(magrittr, "%<>%")
+#' @importFrom plyr compact
+#' @importFrom shinyBS bsButton
+#' @importFrom magrittr %<>%
 
 md_page = function(...) {
   tags$html(

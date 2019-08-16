@@ -1,4 +1,4 @@
-import::from(future, cluster, makeClusterPSOCK)
+#' @importFrom future cluster makeClusterPSOCK
 
 
 # Set up a worker for evaluation of InterventionEvaluatR

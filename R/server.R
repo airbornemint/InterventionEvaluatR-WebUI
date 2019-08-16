@@ -1,24 +1,24 @@
-import::from(magrittr, "%>%")
-import::from(shiny, validate)
-import::from(plotly, ggplotly, renderPlotly)
-import::from(shinyBS, updateButton)
-import::from(shinyjs, hidden, toggleElement, toggleClass)
-import::from(shinyWidgets, airMonthpickerInput)
-import::from(lubridate, "%m+%", "%m-%", days, "day<-")
-import::from(ggplot2, geom_blank, geom_errorbarh, ggplot, aes_, labs, geom_line, geom_segment, theme_minimal, geom_ribbon, ggsave, geom_point, ggplot)
-import::from(plyr, llply)
-import::from(dplyr, filter, arrange, summarize_all, filter_at, group_by, summarize, select)
-import::from(htmltools, tagAppendAttributes)
-import::from(uuid, UUIDgenerate)
-import::from(brew, brew)
-import::from(tools, texi2pdf)
-import::from(shiny, reactiveVal, observe, updateSelectInput, reactive, selectInput, checkboxGroupInput, renderUI, downloadButton, downloadHandler, fileInput, observeEvent, outputOptions, renderTable, renderText, showNotification, withLogErrors)
-import::from(future, plan, multisession, value, future, transparent)
-import::from(htmltools, div, p, tags, tagList, singleton, h1, a, span)
-import::from(promises, "%...!%", "%...>%")
-import::from(stats, median, setNames)
-import::from(utils, read.csv, zip)
-import::from(rlang, env)
+#' @importFrom magrittr %>%
+#' @importFrom shiny validate
+#' @importFrom plotly ggplotly renderPlotly
+#' @importFrom shinyBS updateButton
+#' @importFrom shinyjs hidden toggleElement toggleClass
+#' @importFrom shinyWidgets airMonthpickerInput
+#' @importFrom lubridate %m+% %m-% days day<-
+#' @importFrom ggplot2 geom_blank geom_errorbarh ggplot aes_ labs geom_line geom_segment theme_minimal geom_ribbon ggsave geom_point ggplot
+#' @importFrom plyr llply
+#' @importFrom dplyr filter arrange summarize_all filter_at group_by summarize select
+#' @importFrom htmltools tagAppendAttributes
+#' @importFrom uuid UUIDgenerate
+#' @importFrom brew brew
+#' @importFrom tools texi2pdf
+#' @importFrom shiny reactiveVal observe updateSelectInput reactive selectInput checkboxGroupInput renderUI downloadButton downloadHandler fileInput observeEvent outputOptions renderTable renderText showNotification withLogErrors
+#' @importFrom future plan multisession value future transparent
+#' @importFrom htmltools div p tags tagList singleton h1 a span
+#' @importFrom promises %...!% %...>%
+#' @importFrom stats median setNames
+#' @importFrom utils read.csv zip
+#' @importFrom rlang env
 
 check.call = function(args) {
   status = system2(args[1], args[2:length(args)], stdout="", stderr="")
