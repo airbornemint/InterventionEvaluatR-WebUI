@@ -9,10 +9,10 @@
 
 library(shiny)
 
-import::from(magrittr, "%>%")
-import::from(plotly, plotlyOutput)
-import::from(fontawesome, fa)
-import::from(shinyjs, useShinyjs, hidden)
+library(magrittr)
+library(plotly)
+library(fontawesome)
+library(shinyjs)
 
 source("common.R")
 source("mdbootstrap.R")

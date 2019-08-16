@@ -1,6 +1,6 @@
 PackratFormat: 1.4
 PackratVersion: 0.5.0.8
-RVersion: 3.6.0
+RVersion: 3.6.1
 Repos: CRAN=https://cran.rstudio.com/
 
 Package: BH
@@ -24,11 +24,6 @@ GithubRepo: InterventionEvaluatR
 GithubUsername: weinbergerlab
 GithubRef: web-ui
 GithubSha1: 4f25bbfb5e02096a5e0a2b27a2ea507c1c26a4fe
-RemoteHost: api.github.com
-RemoteRepo: InterventionEvaluatR
-RemoteUsername: weinbergerlab
-RemoteRef: web-ui
-RemoteSha: 4f25bbfb5e02096a5e0a2b27a2ea507c1c26a4fe
 
 Package: R6
 Source: CRAN
@@ -679,7 +674,6 @@ Source: CRAN
 Version: 0.5.1
 Hash: c95b36acba37ea1d6cd6e1c6fe2c2ecc
 Requires: callr, jsonlite, magrittr
-
 
 Package: withr
 Source: CRAN

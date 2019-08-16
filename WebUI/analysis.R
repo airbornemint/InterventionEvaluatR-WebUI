@@ -1,7 +1,7 @@
-import::from(plyr, llply)
-import::from(InterventionEvaluatR, evaluatr.init, evaluatr.univariate, evaluatr.univariate.plot, evaluatr.plots, evaluatr.prune)
-import::from(ggplot2, ggtitle)
-import::from(tibble, rownames_to_column)
+library(plyr)
+library(InterventionEvaluatR)
+library(ggplot2)
+library(tibble)
 
 # Run the relevant pieces of evaluatr analysis
 app.analyze = function(params, analysisTypes) {
