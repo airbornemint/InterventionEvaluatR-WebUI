@@ -211,8 +211,8 @@ Hash: 4aaf002dd434e8c854611c5d11a1d58e
 
 Package: ggplot2
 Source: CRAN
-Version: 3.2.0
-Hash: 3f9c63b2e40ea80716bbf249d9eeb9f4
+Version: 3.2.1
+Hash: 7cf3f9df0089475f133ec23befca1032
 Requires: digest, gtable, lazyeval, reshape2, rlang, scales, tibble,
     viridisLite, withr
 
@@ -309,8 +309,8 @@ Requires: digest, glue, htmltools, knitr, magrittr, readr, rmarkdown,
 
 Package: knitr
 Source: CRAN
-Version: 1.23
-Hash: 97e380b89b7561ff23821e60296b394c
+Version: 1.24
+Hash: 6f49966079cf15bce4f8a94aff3c0313
 Requires: evaluate, highr, markdown, stringr, xfun, yaml
 
 Package: labeling
@@ -365,9 +365,9 @@ Hash: bdc4d48c3135e8f3b399536ddf160df4
 
 Package: markdown
 Source: CRAN
-Version: 1.0
-Hash: fe604255cb83cac629aed0569c9df922
-Requires: mime
+Version: 1.1
+Hash: 1b6a18fd395589425e338a47b999099f
+Requires: mime, xfun
 
 Package: matrixStats
 Source: CRAN
