@@ -13,7 +13,7 @@
 #' @importFrom brew brew
 #' @importFrom tools texi2pdf
 #' @importFrom shiny reactiveVal observe updateSelectInput reactive selectInput checkboxGroupInput renderUI downloadButton downloadHandler fileInput observeEvent outputOptions renderTable renderText showNotification withLogErrors
-#' @importFrom future plan multisession value future transparent
+#' @importFrom future plan multisession value future transparent sequential
 #' @importFrom htmltools div p tags tagList singleton h1 a span
 #' @importFrom promises %...!% %...>%
 #' @importFrom stats median setNames
