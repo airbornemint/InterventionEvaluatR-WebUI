@@ -1,6 +1,6 @@
-import::from(plyr, compact)
-import::from(shinyBS, bsButton)
-import::from(magrittr, "%<>%")
+library(plyr)
+library(shinyBS)
+library(magrittr)
 
 md_page = function(...) {
   tags$html(

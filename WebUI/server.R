@@ -1,39 +1,27 @@
-#
-# This is the server logic of a Shiny web application. You can run the
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
 library(future)
 library(promises)
 library(shiny)
 library(InterventionEvaluatR)
 library(uuid)
-library(dplyr)
 library(ggplot2)
+library(magrittr)
+library(plotly)
+library(shinyBS)
+library(shinyjs)
+library(shinyWidgets)
+library(lubridate)
+library(plyr)
+library(dplyr)
+library(htmltools)
+library(uuid)
+library(brew)
+library(tools)
+
 
 source("analysis.R")
 source("common.R")
 source("worker.R")
 source("results.R")
-
-import::from(magrittr, "%>%")
-import::from(shiny, validate)
-import::from(plotly, ggplotly, renderPlotly)
-import::from(shinyBS, updateButton)
-import::from(shinyjs, hidden, toggleElement, toggleClass)
-import::from(shinyWidgets, airMonthpickerInput)
-import::from(lubridate, "%m+%", "%m-%", days, "day<-")
-import::from(ggplot2, geom_blank, geom_errorbarh)
-import::from(plyr, llply)
-import::from(dplyr, filter)
-import::from(htmltools, tagAppendAttributes)
-import::from(uuid, UUIDgenerate)
-import::from(brew, brew)
-import::from(tools, texi2pdf)
 
 plan(multisession)
 

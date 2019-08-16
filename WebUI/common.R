@@ -1,4 +1,4 @@
-import::from(plyr, compact)
+library(plyr)
 
 dateFormats = list(
   `YYYY-MM-DD`="%Y-%m-%d",
