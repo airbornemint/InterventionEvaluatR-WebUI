@@ -28,7 +28,7 @@ app.vis = function(analysis, analysisTypes) {
   
   if ('univariate' %in% analysisTypes) {
     univariatePlots = setNames(llply(seq_along(analysis$groups), function(idx) 
-      evaluatr.univariate.plot(analysis$results$univariate[[idx]])
+      evaluatr.univariate.plot(analysis$results$univariate[[idx]], plot.labs=NULL)
     ), groupNames)
   } else {
     univariatePlots = NULL
