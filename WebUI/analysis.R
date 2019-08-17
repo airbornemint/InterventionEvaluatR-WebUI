@@ -54,7 +54,7 @@ app.vis = function(analysis, analysisTypes) {
         impact = list(
           tsMonthly=impactPlots$groups[[group]]$pred_best + ggtitle(NULL),
           tsYearly=impactPlots$groups[[group]]$pred_best_agg + ggtitle(NULL),
-          prevented=impactPlots$groups[[group]]$cumsum_prevented + ggtitle(NULL)
+          prevented=impactPlots$groups[[group]]$cumsum_prevented + ggtitle(NULL) + theme(panel.grid.major.y=element_line(color="lightgrey"))
         )
       } else {
         impact = list()
