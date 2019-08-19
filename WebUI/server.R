@@ -171,9 +171,9 @@ shinyServer(function(input, output, session) {
   # Set up reactive data display
   ############################################################
   
-  plotlyOptions = function(plot) {
+  plotlyOptions = function(plot, staticPlot=FALSE, hovermode="x") {
     plot %>% plotly::config(
-      staticPlot=TRUE,
+      staticPlot=staticPlot,
       editable=FALSE,
       scrollZoom=FALSE,
       doubleClick=FALSE,
@@ -182,6 +182,8 @@ shinyServer(function(input, output, session) {
       displayModeBar=FALSE,
       showSendToCloud=FALSE,
       displaylogo=FALSE
+    ) %>% plotly::layout(
+      hovermode=hovermode
     )
   }
   
@@ -791,7 +793,7 @@ shinyServer(function(input, output, session) {
 
               if ("univariate" %in% analysisTypes) {
                 output[[visId("univariate", idx)]] = renderPlotly(
-                  ggplotly(plots$univariate) %>% plotlyOptions(),
+                  ggplotly(plots$univariate) %>% plotlyOptions(staticPlot=TRUE),
                   env=plotlyEnv
                 )
                 outputOptions(output, visId("univariate", idx), suspendWhenHidden=FALSE)
