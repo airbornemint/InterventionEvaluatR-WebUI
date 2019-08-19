@@ -625,19 +625,23 @@ shinyServer(function(input, output, session) {
   
   output$resultsUnivariate = reactive({})
   outputOptions(output, 'resultsUnivariate', suspendWhenHidden=FALSE)
-
+  
+  output$resultsPendingUI = renderUI({
+    tags$section(
+      id="results-pending",
+      div(
+        class="navbar results-heading mb-3 mt-3 justify-content-center primary-color",
+        p(class="h3 p-2 m-0 text-white", "Analysis in progress…"),
+        md_spinner("spinner-results") %>% tagAppendAttributes(class="text-white")
+      )
+    )
+  })
+  outputOptions(output, 'resultsPendingUI', suspendWhenHidden=FALSE)
+  
   observeEvent(input$analyze, {
     # Loading progress UI
-    output$resultsUI = renderUI({
-      tags$section(
-        div(
-          class="navbar results-heading mb-3 mt-3 justify-content-center primary-color",
-          p(class="h3 p-2 m-0 text-white", "Analysis in progress…"),
-          md_spinner("spinner-results") %>% tagAppendAttributes(class="text-white")
-        )
-      )
-    })
-
+    shinyjs::show("results-pending")
+    
     withLogErrors({
       session$sendCustomMessage("activate_tab", list(tab="nav-results-tab"))
       if (analysisStatus() == ANALYSIS_RUNNING) {
@@ -818,6 +822,8 @@ shinyServer(function(input, output, session) {
                 outputOptions(output, visId("prevented", idx), suspendWhenHidden=FALSE)
               }
             }
+            output$resultsPendingUI = renderUI({
+            })
           })
         }) %...!% (function(error) {
           print("Analysis failed")

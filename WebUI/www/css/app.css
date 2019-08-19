@@ -51,6 +51,10 @@
   align-items: stretch;
 }
 
+#results-pending {
+  display: none;
+}
+
 #resultsUI .accordion > .card > .card-header button.btn {
   text-transform: none;
 }
