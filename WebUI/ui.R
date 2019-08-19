@@ -140,7 +140,7 @@ md_page(
                                     inputId = "postDuration",
                                     label = "How long after its introduction did the vaccine become established in the population?",
                                     choices=postDurations,
-                                    selected=12
+                                    selected=24
                                 ),
                                 nextButton("nextAnalysis", "periodsSpinner"),
                                 summary=uiOutput("periodsSummary")
