@@ -629,17 +629,13 @@ shinyServer(function(input, output, session) {
   observeEvent(input$analyze, {
     # Loading progress UI
     output$resultsUI = renderUI({
-      groups = llply(seq_along(input$analysisGroups), function(idx) {
-        groupName = input$analysisGroups[idx]
-        
-        tags$section(
-          div(
-            class="navbar results-heading mb-3 mt-3 justify-content-center primary-color",
-            p(class="h3 p-2 m-0 text-white", sprintf("%s %s", input$groupCol, groupName)),
-            md_spinner(sprintf("spinner-results-group-%s", idx)) %>% tagAppendAttributes(class="text-white")
-          )
+      tags$section(
+        div(
+          class="navbar results-heading mb-3 mt-3 justify-content-center primary-color",
+          p(class="h3 p-2 m-0 text-white", "Analysis in progress…"),
+          md_spinner("spinner-results") %>% tagAppendAttributes(class="text-white")
         )
-      })
+      )
     })
 
     withLogErrors({
@@ -715,54 +711,72 @@ shinyServer(function(input, output, session) {
             
             output$resultsUI = renderUI({
               # One stepper step for each analysis group
-              tagList(llply(seq_along(results$plots), function(idx) {
-                groupName = names(results$plots)[idx]
-                
-# item=tableOutput(visId("rateRatios", idx)) %>% tagAppendAttributes(class="table-wrap"),
-
+              tagList(
+                tagList(llply(seq_along(results$plots), function(idx) {
+                  groupName = names(results$plots)[idx]
+                  
+  # item=tableOutput(visId("rateRatios", idx)) %>% tagAppendAttributes(class="table-wrap"),
+  
+                  tags$section(
+                    div(
+                      class="navbar results-heading mt-3 mb-3 justify-content-center primary-color",
+                      p(class="h3 p-2 m-0 text-white", groupName)
+                    ),
+                    md_accordion(
+                      id=sprintf("acc-results-group-%s", idx),
+                      md_accordion_card(
+                        visId("prevented", idx),
+                        "Prevented cases",
+                        div(
+                          class="d-flex justify-content-center", 
+                          plotlyOutput(visId("prevented", idx), width="800px")
+                        ),
+                        expanded=TRUE
+                      ),
+                      md_accordion_card(
+                        visId("tsYearly", idx),
+                        "Total cases (yearly)",
+                        div(
+                          class="d-flex justify-content-center", 
+                          plotlyOutput(visId("tsYearly", idx), width="800px")
+                        )
+                      ),
+                      md_accordion_card(
+                        visId("tsMonthly", idx),
+                        "Total cases (monthly)",
+                        div(
+                          class="d-flex justify-content-center", 
+                          plotlyOutput(visId("tsMonthly", idx), width="800px")
+                        )
+                      ),
+                      md_accordion_card(
+                        visId("card-univariate", idx),
+                        "Covariate comparison",
+                        div(
+                          class="d-flex justify-content-center", 
+                          plotlyOutput(visId("univariate", idx), width="800px")
+                        )
+                      )
+                    ) %>% tagAppendAttributes(class="mb-3 mt-3 col-12")
+                  )
+                })),
                 tags$section(
                   div(
-                    class="navbar results-heading mt-3 mb-3 justify-content-center primary-color",
-                    p(class="h3 p-2 m-0 text-white", groupName)
+                    class="navbar results-heading justify-content-center primary-color",
+                    p(class="h3 p-2 m-0 text-white", "Download results")
                   ),
-                  md_accordion(
-                    id=sprintf("acc-results-group-%s", idx),
-                    md_accordion_card(
-                      visId("prevented", idx),
-                      "Prevented cases",
-                      div(
-                        class="d-flex justify-content-center", 
-                        plotlyOutput(visId("prevented", idx), width="800px")
-                      ),
-                      expanded=TRUE
-                    ),
-                    md_accordion_card(
-                      visId("tsYearly", idx),
-                      "Total cases (yearly)",
-                      div(
-                        class="d-flex justify-content-center", 
-                        plotlyOutput(visId("tsYearly", idx), width="800px")
-                      )
-                    ),
-                    md_accordion_card(
-                      visId("tsMonthly", idx),
-                      "Total cases (monthly)",
-                      div(
-                        class="d-flex justify-content-center", 
-                        plotlyOutput(visId("tsMonthly", idx), width="800px")
-                      )
-                    ),
-                    md_accordion_card(
-                      visId("card-univariate", idx),
-                      "Covariate comparison",
-                      div(
-                        class="d-flex justify-content-center", 
-                        plotlyOutput(visId("univariate", idx), width="800px")
-                      )
+                  div(
+                    class="col-12 mb-3 mt-3",
+                    downloadButton('downloadResults', "Download results"),
+                    p("Includes:"),
+                    tags$ul(
+                      tags$li("Report with analysis results (PDF). It contains the same information you see on this page, in a form that you can easily share with others."),
+                      tags$li("Individual plots (PDF). You can use these in your own reports and presentations."),
+                      tags$li("Data file with analysis results (RDS). Advanced users can import this into RStudio for additional analysis or to generate additional plots.")
                     )
-                  ) %>% tagAppendAttributes(class="mb-3 mt-3 col-12")
+                  )
                 )
-              }))
+              )
             })
             
             for(idx in seq_along(results$plots)) {

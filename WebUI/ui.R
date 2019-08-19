@@ -175,25 +175,7 @@ md_page(
                 class="container",
                 md_row(
                     md_column(
-                        tagList(
-                            uiOutput("resultsUI"),
-                            tags$section(
-                                div(
-                                    class="navbar results-heading justify-content-center primary-color",
-                                    p(class="h3 p-2 m-0 text-white", "Download results")
-                                ),
-                                div(
-                                    class="col-12 mb-3 mt-3",
-                                    downloadButton('downloadResults', "Download results"),
-                                    p("Includes:"),
-                                    tags$ul(
-                                        tags$li("Report with analysis results (PDF). It contains the same information you see on this page, in a form that you can easily share with others."),
-                                        tags$li("Individual plots (PDF). You can use these in your own reports and presentations."),
-                                        tags$li("Data file with analysis results (RDS). Advanced users can import this into RStudio for additional analysis or to generate additional plots.")
-                                    )
-                                )
-                            )
-                        )
+                        uiOutput("resultsUI")
                     )
                 )
             )
