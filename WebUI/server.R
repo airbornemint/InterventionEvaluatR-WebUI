@@ -595,7 +595,7 @@ shinyServer(function(input, output, session) {
       )
       
       print("tex")
-      Sys.setenv(LATEX="xelatex")
+      Sys.setenv(PDFLATEX="xelatex")
       texi2pdf(
         file="Report.tex",
         quiet=FALSE
