@@ -727,10 +727,12 @@ shinyServer(function(input, output, session) {
             analysisVis(results)
             
             output$resultsUI = renderUI({
-              # One stepper step for each analysis group
+              # One section for each analysis group
               tagList(
                 tagList(llply(seq_along(results$plots), function(idx) {
                   groupName = names(results$plots)[idx]
+                  
+                  prevented = results$prevented[[idx]]
                   
   # item=tableOutput(visId("rateRatios", idx)) %>% tagAppendAttributes(class="table-wrap"),
   
@@ -750,7 +752,10 @@ shinyServer(function(input, output, session) {
                           denomCol = input$denomCol,
                           groupName = groupName,
                           postStart = dataPostStart() %>% strftime(format="%B %Y"),
-                          postEnd = max(dataTime()) %>% strftime(format="%B %Y")
+                          postEnd = max(dataTime()) %>% strftime(format="%B %Y"),
+                          prevented = format(prevented$median, big.mark = " "),
+                          preventedLCL = format(prevented$lcl, big.mark = " "),
+                          preventedUCL = format(prevented$ucl, big.mark = " ")
                         ),
                         expanded=TRUE
                       ),

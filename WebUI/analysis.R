@@ -61,6 +61,15 @@ app.vis = function(analysis, analysisTypes) {
       }
       
       c(univariate, impact)
+    }), groupNames),
+    prevented=setNames(llply(seq_along(analysis$groups), function(group) {
+      prevented = as.data.frame(analysis$results$impact$best$cumsum_prevented[, , group])
+      prevented = prevented[nrow(prevented),] %>% round() %>% signif(3)
+      list(
+        median=prevented[["50%"]],
+        lcl=prevented[["2.5%"]],
+        ucl=prevented[["97.5%"]]
+      )
     }), groupNames)
   )
   
