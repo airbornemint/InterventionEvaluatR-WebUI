@@ -1,6 +1,40 @@
-\documentclass[11pt]{scrreprt}
-
+\documentclass[11pt,svgnames]{scrreprt}
+\usepackage[margin=1in]{geometry}
 \usepackage{graphicx}
+
+\usepackage{tikz}
+\usepackage{fontspec}
+\usepackage[explicit]{titlesec}
+
+\newfontface\robotobold{Roboto-Medium}
+\newfontface\robotolight{Roboto-Light}
+
+\definecolor{ChapterColor}{RGB}{66,133,244}
+\definecolor{SectionColor}{RGB}{248,248,248}
+\definecolor{SectionTextColor}{RGB}{0,123,255}
+
+\titleformat{\chapter}
+  {\normalfont\huge\bfseries}{}{0em}
+  {%
+  \begin{tikzpicture}
+  \node[inner xsep=0pt,text width=\textwidth,
+    align=left,left color=ChapterColor,right color=ChapterColor] 
+    {\parbox[t][2em]{\linewidth}{\robotobold\center\textcolor{White}{#1}}};
+  \end{tikzpicture}%
+  }
+
+\titleformat{\section}
+  {\normalfont\LARGE\bfseries}{}{0em}
+  {%
+  \begin{tikzpicture}
+  \node[inner xsep=0pt,text width=\textwidth,
+    align=left,left color=SectionColor,right color=SectionColor] 
+    {\parbox[c][2em]{\linewidth}{\qquad\robotolight\raggedright\textcolor{SectionTextColor}{#1}}};
+  \end{tikzpicture}%
+  }
+
+\titlespacing\chapter{0em}{0em}{0em}
+%\titlespacing\section{0em}{0em}{0em}
 
 \begin{document}
 

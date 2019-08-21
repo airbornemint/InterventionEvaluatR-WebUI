@@ -24,12 +24,12 @@ ARG R_RUN_APT_DEPENDENCIES="libcurl3-gnutls libssh2-1 libxml2 zlib1g libgit2-24 
 RUN apt-get install -y -qq --no-install-recommends ${R_BUILD_APT_DEPENDENCIES}
 
 ### Setup misc other packages needed to run our build
-ARG BUILD_APT_DEPENDENCIES="tzdata locales"
+ARG BUILD_APT_DEPENDENCIES="tzdata locales fontconfig"
 #ARG BUILD_APT_DEPENDENCIES="tzdata locales qpdf pandoc pandoc-citeproc"
 RUN apt-get install -y -qq --no-install-recommends ${BUILD_APT_DEPENDENCIES}
 
 ### Setup packages needed to run our app
-ARG APT_DEPENDENCIES="texinfo texlive"
+ARG APT_DEPENDENCIES="texinfo texlive texlive-xetex"
 RUN apt-get install -y -qq --no-install-recommends ${APT_DEPENDENCIES}
 
 ### Install required R packages. Doing it this way allows docker to cache packrat state and not rebuild everything when app source changes in a way that doesn't affect package dependencies
@@ -48,6 +48,11 @@ RUN rm /etc/timezone
 RUN rm /etc/localtime
 RUN dpkg-reconfigure --frontend noninteractive tzdata
 RUN update-locale --reset LANG=en_US.utf8 LANGUAGE=en_US LC_ALL=en_US.utf8 LC_CTYPE=en_US.utf8
+
+### Install fonts
+COPY www/fonts /tmp/fonts
+RUN mv /tmp/fonts/*/*.ttf /usr/share/fonts
+RUN fc-cache -f -v
 
 ### Cleanup
 RUN apt-get autoremove -y
