@@ -1,3 +1,14 @@
+<%
+  `%|%` = function(a, b) b(a)
+
+  formatMonth = function(date) {
+    strftime(date, "%B %Y")
+  }
+  
+  latex = function(str) {
+    kableExtra:::escape_latex(str)
+  }
+%>
 \documentclass[11pt,svgnames]{scrreprt}
 \usepackage[margin=1in]{geometry}
 \usepackage{graphicx}
@@ -36,16 +47,26 @@
 \titlespacing\chapter{0em}{0em}{0em}
 %\titlespacing\section{0em}{0em}{0em}
 
+\title{InterventionEvaluatR Report}
+
 \begin{document}
+
+\maketitle
 
 <%
 for(idx in seq_along(results$plots)) { 
   groupName = names(results$plots)[idx]
-  groupNameL = kableExtra:::escape_latex(groupName)
   groupFileName = gsub("[^a-zA-Z0-9_.-]", "-", groupName)
+  prevented = "XXX"
+  preventedLCL = "YYY"
+  preventedUCL = "ZZZ"
 %>
 
-\chapter*{<%= groupNameL %>}
+\section*{<%= groupName %|% latex %>}
+
+\subsection*{Summary}
+
+The analysis of \texttt{<%= outcomeCol %|% latex %> / <%= denomCol %|% latex %>} in \texttt{<%= groupName %|% latex %>} found that vaccine introduced in <%= postStart %|% formatMonth %|% latex %> prevented <%= prevented %|% latex %> (95\% CI: <%= preventedLCL %|% latex %>–<%= preventedUCL %|% latex %>) cases between <%= postStart %|% formatMonth %|% latex %> and <%= postEnd %|% formatMonth %|% latex %>.
 
 \section*{Prevented Cases}
 
