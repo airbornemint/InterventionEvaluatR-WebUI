@@ -587,14 +587,24 @@ shinyServer(function(input, output, session) {
         )
       }
       
-      print(tempDir)
-      print("brew")
+      env = new.env()
+      env$outcomeCol = input$outcomeCol
+      env$denomCol = input$denomCol
+      env$groupName = groupName
+      env$postStart = dataPostStart()
+      env$postEnd = max(dataTime())
+      
+      message("brew")
+      message(tempDir)
+      
       brew(
         file=sprintf("%s/Report.template.tex", oldWD), 
-        output="Report.tex"
+        output="Report.tex",
+        envir=env
       )
       
-      print("tex")
+      message("tex")
+
       Sys.setenv(PDFLATEX="xelatex")
       texi2pdf(
         file="Report.tex",
@@ -732,13 +742,25 @@ shinyServer(function(input, output, session) {
                     md_accordion(
                       id=sprintf("acc-results-group-%s", idx),
                       md_accordion_card(
+                        visId("summary", idx),
+                        "Summary",
+                        htmlTemplate(
+                          "results.html",
+                          outcomeCol = input$outcomeCol,
+                          denomCol = input$denomCol,
+                          groupName = groupName,
+                          postStart = dataPostStart() %>% strftime(format="%B %Y"),
+                          postEnd = max(dataTime()) %>% strftime(format="%B %Y")
+                        ),
+                        expanded=TRUE
+                      ),
+                      md_accordion_card(
                         visId("prevented", idx),
                         "Prevented cases",
                         div(
                           class="d-flex justify-content-center", 
                           plotlyOutput(visId("prevented", idx), width="800px")
-                        ),
-                        expanded=TRUE
+                        )
                       ),
                       md_accordion_card(
                         visId("tsYearly", idx),
