@@ -341,7 +341,7 @@ shinyServer(function(input, output, session) {
   output$outcomeColUI <- renderUI({
     selectInput(
       inputId = "outcomeCol",
-      label = "Outcome:",
+      label = "Which is the outcome (incidence or incidence rate) variable in your data?",
       choices = c("", setdiff(names(inputData()), names(dateColumns(inputData()))))
     )
   })
@@ -350,7 +350,7 @@ shinyServer(function(input, output, session) {
   output$denomColUI <- renderUI({
     selectInput(
       inputId = "denomCol",
-      label = "Denominator:",
+      label = "Which is the denominator variable in your data?",
       choices = c(`No denominator`="", setdiff(names(inputData()), names(dateColumns(inputData()))))
     )
   })
@@ -360,7 +360,7 @@ shinyServer(function(input, output, session) {
     if (dataNeedsGroup()) {
       selectInput(
         inputId = "groupCol",
-        label = "Group:",
+        label = "Your data contains multiple observations for each point in time. Which is the grouping variable in your data?",
         choices = c(`No grouping`="", setdiff(names(inputData()), names(dateColumns(inputData()))))
       )
     }
