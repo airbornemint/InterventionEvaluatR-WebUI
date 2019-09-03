@@ -1,4 +1,5 @@
 library(plyr)
+library(rmarkdown)
 
 dateFormats = list(
   `YYYY-MM-DD`="%Y-%m-%d",
@@ -77,3 +78,24 @@ nextButton = function(buttonId, spinnerId, title="Next", disabled=TRUE) {
   )
 }
 
+# Render using Rmarkdown, then read into shiny HTML
+renderHTML = function(input, ...) {
+  format = html_document(template=NULL, self_contained = FALSE)
+  format$pandoc$args = format$pandoc$args[format$pandoc$args != "--standalone"]
+  print(format$pandoc$args)
+  print("AAA")
+  
+  args = c(
+    list(...),
+    list(
+      input = input,
+      output_file = tempfile("renderHTML", fileext=".html"),
+      output_format = format
+    )
+  )
+  print(args)
+  print("BBB")
+  
+  do.call(render, args)
+  HTML(readLines(args$output_file))
+}
