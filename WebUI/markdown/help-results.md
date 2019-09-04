@@ -1,10 +1,4 @@
-:::: { #help-toggle }
-
-:::::: { #help-container }
-
-:::::::: { #help .card }
-
-:::::::::: { #help-load .help-section .card-body }
+:::: { #help-load .help-section .card-body }
 
 # Loading data
 
@@ -26,17 +20,17 @@ Your data must be a CSV file with the following columns:
 * If the outcome variable is incidence, then a separate column containing the denominator should be included.
 * Any other relevant variables you want to include as predictors in the analysis.
 
-::::::::::
+::::
 
-:::::::::: { #help-date .help-section .card-body }
+:::: { #help-date .help-section .card-body }
 
 # Selecting time variable
 
 Choose which variable in your data contains the date of the observations. Only variables that contain valid dates are shown here.
 
-::::::::::
+::::
 
-:::::::::: { #help-outcome .help-section .card-body }
+:::: { #help-outcome .help-section .card-body }
 
 # Selecting outcome
 
@@ -46,9 +40,9 @@ If your data is grouped (for example, by age), then you must specify which varia
 
 If the outcome variable you selected above is incidence (rather than incidence rate), then you also need to select the denominator variable.
 
-::::::::::
+::::
 
-:::::::::: { #help-periods .help-section .card-body }
+:::: { #help-periods .help-section .card-body }
 
 # Selecting analysis
 
@@ -56,26 +50,12 @@ Specify the month in which the vaccine was introduced.
 
 Also specify how long it took the vaccine to become established in the population. If you are unsure, 24 months is a good initial choice.
                 ),
-::::::::::
+::::
 
-:::::::::: { #help-analysis .help-section .card-body }
+:::: { #help-analysis .help-section .card-body }
 
 # Running the analysis
 
 If you specified a group variable above, then you can choose to exclude some groups from the analysis. The analysis takes several minutes for each group, so excluding unneeded groups is definitely a good idea.
-
-::::::::::
-
-:::::::::: { #help-results .help-section .card-body }
-
-# Interpreting the analysis
-
-Lorem ipsum.
-
-::::::::::
-
-::::::::
-
-::::::
 
 ::::

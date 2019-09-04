@@ -80,22 +80,54 @@ nextButton = function(buttonId, spinnerId, title="Next", disabled=TRUE) {
 
 # Render using Rmarkdown, then read into shiny HTML
 renderHTML = function(input, ...) {
-  format = html_document(template=NULL, self_contained = FALSE)
-  format$pandoc$args = format$pandoc$args[format$pandoc$args != "--standalone"]
-  print(format$pandoc$args)
-  print("AAA")
-  
+  # rmarkdown normally outputs to a file, and creates a complete (standalone) HTML document
+  # But we want to return the output as an object, and it needs to be an HTML fragment
   args = c(
     list(...),
     list(
       input = input,
       output_file = tempfile("renderHTML", fileext=".html"),
-      output_format = format
+      output_format = html_fragment()
     )
   )
-  print(args)
-  print("BBB")
-  
   do.call(render, args)
+  
+  # Then read the file back as HTML
   HTML(readLines(args$output_file))
 }
+
+renderLaTeX = function(input, ...) {
+  # rmarkdown normally outputs to a file, and creates a complete (standalone) HTML document
+  # But we want to return the output as an object, and it needs to be an HTML fragment
+  args = c(
+    list(...),
+    list(
+      input = input,
+      output_file = tempfile("renderLaTeX", fileext=".tex"),
+      output_format = latex_fragment(),
+      quiet=TRUE
+    )
+  )
+  do.call(render, args)
+  
+  # Then read the file back
+  paste(readLines(args$output_file), collapse="\n")
+}
+
+# Default plotly options for all plots
+plotlyOptions = function(plot, staticPlot=FALSE, hovermode="x") {
+  plot %>% plotly::config(
+    staticPlot=staticPlot,
+    editable=FALSE,
+    scrollZoom=FALSE,
+    doubleClick=FALSE,
+    showAxisDragHandles=FALSE,
+    showLink=FALSE,
+    displayModeBar=FALSE,
+    showSendToCloud=FALSE,
+    displaylogo=FALSE
+  ) %>% plotly::layout(
+    hovermode=hovermode
+  )
+}
+

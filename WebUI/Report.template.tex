@@ -1,15 +1,11 @@
 <%
   `%|%` = function(a, b) b(a)
 
-  formatMonth = function(date) {
-    strftime(date, "%B %Y")
-  }
-  
   latex = function(str) {
     kableExtra:::escape_latex(str)
   }
 %>
-\documentclass[11pt,svgnames]{scrreprt}
+\documentclass[11pt,svgnames]{report}
 \usepackage[margin=1in]{geometry}
 \usepackage{graphicx}
 
@@ -17,6 +13,7 @@
 \usepackage{fontspec}
 \usepackage[explicit]{titlesec}
 
+\setmainfont{Roboto-Light}
 \newfontface\robotobold{Roboto-Medium}
 \newfontface\robotolight{Roboto-Light}
 
@@ -54,19 +51,24 @@
 \maketitle
 
 <%
-for(idx in seq_along(results$plots)) { 
-  groupName = names(results$plots)[idx]
+for(idx in seq_along(analysis$results$groups)) { 
+  group = analysis$results$groups[[idx]]
+  groupName = group$name
   groupFileName = gsub("[^a-zA-Z0-9_.-]", "-", groupName)
-  prevented = "XXX"
-  preventedLCL = "YYY"
-  preventedUCL = "ZZZ"
 %>
 
 \section*{<%= groupName %|% latex %>}
 
 \subsection*{Summary}
 
-The analysis of \texttt{<%= outcomeCol %|% latex %> / <%= denomCol %|% latex %>} in \texttt{<%= groupName %|% latex %>} found that vaccine introduced in <%= postStart %|% formatMonth %|% latex %> prevented <%= prevented %|% latex %> (95\% CI: <%= preventedLCL %|% latex %>–<%= preventedUCL %|% latex %>) cases between <%= postStart %|% formatMonth %|% latex %> and <%= postEnd %|% formatMonth %|% latex %>.
+<%=
+renderLaTeX(
+  "markdown/results-group-summary.Rmd", envir=new_environment(data=list(
+    setup=analysis$setup,
+    group=group
+  ), parent=baseenv())
+)
+%>
 
 \section*{Prevented Cases}
 
