@@ -107,8 +107,8 @@ reformatAnalysis = function(analysis, analysisTypes, info) {
   }
   
   reformatted$dataIssues = list(
-    list(description="Nothing to see here, just a test"),
-    list(description="Nothing to see here, just another test")
+    # list(description="Nothing to see here, just a test"),
+    # list(description="Nothing to see here, just another test")
   )
   
   reformatted
