@@ -18,6 +18,7 @@ library(uuid)
 library(brew)
 library(tools)
 library(rlang)
+library(stringr)
 
 source("common.R")
 source("mdbootstrap.R")

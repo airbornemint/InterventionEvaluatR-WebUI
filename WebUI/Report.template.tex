@@ -41,6 +41,9 @@
   \end{tikzpicture}%
   }
 
+% This is used by pandoc, but we don't care
+\def\tightlist{}
+
 \titlespacing\chapter{0em}{0em}{0em}
 %\titlespacing\section{0em}{0em}{0em}
 
@@ -49,6 +52,21 @@
 \begin{document}
 
 \maketitle
+
+\section*{Analysis Summary}
+
+<%=
+renderLaTeX(
+  "markdown/results-summary.Rmd", envir=new_environment(data=list(
+    setup = analysis$setup,
+    dataIssues = analysis$dataIssues,
+    # Also some helpers
+    rmd.if = rmd.if,
+    rmd.endif = rmd.endif,
+    rmd.foreach = rmd.foreach
+  ), parent=baseenv())
+)
+%>
 
 <%
 for(idx in seq_along(analysis$results$groups)) { 

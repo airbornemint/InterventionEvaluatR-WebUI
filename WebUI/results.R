@@ -39,6 +39,7 @@ results.server = function(input, output, session, setup) {
   analysisStatus = reactiveVal(ANALYSIS_READY)
   completedAnalysis = reactiveVal(NULL)
   reformattedAnalysis = reactiveVal(NULL)
+  saveData = reactiveVal(NULL)
   
   output$analysisStatus = renderText({
     analysisStatus()
@@ -71,10 +72,10 @@ results.server = function(input, output, session, setup) {
       } else {
         analysisStatus(ANALYSIS_RUNNING)
         
-        analysisData = setup$preparedData()
+        fullAnalysisData = setup$preparedData()
         
         if (checkNeed(input$analysisGroups)) {
-          analysisData %<>% filter_at(input$groupCol, function(group) group %in% input$analysisGroups)
+          analysisData = fullAnalysisData %>% filter_at(input$groupCol, function(group) group %in% input$analysisGroups)
           groups = input$analysisGroups
         } else {
           groups = NULL
@@ -85,20 +86,26 @@ results.server = function(input, output, session, setup) {
         print("Analysis setup:")
         print(params)
         
-        params = c(
+        fullParams = c(
           params,
           list(
             data=analysisData
           )
         )
+
+        # Need to pull these out of reactives in order to use them inside a future
         if (checkNeed(setup$precomputedAnalysis())) {
           precomputedAnalysis = setup$precomputedAnalysis()
         } else {
           precomputedAnalysis = NULL
+          userInput = setup$userInput()
+          userInput$info$analysisDate = now()
+          setup$userInput(userInput)
         }
+        info = setup$userInput()$info
         
         analysisTypes = input$analysisTypes
-        
+
         future({
           withLogErrors({
             # If the user uploaded precomputed results, and their current analysis settings are compatible with them, use them
@@ -117,7 +124,7 @@ results.server = function(input, output, session, setup) {
               
               future({
                 withLogErrors({
-                  performAnalysis(params, analysisTypes)
+                  performAnalysis(fullParams, analysisTypes)
                 })
               }) %>% value()
             }
@@ -127,8 +134,17 @@ results.server = function(input, output, session, setup) {
           analysisStatus(ANALYSIS_DONE)
           completedAnalysis(analysis)
           
-          reformatted = reformatAnalysis(analysis, analysisTypes)
+          reformatted = reformatAnalysis(analysis, analysisTypes, info)
           reformattedAnalysis(reformatted)
+
+          # This is the data that is saved to Results.Rds on download. If you change the format of this data or anything included in it, you need to increment SAVE_VERSION_CURRENT and SAVE_VERSION_COMPATIBLE.
+          saveData(list(
+            version = SAVE_VERSION_CURRENT,
+            data = fullAnalysisData,
+            params = params,
+            info = info,
+            analysis = analysis
+          ))
           results.server.show(input, output, session, reformatted)
         }) %...!% (function(error) {
           print("Analysis failed")
@@ -138,7 +154,7 @@ results.server = function(input, output, session, setup) {
           showNotification(error$message)
         })
         
-        # By constructing a future but returning a NULL, shiny server will continue updating the UI while the future is being computed, which allows us to give progress updates
+        # By constructing a future but returning NULL, shiny server will continue updating the UI while the future is being computed, which allows us to give progress updates
         NULL
       }
     })
@@ -156,80 +172,78 @@ results.server = function(input, output, session, setup) {
       # Output files to a temporary directory
       tempDir = sprintf("%s/%s", tempdir(), UUIDgenerate())
       dir.create(tempDir, recursive=TRUE)
-
-      # Save data in RDS
-      # Note: save all data even if only a subset of groups was analyzed, so that we can come back later and analyze other groups
-      analysis = completedAnalysis()
-      saveRDS(list(
-        version = SAVE_VERSION_CURRENT,
-        data = setup$preparedData(),
-        params = setup$analysisParams(),
-        analysis = analysis
-      ), sprintf("%s/Results.rds", tempDir))
       
-      # Render each plot to a PDF file
-      analysis = reformattedAnalysis()
-      for (idx in seq_along(analysis$results$groups)) {
-        group = analysis$results$groups[[idx]]
-        groupName = group$name
-        groupFileName = gsub("[^a-zA-Z0-9_.-]", "-", groupName)
-        dir.create(sprintf("%s/Plots/%s", tempDir, groupFileName), recursive=TRUE)
-        ggsave(
-          sprintf("%s/Plots/%s/prevented-cases.pdf", tempDir, groupFileName), 
-          group$plots$prevented,
-          width = 4, height = 3
+      withLogErrors({
+        # Save data in RDS
+        # Note: save all data even if only a subset of groups was analyzed, so that we can come back later and analyze other groups
+        saveRDS(saveData(), sprintf("%s/Results.rds", tempDir))
+        
+        # Render each plot to a PDF file
+        analysis = reformattedAnalysis()
+        for (idx in seq_along(analysis$results$groups)) {
+          group = analysis$results$groups[[idx]]
+          groupName = group$name
+          groupFileName = gsub("[^a-zA-Z0-9_.-]", "-", groupName)
+          dir.create(sprintf("%s/Plots/%s", tempDir, groupFileName), recursive=TRUE)
+          ggsave(
+            sprintf("%s/Plots/%s/prevented-cases.pdf", tempDir, groupFileName), 
+            group$plots$prevented,
+            width = 4, height = 3
+          )
+          ggsave(
+            sprintf("%s/Plots/%s/cases-yearly.pdf", tempDir, groupFileName), 
+            group$plots$tsYearly,
+            width = 4, height = 3
+          )
+          ggsave(
+            sprintf("%s/Plots/%s/cases-monthly.pdf", tempDir, groupFileName), 
+            group$plots$tsMonthly,
+            width = 4, height = 3
+          )
+          ggsave(
+            sprintf("%s/Plots/%s/covariate-comparison.pdf", tempDir, groupFileName), 
+            group$plots$univariate,
+            width = 4, height = 3
+          )
+        }
+        
+        message(sprintf("Running brew in %s", tempDir))
+  
+        # Using brew -> latex because rmarkdown is currently unable to output code blocks from a loop, and we need to loop over groups
+        brew(
+          file="Report.template.tex",
+          output=sprintf("%s/Report.tex", tempDir),
+          envir=new_environment(data=list(
+            # LaTeX template needs analysis data
+            analysis=analysis,
+            # and some helpers
+            renderLaTeX=renderLaTeX,
+            new_environment=new_environment,
+            rmd.if=rmd.if,
+            rmd.endif=rmd.endif,
+            rmd.foreach=rmd.foreach
+          ), parent=baseenv())
         )
-        ggsave(
-          sprintf("%s/Plots/%s/cases-yearly.pdf", tempDir, groupFileName), 
-          group$plots$tsYearly,
-          width = 4, height = 3
+  
+        # Change workdir when running LaTeX so its temporary files can be deleted
+        oldWD <- getwd()
+        # Clean up temporary directory on exit
+        on.exit({
+          setwd(oldWD)
+          unlink(tempDir, recursive = TRUE, force = TRUE)
+        })
+        setwd(tempDir)
+        
+        message(sprintf("Running texi2pdf in %s", tempDir))
+  
+        Sys.setenv(PDFLATEX="xelatex")
+        texi2pdf(
+          file="Report.tex"
         )
-        ggsave(
-          sprintf("%s/Plots/%s/cases-monthly.pdf", tempDir, groupFileName), 
-          group$plots$tsMonthly,
-          width = 4, height = 3
-        )
-        ggsave(
-          sprintf("%s/Plots/%s/covariate-comparison.pdf", tempDir, groupFileName), 
-          group$plots$univariate,
-          width = 4, height = 3
-        )
-      }
-      
-      message(sprintf("Running brew in %s", tempDir))
-
-      # Using brew -> latex because rmarkdown is currently unable to output code blocks from a loop, and we need to loop over groups
-      brew(
-        file="Report.template.tex",
-        output=sprintf("%s/Report.tex", tempDir),
-        envir=new_environment(data=list(
-          # LaTeX template needs analysis data
-          analysis=analysis,
-          # and some helpers
-          renderLaTeX=renderLaTeX,
-          new_environment=new_environment
-        ), parent=baseenv())
-      )
-
-      # Change workdir when running LaTeX so its temporary files can be deleted
-      oldWD <- getwd()
-      # Clean up temporary directory on exit
-      on.exit({
-        setwd(oldWD)
-        unlink(tempDir, recursive = TRUE, force = TRUE)
+        
       })
-      setwd(tempDir)
-      
-      message(sprintf("Running texi2pdf in %s", tempDir))
-
-      Sys.setenv(PDFLATEX="xelatex")
-      texi2pdf(
-        file="Report.tex",
-        quiet=FALSE
-      )
-      
       # Zip what we want (the rest is LaTeX garbage)
-      zip(file, c("Plots", "Report.pdf", "Results.rds"))
+      zip(file, c("Plots", "Report.pdf", "Report.tex", "Results.rds"))
     }
   )
   outputOptions(output, 'downloadResults', suspendWhenHidden=FALSE)
@@ -243,6 +257,30 @@ results.server.show = function(input, output, session, analysis) {
     output$resultsUI = renderUI({
       # One section for each analysis group
       tagList(
+        tags$section(
+          div(
+            class="navbar results-heading justify-content-center primary-color",
+            p(class="h3 p-2 m-0 text-white", "Analysis Summary")
+          ),
+          md_accordion(
+            id=sprintf("acc-results-group-%s", idx),
+            md_accordion_card(
+              visId("summary", idx),
+              "Summary",
+              renderHTML(
+                "markdown/results-summary.Rmd", envir=new_environment(data=list(
+                  setup = setup,
+                  dataIssues = analysis$dataIssues,
+                  # Also some helpers
+                  rmd.if = rmd.if,
+                  rmd.endif = rmd.endif,
+                  rmd.foreach = rmd.foreach
+                ), parent=baseenv())
+              ),
+              expanded=TRUE
+            )
+          ) %>% tagAppendAttributes(class="mb-3 mt-3 col-12")
+        ),
         tagList(llply(seq_along(results$groups), function(idx) {
           group = results$groups[[idx]]
           groupName = group$name

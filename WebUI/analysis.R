@@ -24,12 +24,17 @@ performAnalysis = function(params, analysisTypes) {
 }
 
 # Take the output of InterventionEvaluatR and rearrange it into a form that is better suited for what the Web UI needs to do with it
-reformatAnalysis = function(analysis, analysisTypes) {
+reformatAnalysis = function(analysis, analysisTypes, info) {
   # saveRDS(list(analysis=analysis, analysisTypes=analysisTypes), "/tmp/app.plot.rds") # For debugging
   reformatted = list(
     setup = list(
+      dataName = info$name,
+      analysisDate.value = info$analysisDate,
+      dateCol = analysis$date_name,
       outcomeCol = analysis$outcome_name,
       denomCol = analysis$denom_name,
+      groupCol = analysis$group_name,
+      preStart.value = analysis$pre_period[1],
       postStart.value = analysis$post_period[1],
       postEnd.value = analysis$post_period[2],
       analysisTypes = analysisTypes,
@@ -43,9 +48,13 @@ reformatAnalysis = function(analysis, analysisTypes) {
   )
   
   # "Month year" with non-breaking space
+  reformatted$setup$preStart = reformatted$setup$preStart.value %>% strftime(format="%B\U00A0%Y")
   reformatted$setup$postStart = reformatted$setup$postStart.value %>% strftime(format="%B\U00A0%Y")
   reformatted$setup$postEnd = reformatted$setup$postEnd.value %>% strftime(format="%B\U00A0%Y")
 
+    # "Month day, year" with non-breaking space
+  reformatted$setup$analysisDate = reformatted$setup$analysisDate.value %>% strftime(format="%B\U00A0%e,\U00A0%Y") %>% str_replace_all(" ", "")
+  
   if ('univariate' %in% analysisTypes) {
     for(idx in seq_along(analysis$groups)) {
       reformatted$results$groups[[idx]]$plots$univariate = evaluatr.univariate.plot(analysis$results$univariate[[idx]], plot.labs=NULL)
@@ -97,10 +106,15 @@ reformatAnalysis = function(analysis, analysisTypes) {
     })
   }
   
+  reformatted$dataIssues = list(
+    list(description="Nothing to see here, just a test"),
+    list(description="Nothing to see here, just another test")
+  )
+  
   reformatted
 }
 
 # This is the version number for the "download results" rds file. Change if making incompatible changes.
-SAVE_VERSION_CURRENT = 10
+SAVE_VERSION_CURRENT = 14
 # This is oldest version number for the "download results" rds file that we still accept. Change when dropping support for loading older files.
-SAVE_VERSION_COMPATIBLE = 10
+SAVE_VERSION_COMPATIBLE = 14

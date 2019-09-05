@@ -112,13 +112,15 @@ setup.server = function(input, output, session) {
   
   setup = new_environment()
   
-  userInput = reactiveVal() # Will be list(name, input, params, results)
+  setup$userInput = reactiveVal() # Will be list(name, input, params, results)
   
   observe({
     validate(need(input$stockDataset, FALSE))
     md_update_spinner(session, "loadSpinner", visible=TRUE)
-    userInput(list(
-      name=names(which(stockDatasets == input$stockDataset)),
+    setup$userInput(list(
+      info=list(
+        name=names(which(stockDatasets == input$stockDataset))
+      ),
       data=switch(
         input$stockDataset,
         pnas_brazil = {
@@ -131,9 +133,9 @@ setup.server = function(input, output, session) {
   
   userInputRDS = function(upload) {
     input = c(
-      readRDS(upload$datapath),
-      name=upload$name
+      readRDS(upload$datapath)
     )
+    input$info$name = upload$name
     if (!is.numeric(input$version) || input$version < SAVE_VERSION_COMPATIBLE) {
       input$analysis = NULL
     }
@@ -143,7 +145,9 @@ setup.server = function(input, output, session) {
   userInputCSV = function(upload) {
     list(
       data=read.csv(upload$datapath),
-      name=upload$name
+      info=list(
+        name=upload$name
+      )
     )
   }
   
@@ -154,28 +158,29 @@ setup.server = function(input, output, session) {
     upload = input$userDataset[1,]
     # We accept rds and csv input. Try rds first.
     tryCatch(
-      userInput(userInputRDS(upload)),
+      setup$userInput(userInputRDS(upload)),
       error = function(e) {
-        userInput(userInputCSV(upload))
+        setup$userInput(userInputCSV(upload))
       }
     )
   })
   
   # This is the input data for analysis  
   inputData = reactive({
-    validate(need(userInput(), FALSE))
-    userInput()$data
+    validate(need(setup$userInput(), FALSE))
+    setup$userInput()$data
   })
   
   # Pre-computed results, if uploaded by the user
   inputAnalysis = reactive({
-    validate(need(userInput(), FALSE))
-    userInput()$analysis
+    validate(need(setup$userInput(), FALSE))
+    setup$userInput()$analysis
   })
   
+  # Params of pre-computed results, if uploaded by the user
   inputParams = reactive({
-    validate(need(userInput(), FALSE))
-    userInput()$params
+    validate(need(setup$userInput(), FALSE))
+    setup$userInput()$params
   })
   
   dataDateColumns = reactive({
@@ -526,9 +531,9 @@ setup.server = function(input, output, session) {
   ############################################################
   
   output$loadSummary = reactive({
-    validate(need(userInput()$name, FALSE))
-    md_update_spinner(session, "loadSpinner", hidden=checkNeed(userInput()$name))
-    userInput()$name
+    validate(need(setup$userInput()$info$name, FALSE))
+    md_update_spinner(session, "loadSpinner", hidden=checkNeed(setup$userInput()$info$name))
+    setup$userInput()$info$name
   })
   
   output$dateSummary = renderUI({
