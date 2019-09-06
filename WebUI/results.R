@@ -297,75 +297,30 @@ results.server.show = function(input, output, session, analysis) {
             ),
             md_accordion(
               id=sprintf("acc-results-group-%s", idx),
-              md_accordion_card(
-                visId("summary", idx),
-                "Summary",
-                renderHTML(
-                  "markdown/results-group-summary.Rmd", envir=new_environment(data=list(
-                    setup=setup,
-                    group=group
-                  ), parent=baseenv())
-                ),
-                expanded=TRUE
+              results_text_panel(
+                idx, "summary", "Summary", "markdown/results-group-summary.Rmd", list(setup=setup, group=group), expanded=TRUE
+              ),
+              results_plot_panel(
+                idx, "prevented", "Prevented cases", "markdown/results-explainer-prevented.md"
+              ),
+              results_plot_panel(
+                idx, "tsYearly", "Total cases (yearly)", "markdown/results-explainer-yearly.md"
+              ),
+              results_plot_panel(
+                idx, "univariate", "Covariate comparison", "markdown/results-explainer-univariate.md"
               ),
               md_accordion_card(
-                visId("prevented", idx),
-                "Prevented cases",
-                div(
-                  class="d-flex justify-content-between", 
-                  plotlyOutput(visId("prevented", idx), width="800px"),
-                  div(
-                    class="explainer card border-light mb-3",
-                    div(
-                      class="card-body text-muted",
-                      renderHTML("markdown/results-explainer-prevented.md")
-                    )
-                  )
-                )
-              ),
-              md_accordion_card(
-                visId("tsYearly", idx),
-                "Total cases (yearly)",
+                visId("card-supplemental", idx),
+                body.class=NULL,
+                "Supplemental information",
                 div(
                   class="d-flex justify-content-center", 
-                  plotlyOutput(visId("tsYearly", idx), width="800px"),
-                  div(
-                    class="explainer card border-light mb-3",
-                    div(
-                      class="card-body text-muted",
-                      renderHTML("markdown/results-explainer-yearly.md")
+                  md_accordion(
+                    id=sprintf("acc-supplemental-group-%s", idx),
+                    supplemental_results_plot_panel(
+                      idx, "tsMonthly", "Total cases (monthly)", "markdown/results-explainer-monthly.md"
                     )
-                  )
-                )
-              ),
-              md_accordion_card(
-                visId("tsMonthly", idx),
-                "Total cases (monthly)",
-                div(
-                  class="d-flex justify-content-center", 
-                  plotlyOutput(visId("tsMonthly", idx), width="800px"),
-                  div(
-                    class="explainer card border-light mb-3",
-                    div(
-                      class="card-body text-muted",
-                      renderHTML("markdown/results-explainer-monthly.md")
-                    )
-                  )
-                )
-              ),
-              md_accordion_card(
-                visId("card-univariate", idx),
-                "Covariate comparison",
-                div(
-                  class="d-flex justify-content-center", 
-                  plotlyOutput(visId("univariate", idx), width="800px"),
-                  div(
-                    class="explainer card border-light mb-3",
-                    div(
-                      class="card-body text-muted",
-                      renderHTML("markdown/results-explainer-univariate.md")
-                    )
-                  )
+                  ) %>% tagAppendAttributes(class="supplemental")
                 )
               )
             ) %>% tagAppendAttributes(class="mb-3 mt-3 col-12")
@@ -440,4 +395,72 @@ visId = function(type, idx) {
 
 analysisStatusDetail <- function(text) {
   print(text)
+}
+
+results_text_panel = function(idx, id, title, template, substitutions, expanded=FALSE) {
+  md_accordion_card(
+    visId(id, idx),
+    title,
+    div(
+      class="d-flex justify-content-between", 
+      div(
+        id = visId(id, idx),
+        renderHTML(
+          template, envir=new_environment(data=substitutions, parent=baseenv())
+        )
+      )
+    ), expanded=expanded
+  )
+}
+
+results_plot_panel = function(idx, id, title, explainer, expanded=FALSE) {
+  md_accordion_card(
+    visId(id, idx),
+    title,
+    div(
+      class="d-flex justify-content-between", 
+      plotlyOutput(visId(id, idx), width="800px"),
+      div(
+        class="explainer card border-light mb-3",
+        div(
+          class="card-body text-muted",
+          renderHTML(explainer)
+        )
+      )
+    ), expanded=expanded
+  )
+}
+
+supplemental_results_text_panel = function(idx, id, title, template, substitutions, expanded=FALSE) {
+  md_accordion_card(
+    visId(id, idx),
+    span(class="ml-3", title),
+    div(
+      class="d-flex justify-content-between ml-3", 
+      div(
+        id = visId(id, idx),
+        renderHTML(
+          template, envir=new_environment(data=substitutions, parent=baseenv())
+        )
+      )
+    ), expanded=expanded
+  )
+}
+
+supplemental_results_plot_panel = function(idx, id, title, explainer, expanded=FALSE) {
+  md_accordion_card(
+    visId(id, idx),
+    span(class="ml-3", title),
+    div(
+      class="d-flex justify-content-between ml-3", 
+      plotlyOutput(visId(id, idx), width="800px"),
+      div(
+        class="explainer card border-light mb-3",
+        div(
+          class="card-body text-muted",
+          renderHTML(explainer)
+        )
+      )
+    ), expanded=expanded
+  )
 }
