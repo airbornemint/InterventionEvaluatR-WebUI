@@ -16,19 +16,19 @@ Hash: abf9c9b233a449b298d7e069d168c303
 Package: InterventionEvaluatR
 Source: github
 Version: 0.1
-Hash: c175dc77ee93f6e370ddc058f056fb63
-Requires: HDInterval, RcppRoll, dummies, future, ggplot2, htmlTable,
-    listenv, lme4, loo, lubridate, pbapply, plyr, pogit, pomp, reshape,
-    xtable
+Hash: f6500550c8e0785a66468001ad030f9f
+Requires: HDInterval, RcppRoll, coda, dummies, future, ggplot2,
+    htmlTable, listenv, lme4, loo, lubridate, pbapply, plyr, pogit,
+    pomp, reshape, xtable
 GithubRepo: InterventionEvaluatR
 GithubUsername: weinbergerlab
 GithubRef: web-ui
-GithubSha1: 933fd7940e0571ae0f7d1b9302f4e4c6b1e778b4
+GithubSha1: c6d0c97ba451c61a211f79743a4252d02be04a77
 RemoteHost: api.github.com
 RemoteRepo: InterventionEvaluatR
 RemoteUsername: weinbergerlab
 RemoteRef: web-ui
-RemoteSha: 933fd7940e0571ae0f7d1b9302f4e4c6b1e778b4
+RemoteSha: c6d0c97ba451c61a211f79743a4252d02be04a77
 
 Package: R6
 Source: CRAN
