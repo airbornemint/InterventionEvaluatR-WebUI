@@ -44,7 +44,7 @@ If the outcome variable you selected above is incidence (rather than incidence r
 
 :::: { #help-periods .help-section .card-body }
 
-# Selecting analysis
+# Selecting analysis periods
 
 Specify the month in which the vaccine was introduced.
 
