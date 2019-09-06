@@ -312,8 +312,15 @@ results.server.show = function(input, output, session, analysis) {
                 visId("prevented", idx),
                 "Prevented cases",
                 div(
-                  class="d-flex justify-content-center", 
-                  plotlyOutput(visId("prevented", idx), width="800px")
+                  class="d-flex justify-content-between", 
+                  plotlyOutput(visId("prevented", idx), width="800px"),
+                  div(
+                    class="explainer card border-light mb-3",
+                    div(
+                      class="card-body text-muted",
+                      renderHTML("markdown/results-explainer-prevented.md")
+                    )
+                  )
                 )
               ),
               md_accordion_card(
@@ -321,7 +328,14 @@ results.server.show = function(input, output, session, analysis) {
                 "Total cases (yearly)",
                 div(
                   class="d-flex justify-content-center", 
-                  plotlyOutput(visId("tsYearly", idx), width="800px")
+                  plotlyOutput(visId("tsYearly", idx), width="800px"),
+                  div(
+                    class="explainer card border-light mb-3",
+                    div(
+                      class="card-body text-muted",
+                      renderHTML("markdown/results-explainer-yearly.md")
+                    )
+                  )
                 )
               ),
               md_accordion_card(
@@ -329,7 +343,14 @@ results.server.show = function(input, output, session, analysis) {
                 "Total cases (monthly)",
                 div(
                   class="d-flex justify-content-center", 
-                  plotlyOutput(visId("tsMonthly", idx), width="800px")
+                  plotlyOutput(visId("tsMonthly", idx), width="800px"),
+                  div(
+                    class="explainer card border-light mb-3",
+                    div(
+                      class="card-body text-muted",
+                      renderHTML("markdown/results-explainer-monthly.md")
+                    )
+                  )
                 )
               ),
               md_accordion_card(
@@ -337,7 +358,14 @@ results.server.show = function(input, output, session, analysis) {
                 "Covariate comparison",
                 div(
                   class="d-flex justify-content-center", 
-                  plotlyOutput(visId("univariate", idx), width="800px")
+                  plotlyOutput(visId("univariate", idx), width="800px"),
+                  div(
+                    class="explainer card border-light mb-3",
+                    div(
+                      class="card-body text-muted",
+                      renderHTML("markdown/results-explainer-univariate.md")
+                    )
+                  )
                 )
               )
             ) %>% tagAppendAttributes(class="mb-3 mt-3 col-12")
