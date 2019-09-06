@@ -1,4 +1,5 @@
 library(plyr)
+library(rmarkdown)
 
 dateFormats = list(
   `YYYY-MM-DD`="%Y-%m-%d",
@@ -77,3 +78,79 @@ nextButton = function(buttonId, spinnerId, title="Next", disabled=TRUE) {
   )
 }
 
+# Render using Rmarkdown, then read into shiny HTML
+renderToString = function(input, output_file, output_format, ...) {
+  # rmarkdown normally outputs to a file, and creates a complete (standalone) HTML document
+  # But we want to return the output as an object, and it needs to be an HTML fragment
+  args = c(
+    list(...),
+    list(
+      input = input,
+      output_file = output_file,
+      output_format = output_format,
+      quiet = TRUE
+    )
+  )
+  do.call(render, args)
+  
+  # Then read the file back
+  paste(readLines(args$output_file), collapse="\n")
+}
+
+renderHTML = function(input, ...) {
+  HTML(
+    renderToString(input, tempfile("renderHTML", fileext=".html"), html_fragment(), ...)
+  )
+}
+
+renderLaTeX = function(input, ...) {
+  renderToString(input, tempfile("renderLaTeX", fileext=".tex"), latex_fragment(), ...)
+}
+
+renderMarkdown = function(input, ...) {
+  renderToString(input, tempfile("renderMarkdown", fileext=".md"), md_document(), ...)
+}
+
+# Default plotly options for all plots
+plotlyOptions = function(plot, staticPlot=FALSE, hovermode="x") {
+  plot %>% plotly::config(
+    staticPlot=staticPlot,
+    editable=FALSE,
+    scrollZoom=FALSE,
+    doubleClick=FALSE,
+    showAxisDragHandles=FALSE,
+    showLink=FALSE,
+    displayModeBar=FALSE,
+    showSendToCloud=FALSE,
+    displaylogo=FALSE
+  ) %>% plotly::layout(
+    hovermode=hovermode
+  )
+}
+
+# These utilities allow use of rmd.if / rmd.endif conditionals inside rmarkdown. See results-summary.Rmd for an example.
+rmd.if.state = c()
+rmd.if = function(cond) {
+  beginHide = all(rmd.if.state) && !cond
+  rmd.if.state <<- c(rmd.if.state, cond)
+  if (beginHide) {
+    "\n<!--\n"
+  }
+}
+rmd.endif = function() {
+  cond = tail(rmd.if.state, 1)
+  rmd.if.state <<- rmd.if.state[1:length(rmd.if.state)-1]
+  endHide = all(rmd.if.state) && !cond
+  if (endHide) {
+    "\n-->\n"
+  }
+}
+
+# This lets you write a loop in your rmarkdown. See results-summary.Rmd for an example.
+rmd.foreach = function(eltName, list, template) {
+  paste(llply(list, function(elt) {
+    env = new_environment(list(), baseenv())
+    env[[eltName]] = elt
+    renderMarkdown(template, envir=env)
+  }), collapse="\n")
+}

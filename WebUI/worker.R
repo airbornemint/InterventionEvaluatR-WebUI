@@ -117,3 +117,23 @@ dismissRemoteWorker = function(worker) {
     )
   )
 }
+
+check.call = function(args) {
+  status = system2(args[1], args[2:length(args)], stdout="", stderr="")
+  if (is.null(status) || (is.numeric(status) && status == 0)) {
+    return()
+  } else {
+    stop(sprintf("status = %d", status))
+  }
+}
+
+check.output = function(args) {
+  res = system2(args[1], args[2:length(args)], stdout=TRUE, stderr="")
+  status = attr(res, "status", exact=TRUE)
+  if (is.null(status) || (is.numeric(status) && status == 0)) {
+    return(res)
+  } else {
+    stop(sprintf("status = %d", status))
+  }
+}
+
