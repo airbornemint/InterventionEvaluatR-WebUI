@@ -50,6 +50,7 @@ build-rel:
     - docker-machine
   stage: deploy
   script:
+    - docker login -u gitlab-ci-token -p "${CI_BUILD_TOKEN}" "${CI_REGISTRY_IMAGE}"
     - docker-machine --debug status "${MACHINE_NAME}" && docker-machine --debug provision "${MACHINE_NAME}"
     - docker-machine --debug status "${MACHINE_NAME}" || docker-machine --debug create --driver digitalocean --digitalocean-access-token "${DIGITAL_OCEAN_ACCESS_TOKEN}" --digitalocean-image ubuntu-16-04-x64 --digitalocean-monitoring --digitalocean-region=sfo2 --digitalocean-tags=InterventionEvaluatR --digitalocean-size "s-1vcpu-2gb" "${MACHINE_NAME}" 
     - docker $(docker-machine config "${MACHINE_NAME}") rm --force "${DOCKER_CONTAINER_WEBUI}" || true
