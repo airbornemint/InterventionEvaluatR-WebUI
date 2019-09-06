@@ -59,6 +59,11 @@
   text-transform: none;
 }
 
+#resultsUI .explainer.card > .card-body {
+  max-height: 400px;
+  overflow-y: scroll;
+}
+
 #help-toggle {
   display: none;
   position: fixed;
