@@ -64,6 +64,10 @@
   overflow-y: scroll;
 }
 
+#resultsUI .accordion.supplemental {
+  width: 100%;
+}
+
 #help-toggle {
   display: none;
   position: fixed;

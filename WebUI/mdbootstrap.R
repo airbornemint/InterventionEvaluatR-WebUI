@@ -198,8 +198,8 @@ md_carousel = function(id, items) {
   )
 }
 
-md_accordion_card = function(id, title, content, expanded=FALSE) {
-  list(id=id, title=title, content=content, expanded=expanded)
+md_accordion_card = function(id, title, content, expanded=FALSE, body.class="card-body") {
+  list(id=id, body.class=body.class, title=title, content=content, expanded=expanded)
 }
 
 md_accordion = function(id, ...) {
@@ -248,7 +248,7 @@ md_accordion = function(id, ...) {
           "aria-labelledby"=buttonId,
           "data-parent"=sprintf("#%s", id),
           div(
-            class="card-body",
+            class=card$body.class,
             card$content
           )
         )
