@@ -12,7 +12,7 @@ RUN apt-get update -y -qq
 
 # These are included in rocker/shiny, but aren't needed to run our shiny app
 # This doesn't do anything for us now, but when docker build --squash is released it will
-ARG UNNEEDED_APT_DEPENDENCIES="g++ gfortran libblas-dev libcairo2-dev libcurl4-gnutls-dev libopenblas-dev libxt-dev pandoc pandoc-citeproc"
+ARG UNNEEDED_APT_DEPENDENCIES="g++ gfortran libblas-dev libcairo2-dev libcurl4-gnutls-dev libopenblas-dev libxt-dev"
 RUN apt-mark auto ${UNNEEDED_APT_DEPENDENCIES}
 # These are needed, and rocker/shiny gets them as deps of what we just marked as unneeded, so we have to make sure to keep them
 ARG NEEDED_APT_DEPENDENCIES="libblas3 libcairo2 libcurl3-gnutls libopenblas-base libxt6"
@@ -24,7 +24,7 @@ ARG R_RUN_APT_DEPENDENCIES="libcurl3-gnutls libssh2-1 libxml2 zlib1g libgit2-24 
 RUN apt-get install -y -qq --no-install-recommends ${R_BUILD_APT_DEPENDENCIES}
 
 ### Setup misc other packages needed to run our build
-ARG BUILD_APT_DEPENDENCIES="tzdata locales fontconfig"
+ARG BUILD_APT_DEPENDENCIES="tzdata locales fontconfig curl"
 #ARG BUILD_APT_DEPENDENCIES="tzdata locales qpdf pandoc pandoc-citeproc"
 RUN apt-get install -y -qq --no-install-recommends ${BUILD_APT_DEPENDENCIES}
 
@@ -39,6 +39,10 @@ RUN ( cd /srv/shiny-server/WebUI ; sudo -u shiny Rscript -e 'packrat::restore()'
 ### Install Shiny app
 COPY --chown=shiny . /srv/shiny-server/WebUI
 COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
+
+### Install pandoc 2.x
+RUN cd /tmp && curl -L -O "https://github.com/jgm/pandoc/releases/download/2.7.3/pandoc-2.7.3-1-amd64.deb"
+RUN dpkg -i /tmp/pandoc-2.7.3-1-amd64.deb
 
 # Finish up the configuration
 RUN echo tzdata tzdata/Areas select America >> /tmp/debconf.txt
