@@ -1,0 +1,17 @@
+proxy:
+  port: 8080
+  authentication: none
+  docker:
+      internal-networking: true
+  landing-page: /app/InterventionEvaluatR
+  specs:
+  - id: InterventionEvaluatR
+    display-name: InterventionEvaluatR
+    description: InterventionEvaluatR
+    container-cmd: []
+    container-image: ${APP_IMAGE}
+    container-network: InterventionEvaluatR
+
+logging:
+  file:
+    shinyproxy.log
