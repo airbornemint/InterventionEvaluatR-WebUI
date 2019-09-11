@@ -68,6 +68,14 @@
   width: 100%;
 }
 
+#resultsUI .warnings ul {
+  list-style: none;
+}
+
+#resultsUI .warnings ul > li > .issue {
+  display: block;
+}
+
 #help-toggle {
   display: none;
   position: fixed;

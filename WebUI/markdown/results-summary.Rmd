@@ -5,7 +5,11 @@ Analysis of “`r setup$dataName`” data was performed on `r setup$analysisDate
 `r rmd.if(length(dataIssues) > 0)`
 The following issues were encountered in the data:
 
+:::::::: { .warnings }
+
 `r rmd.foreach("issue", dataIssues, "results-summary-issue.Rmd")`
+
+::::::::
 
 `r rmd.endif()`
 

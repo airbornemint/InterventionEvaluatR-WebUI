@@ -6,21 +6,29 @@ library(tibble)
 # Run the relevant pieces of evaluatr analysis. This calls InterventionEvaluatR, but it doesn't do anything to rearrange the results into a form that is useful in the web interface
 performAnalysis = function(params, analysisTypes) {
   # return(readRDS("/tmp/app.plot.rds")$analysis) # For debugging
-  analysis = do.call(
-    evaluatr.init,
-    params
-  )
-  
-  if ('univariate' %in% analysisTypes) {
-    univariateResults = evaluatr.univariate(analysis)
-  }
-
-  if ('impact' %in% analysisTypes) {
-    impactResults = evaluatr.impact(analysis)
-  }
-
-  # Only keep what we need so we aren't shipping large amounts of never-to-be-used data between worker and UI
-  evaluatr.prune(analysis)
+  dataCheckWarnings = list()
+  withCallingHandlers({
+    analysis = do.call(
+      evaluatr.init,
+      params
+    )
+    
+    if ('univariate' %in% analysisTypes) {
+      univariateResults = evaluatr.univariate(analysis)
+    }
+    
+    if ('impact' %in% analysisTypes) {
+      impactResults = evaluatr.impact(analysis)
+    }
+    
+    # Only keep what we need so we aren't shipping large amounts of never-to-be-used data between worker and UI
+    evaluatr.prune(analysis)
+    analysis$dataCheckWarnings = dataCheckWarnings
+    analysis
+  }, evaluatr.dataCheck=function(warning) {
+    dataCheckWarnings <<- c(dataCheckWarnings, list(warning))
+    invokeRestart("muffleWarning")
+  })
 }
 
 # Take the output of InterventionEvaluatR and rearrange it into a form that is better suited for what the Web UI needs to do with it
@@ -106,10 +114,9 @@ reformatAnalysis = function(analysis, analysisTypes, info) {
     })
   }
   
-  reformatted$dataIssues = list(
-    # list(description="Nothing to see here, just a test"),
-    # list(description="Nothing to see here, just another test")
-  )
+  reformatted$dataIssues = llply(analysis$dataCheckWarnings, function(warning) {
+    list(type = "warning", description = warning$message)
+  })
   
   reformatted
 }
