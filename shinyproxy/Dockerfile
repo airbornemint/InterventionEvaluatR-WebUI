@@ -6,6 +6,7 @@ COPY application.yml /opt/shinyproxy/application.yml
 # See https://unix.stackexchange.com/questions/294835/replace-environment-variables-in-a-file-with-their-actual-values
 ARG APP_IMAGE
 RUN perl -p -i -e 's{\$(\{)?(\w+)(?(1)\})}{$ENV{$2} // $&}ge' /opt/shinyproxy/application.yml
+COPY templates /opt/shinyproxy/templates
 
 WORKDIR /opt/shinyproxy/
 CMD ["java", "-jar", "/opt/shinyproxy/shinyproxy.jar"]
