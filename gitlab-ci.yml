@@ -9,6 +9,9 @@ variables:
   DOCKER_IMAGE_SHINYPROXY: "${CI_REGISTRY_IMAGE}/interventionevaluatr-shinyproxy-ci:ci-${CI_PIPELINE_IID}"
   DOCKER_IMAGE_SHINYPROXY_REF: "${CI_REGISTRY_IMAGE}/interventionevaluatr-shinyproxy-ci:ci-${CI_COMMIT_REF_SLUG}"
   DOCKER_IMAGE_SHINYPROXY_MASTER: "${CI_REGISTRY_IMAGE}/interventionevaluatr-shinyproxy-ci:ci-master"
+  DOCKER_IMAGE_WORKER: "${CI_REGISTRY_IMAGE}/interventionevaluatr-worker-ci:ci-${CI_PIPELINE_IID}"
+  DOCKER_IMAGE_WORKER_REF: "${CI_REGISTRY_IMAGE}/interventionevaluatr-worker-ci:ci-${CI_COMMIT_REF_SLUG}"
+  DOCKER_IMAGE_WORKER_MASTER: "${CI_REGISTRY_IMAGE}/interventionevaluatr-worker-ci:ci-master"
   APP_WEBUI: "app/interventionevaluatr-web-ui-${CI_PIPELINE_IID}.tar.xz"
   DOCKER_CONTAINER: "interventionevaluatr-web-ui"
 
@@ -28,15 +31,24 @@ variables:
     # Build web UI docker image
     - docker pull "${DOCKER_IMAGE_WEBUI_REF}" || true
     - docker pull "${DOCKER_IMAGE_WEBUI_MASTER}" || true
-    - docker build --cache-from "${DOCKER_IMAGE_WEBUI_REF}" --cache-from "${DOCKER_IMAGE_WEBUI_MASTER}" -t "${DOCKER_IMAGE_WEBUI}" -t "${DOCKER_IMAGE_WEBUI_REF}" WebUI
+    - docker build --cache-from "${DOCKER_IMAGE_WEBUI_REF}" --cache-from "${DOCKER_IMAGE_WEBUI_MASTER}" -t "${DOCKER_IMAGE_WEBUI}" -t "${DOCKER_IMAGE_WEBUI_REF}" --build-arg "GITLAB_REGISTRY=${CI_REGISTRY_IMAGE}" --build-arg "GITLAB_REGISTRY_USER=${GITLAB_REGISTRY_USER}" --build-arg "GITLAB_REGISTRY_TOKEN=${GITLAB_REGISTRY_TOKEN}" --build-arg "WORKER_IMAGE=${DOCKER_IMAGE_WORKER}" WebUI
     - docker push "${DOCKER_IMAGE_WEBUI}" 
     - docker push "${DOCKER_IMAGE_WEBUI_REF}"
+    # Find out what SHA of InterventionEvaluatR should be installed on the worker
+    - docker run --workdir /srv/shiny-server/WebUI "${DOCKER_IMAGE_WEBUI}" Rscript -e 'packageDescription("InterventionEvaluatR")'
+    - export INTERVENTIONEVALUATR_REF=$(docker run --workdir /srv/shiny-server/WebUI "${DOCKER_IMAGE_WEBUI}" Rscript -e 'write(packageDescription("InterventionEvaluatR")$GithubSHA1, stdout())')
     # Build ShinyProxy docker image (referencing the app image)
     - docker pull "${DOCKER_IMAGE_SHINYPROXY_REF}" || true
     - docker pull "${DOCKER_IMAGE_SHINYPROXY_MASTER}" || true
     - docker build --cache-from "${DOCKER_IMAGE_SHINYPROXY_REF}" --cache-from "${DOCKER_IMAGE_SHINYPROXY_MASTER}" -t "${DOCKER_IMAGE_SHINYPROXY}" -t "${DOCKER_IMAGE_SHINYPROXY_REF}" --build-arg "APP_IMAGE=${DOCKER_IMAGE_WEBUI}" shinyproxy
     - docker push "${DOCKER_IMAGE_SHINYPROXY}" 
     - docker push "${DOCKER_IMAGE_SHINYPROXY_REF}"
+    # Build worker docker image
+    - docker pull "${DOCKER_IMAGE_WORKER_REF}" || true
+    - docker pull "${DOCKER_IMAGE_WORKER_MASTER}" || true
+    - docker build --cache-from "${DOCKER_IMAGE_WORKER_REF}" --cache-from "${DOCKER_IMAGE_WORKER_MASTER}" -t "${DOCKER_IMAGE_WORKER}" -t "${DOCKER_IMAGE_WORKER_REF}" --build-arg "INTERVENTIONEVALUATR_REF=${INTERVENTIONEVALUATR_REF}" worker
+    - docker push "${DOCKER_IMAGE_WORKER}" 
+    - docker push "${DOCKER_IMAGE_WORKER_REF}"
     # Save app source in a build artifact
     - mkdir -p "app"
     - tar -cvzf "${APP_WEBUI}" WebUI
