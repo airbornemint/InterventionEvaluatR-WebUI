@@ -21,7 +21,8 @@ RUN apt-get install -y -qq --no-install-recommends ${RUN_APT_DEPENDENCIES}
 
 ### Install required R packages
 RUN install2.r devtools future
-RUN Rscript -e 'devtools::install_github("weinbergerlab/InterventionEvaluatR")'
+ARG INTERVENTIONEVALUATR_REF
+RUN Rscript -e 'devtools::install_github("weinbergerlab/InterventionEvaluatR", ref=commandArgs(trailingOnly=TRUE)[1])' "${INTERVENTIONEVALUATR_REF}"
 
 # Finish up the configuration
 RUN echo tzdata tzdata/Areas select America >> /tmp/debconf.txt
