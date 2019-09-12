@@ -29,7 +29,7 @@ ARG BUILD_APT_DEPENDENCIES="tzdata locales fontconfig curl"
 RUN apt-get install -y -qq --no-install-recommends ${BUILD_APT_DEPENDENCIES}
 
 ### Setup packages needed to run our app
-ARG APT_DEPENDENCIES="texinfo texlive texlive-xetex"
+ARG APT_DEPENDENCIES="texinfo texlive texlive-xetex openssh-client"
 RUN apt-get install -y -qq --no-install-recommends ${APT_DEPENDENCIES}
 
 ### Install required R packages. Doing it this way allows docker to cache packrat state and not rebuild everything when app source changes in a way that doesn't affect package dependencies
@@ -39,6 +39,13 @@ RUN ( cd /srv/shiny-server/WebUI ; sudo -u shiny Rscript -e 'packrat::restore()'
 ### Install Shiny app
 COPY --chown=shiny . /srv/shiny-server/WebUI
 COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
+RUN ssh-keygen -t rsa -f /srv/shiny-server/WebUI/worker/id_rsa
+ARG GITLAB_REGISTRY
+ARG GITLAB_REGISTRY_USER
+ARG GITLAB_REGISTRY_TOKEN
+ARG WORKER_IMAGE
+RUN export WORKER_SSH_PUBKEY="$(cat /srv/shiny-server/WebUI/worker/id_rsa.pub)"
+RUN perl -p -i -e 's{\$(\{)?(\w+)(?(1)\})}{$ENV{$2} // $&}ge' /srv/shiny-server/WebUI/worker/cloud-config.yml
 
 ### Install pandoc 2.x
 RUN cd /tmp && curl -L -O "https://github.com/jgm/pandoc/releases/download/2.7.3/pandoc-2.7.3-1-amd64.deb"
