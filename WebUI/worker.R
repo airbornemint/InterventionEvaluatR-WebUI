@@ -12,26 +12,17 @@ setupLocalWorker = function() {
 }
 
 setupRemoteWorker = function() {
-  # TODO generate ephemeral SSH key
-  
   machineName = sprintf("iew-%s", UUIDgenerate())
   
-  # First provision a DigitalOcean droplet
+  # Provision a DigitalOcean droplet
   analysisStatusDetail("Provisioning DO droplet")
   check.call(
     c(
       sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "create",
       "--driver", "digitalocean",
       "--digitalocean-access-token", getOption("ie.digitalocean.access.token"),
-      "--digitalocean-size", getOption("ie.worker.digitalocean-droplet-size", "s-2vcpu-4gb"),
+      "--digitalocean-size", getOption("ie.worker.digitalocean-droplet-size", "s-4vcpu-8gb"),
       "--digitalocean-userdata", "worker/cloud-config.yml",
-      machineName
-    )
-  )
-  
-  workerConfig = check.output(
-    c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "config",
       machineName
     )
   )
@@ -42,32 +33,6 @@ setupRemoteWorker = function() {
       machineName
     )
   ) %>% trimws()
-  
-  # Copy the worker image
-  analysisStatusDetail("Copying worker image")
-  check.call(
-    c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "scp",
-      "worker/image.tar.xz", sprintf("%s:/tmp/worker-image.tar.xz", machineName)
-    )
-  )
-  
-  # Load the worker image into docker
-  analysisStatusDetail("Unarchiving worker image")
-  check.call(
-    c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "ssh",
-      machineName, "/usr/bin/unxz", "/tmp/worker-image.tar.xz"
-    )
-  )
-  
-  analysisStatusDetail("Loading worker image")
-  check.call(
-    c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "ssh",
-      machineName, sprintf("%s/docker", getOption("ie.worker.docker.bindir")), "load", "--input", "/tmp/worker-image.tar"
-    )
-  )
   
   # Make a single-worker cluster 
   workerCluster = makeClusterPSOCK(
@@ -128,7 +93,11 @@ check.call = function(args) {
 }
 
 check.output = function(args) {
-  res = system2(args[1], args[2:length(args)], stdout=TRUE, stderr="")
+  if (length(args) > 1) {
+    res = system2(args[1], args[2:length(args)], stdout=TRUE, stderr="")
+  } else {
+    res = system2(args[1], c(), stdout=TRUE, stderr="")
+  }
   status = attr(res, "status", exact=TRUE)
   if (is.null(status) || (is.numeric(status) && status == 0)) {
     return(res)
