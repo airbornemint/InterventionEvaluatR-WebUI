@@ -13,36 +13,53 @@ setupLocalWorker = function() {
 
 setupRemoteWorker = function() {
   machineName = sprintf("iew-%s", UUIDgenerate())
-  
-  # Provision a DigitalOcean droplet
-  analysisStatusDetail("Provisioning DO droplet")
-  check.call(
-    c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "create",
-      "--driver", "digitalocean",
-      "--digitalocean-access-token", getOption("ie.digitalocean.access.token"),
-      "--digitalocean-size", getOption("ie.worker.digitalocean-droplet-size", "s-4vcpu-8gb"),
-      "--digitalocean-userdata", "worker/cloud-config.yml",
-      machineName
+
+  tryCatch({
+    # Provision a DigitalOcean droplet
+    analysisStatusDetail("Provisioning DO droplet")
+    check.call(
+      c(
+        sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "create",
+        "--driver", "digitalocean",
+        "--digitalocean-access-token", getOption("ie.digitalocean.access.token"),
+        "--digitalocean-size", getOption("ie.worker.digitalocean-droplet-size", "s-4vcpu-8gb"),
+        "--digitalocean-userdata", "worker/cloud-config.yml",
+        machineName
+      )
     )
-  )
   
-  workerIp = check.output(
-    c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "ip",
-      machineName
+    workerIp = check.output(
+      c(
+        sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "ip",
+        machineName
+      )
+    ) %>% trimws()
+  
+    makeCluster = function(workerCount) {
+      makeClusterPSOCK(
+          workers=rep(workerIp, workerCount),
+          rshopts=c("-i", "worker/id_rsa", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"),
+          user="evaluatr",
+          rscript="/usr/local/bin/Rscript-docker"
+        )
+    }
+  
+    # First make a single-worker cluster, which we will use to determine the number of cores available on the worker
+    singleCluster = makeCluster(1)
+    numCores = clusterCall(singleCluster, function() { future::availableCores(methods=c("system")) })[[1]]
+    stopCluster(singleCluster)
+  
+    list(local=FALSE, cluster=makeCluster(numCores), machineName=machineName)
+  }, error = function(errorCondition) {
+    message(errorCondition)
+    check.call(
+      c(
+        sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "rm", "-f",
+        machineName
+      )
     )
-  ) %>% trimws()
-  
-  # Make a single-worker cluster 
-  workerCluster = makeClusterPSOCK(
-    workers=workerIp,
-    rshopts=c("-i", "worker/id_rsa", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"),
-    user="evaluatr",
-    rscript="/usr/local/bin/Rscript-docker"
-  )
-  
-  list(local=FALSE, cluster=workerCluster, machineName=machineName)
+    signalCondition(errorCondition)
+  })
 }
 
 # Generate a future evaluation plan for our worker
