@@ -13,6 +13,7 @@ write_files:
   - path: /usr/local/bin/Rscript-docker
     content: |
       #!/bin/bash
-      docker login -u "${GITLAB_REGISTRY_USER}" -p "${GITLAB_REGISTRY_TOKEN}" "${GITLAB_REGISTRY}"
+      docker login -u "${GITLAB_REGISTRY_USER}" -p "${GITLAB_REGISTRY_TOKEN}" "${GITLAB_REGISTRY}" &> /dev/null
+      /usr/bin/docker pull "${WORKER_IMAGE}" "$@" &> /dev/null
       exec /usr/bin/docker run --network host "${WORKER_IMAGE}" "$@"
     permissions: 0755
