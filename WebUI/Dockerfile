@@ -40,6 +40,7 @@ RUN ( cd /srv/shiny-server/WebUI ; sudo -u shiny Rscript -e 'packrat::restore()'
 COPY --chown=shiny . /srv/shiny-server/WebUI
 COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
 RUN ssh-keygen -t rsa -f /srv/shiny-server/WebUI/worker/id_rsa
+RUN chown shiny /srv/shiny-server/WebUI/worker/id_rsa*
 ARG GITLAB_REGISTRY
 ARG GITLAB_REGISTRY_USER
 ARG GITLAB_REGISTRY_TOKEN
