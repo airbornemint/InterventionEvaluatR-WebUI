@@ -44,8 +44,7 @@ ARG GITLAB_REGISTRY
 ARG GITLAB_REGISTRY_USER
 ARG GITLAB_REGISTRY_TOKEN
 ARG WORKER_IMAGE
-RUN export WORKER_SSH_PUBKEY="$(cat /srv/shiny-server/WebUI/worker/id_rsa.pub)"
-RUN perl -p -i -e 's{\$(\{)?(\w+)(?(1)\})}{$ENV{$2} // $&}ge' /srv/shiny-server/WebUI/worker/cloud-config.yml
+RUN env WORKER_SSH_PUBKEY="$(cat /srv/shiny-server/WebUI/worker/id_rsa.pub)" perl -p -i -e 's{\$(\{)?(\w+)(?(1)\})}{$ENV{$2} // $&}ge' /srv/shiny-server/WebUI/worker/cloud-config.yml
 
 ### Install pandoc 2.x
 RUN cd /tmp && curl -L -O "https://github.com/jgm/pandoc/releases/download/2.7.3/pandoc-2.7.3-1-amd64.deb"
