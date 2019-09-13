@@ -50,6 +50,11 @@ RUN env WORKER_SSH_PUBKEY="$(cat /srv/shiny-server/WebUI/worker/id_rsa.pub)" per
 RUN cd /tmp && curl -L -O "https://github.com/jgm/pandoc/releases/download/2.7.3/pandoc-2.7.3-1-amd64.deb"
 RUN dpkg -i /tmp/pandoc-2.7.3-1-amd64.deb
 
+### Install docker-machine
+RUN curl -L https://github.com/docker/machine/releases/download/v0.16.0/docker-machine-$(uname -s)-$(uname -m) > /tmp/docker-machine
+RUN mv /tmp/docker-machine /usr/local/bin/docker-machine
+RUN chmod +x /usr/local/bin/docker-machine
+
 # Finish up the configuration
 RUN echo tzdata tzdata/Areas select America >> /tmp/debconf.txt
 RUN echo tzdata tzdata/Zones/America select New_York >> /tmp/debconf.txt
