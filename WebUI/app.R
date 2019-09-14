@@ -27,7 +27,7 @@ source("setup.R")
 source("results.R")
 source("worker.R")
 
-plan(multisession)
+plan(sequential)
 
 ui <- md_page(
   id="page",
