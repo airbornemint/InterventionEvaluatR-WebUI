@@ -114,19 +114,7 @@ results.server = function(input, output, session, setup) {
             } 
             # Otherwise set up the computation worker and run the analysis
             else {
-              worker = setupWorker()
-              oplan = workerPlan(worker)
-              on.exit(plan(oplan), add=TRUE)
-              
-              on.exit({
-                dismissWorker(worker)
-              }, add=TRUE)
-              
-              future({
-                withLogErrors({
-                  performAnalysis(fullParams, analysisTypes)
-                })
-              }) %>% value()
+              performAnalysis(fullParams, analysisTypes)
             }
           })
         }) %...>% (function(analysis) {
