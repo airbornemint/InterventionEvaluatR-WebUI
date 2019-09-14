@@ -18,7 +18,9 @@ performAnalysis = function(params, analysisTypes) {
       evaluatr.init,
       params
     )
-    InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$cluster, function(analysis, done, total) { message(sprintf("%d / %d", done, total)) })
+    if (!is.null(worker$cluster)) {
+      InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$cluster, function(analysis, done, total) { message(sprintf("%d / %d", done, total)) })
+    }
     
     if ('univariate' %in% analysisTypes) {
       univariateResults = evaluatr.univariate(analysis)
