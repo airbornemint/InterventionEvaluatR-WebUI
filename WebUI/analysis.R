@@ -8,10 +8,17 @@ performAnalysis = function(params, analysisTypes) {
   # return(readRDS("/tmp/app.plot.rds")$analysis) # For debugging
   dataCheckWarnings = list()
   withCallingHandlers({
+    worker = setupWorker()
+    
+    on.exit({
+      dismissWorker(worker)
+    }, add=TRUE)
+
     analysis = do.call(
       evaluatr.init,
       params
     )
+    InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$cluster, function(analysis, done, total) { message(sprintf("%d / %d", done, total)) })
     
     if ('univariate' %in% analysisTypes) {
       univariateResults = evaluatr.univariate(analysis)
