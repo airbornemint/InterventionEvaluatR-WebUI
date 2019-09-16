@@ -31,7 +31,7 @@ variables:
     # Build web UI docker image
     - docker pull "${DOCKER_IMAGE_WEBUI_REF}" || true
     - docker pull "${DOCKER_IMAGE_WEBUI_MASTER}" || true
-    - docker build ${DOCKER_NOCACHE:-} --cache-from "${DOCKER_IMAGE_WEBUI_REF}" --cache-from "${DOCKER_IMAGE_WEBUI_MASTER}" -t "${DOCKER_IMAGE_WEBUI}" -t "${DOCKER_IMAGE_WEBUI_REF}" --build-arg "GITLAB_REGISTRY=${CI_REGISTRY_IMAGE}" --build-arg "GITLAB_REGISTRY_USER=${GITLAB_REGISTRY_USER}" --build-arg "GITLAB_REGISTRY_TOKEN=${GITLAB_REGISTRY_TOKEN}" --build-arg "DIGITALOCEAN_ACCESS_TOKEN=${DIGITALOCEAN_ACCESS_TOKEN}" --build-arg "WORKER_IMAGE=${DOCKER_IMAGE_WORKER}" WebUI
+    - docker build ${DOCKER_NOCACHE:-} --cache-from "${DOCKER_IMAGE_WEBUI_REF}" --cache-from "${DOCKER_IMAGE_WEBUI_MASTER}" -t "${DOCKER_IMAGE_WEBUI}" -t "${DOCKER_IMAGE_WEBUI_REF}" --build-arg "GITLAB_REGISTRY=${CI_REGISTRY_IMAGE}" --build-arg "GITLAB_REGISTRY_USER=${GITLAB_REGISTRY_USER}" --build-arg "GITLAB_REGISTRY_TOKEN=${GITLAB_REGISTRY_TOKEN}" --build-arg "DIGITALOCEAN_ACCESS_TOKEN=${DIGITALOCEAN_ACCESS_TOKEN}" --build-arg "WORKER_IMAGE=${DOCKER_IMAGE_WORKER}" --build-arg INTERVENTIONEVALUATR_DEPLOY="${INTERVENTIONEVALUATR_DEPLOY}" WebUI
     - docker push "${DOCKER_IMAGE_WEBUI}" 
     - docker push "${DOCKER_IMAGE_WEBUI_REF}"
     # Find out what SHA of InterventionEvaluatR should be installed on the worker
@@ -58,11 +58,15 @@ variables:
 
 build-dev:
   extends: .build
+  variables:
+    INTERVENTIONEVALUATR_DEPLOY: staging
   artifacts:
     expire_in: 30 days
 
 build-rel:
   extends: .build
+  variables:
+    INTERVENTIONEVALUATR_DEPLOY: production
   only:
     - tags
 
