@@ -21,16 +21,16 @@ RUN apt-mark manual ${NEEDED_APT_DEPENDENCIES}
 ### Setup R package dependencies
 ARG R_BUILD_APT_DEPENDENCIES="libcurl4-gnutls-dev gnutls-dev libssh2-1-dev libxml2-dev zlib1g-dev libgit2-dev libssl-dev"
 ARG R_RUN_APT_DEPENDENCIES="libcurl3-gnutls libssh2-1 libxml2 zlib1g libgit2-24 libssl1.1"
-RUN apt-get install -y -qq --no-install-recommends ${R_BUILD_APT_DEPENDENCIES}
+RUN apt-get update -y -qq && apt-get install -y -qq --no-install-recommends ${R_BUILD_APT_DEPENDENCIES}
 
 ### Setup misc other packages needed to run our build
 ARG BUILD_APT_DEPENDENCIES="tzdata locales fontconfig curl"
 #ARG BUILD_APT_DEPENDENCIES="tzdata locales qpdf pandoc pandoc-citeproc"
-RUN apt-get install -y -qq --no-install-recommends ${BUILD_APT_DEPENDENCIES}
+RUN apt-get update -y -qq && apt-get install -y -qq --no-install-recommends ${BUILD_APT_DEPENDENCIES}
 
 ### Setup packages needed to run our app
 ARG APT_DEPENDENCIES="texinfo texlive texlive-xetex openssh-client"
-RUN apt-get install -y -qq --no-install-recommends ${APT_DEPENDENCIES}
+RUN apt-get update -y -qq && apt-get install -y -qq --no-install-recommends ${APT_DEPENDENCIES}
 
 ### Install required R packages. Doing it this way allows docker to cache packrat state and not rebuild everything when app source changes in a way that doesn't affect package dependencies
 COPY --chown=shiny packrat/packrat.lock packrat/packrat.opts /srv/shiny-server/WebUI/packrat/
@@ -76,6 +76,9 @@ RUN fc-cache -f -v
 RUN apt-get autoremove -y
 RUN apt-get clean
 RUN rm -rf /tmp/*
+
+ARG INTERVENTIONEVALUATR_DEPLOY
+RUN echo "options(ie.deployment='${INTERVENTIONEVALUATR_DEPLOY}')" >> /usr/local/lib/R/etc/Rprofile.site
 
 USER shiny
 EXPOSE 3838
