@@ -19,7 +19,7 @@ setupRemoteWorker = function() {
     analysisStatusDetail("Provisioning DO droplet")
     check.call(
       c(
-        sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "create",
+        getOption("ie.webui.docker-machine", "docker-machine"), "create",
         "--driver", "digitalocean",
         "--digitalocean-access-token", getOption("ie.digitalocean.access.token"),
         "--digitalocean-size", getOption("ie.worker.digitalocean-droplet-size", "s-4vcpu-8gb"),
@@ -30,7 +30,7 @@ setupRemoteWorker = function() {
   
     workerIp = check.output(
       c(
-        sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "ip",
+        getOption("ie.webui.docker-machine", "docker-machine"), "ip",
         machineName
       )
     ) %>% trimws()
@@ -54,7 +54,7 @@ setupRemoteWorker = function() {
     message(errorCondition)
     check.call(
       c(
-        sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "rm", "-f",
+        getOption("ie.webui.docker-machine", "docker-machine"), "rm", "-f",
         machineName
       )
     )
@@ -94,7 +94,7 @@ dismissLocalWorker = function(worker) {
 dismissRemoteWorker = function(worker) {
   check.call(
     c(
-      sprintf("%s/docker-machine", getOption("ie.webui.docker.bindir")), "rm", "--force",
+      getOption("ie.webui.docker-machine", "docker-machine"), "rm", "--force",
       worker$machineName
     )
   )
