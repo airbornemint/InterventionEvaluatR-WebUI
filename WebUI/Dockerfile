@@ -77,6 +77,9 @@ RUN apt-get autoremove -y
 RUN apt-get clean
 RUN rm -rf /tmp/*
 
+ARG INTERVENTIONEVALUATR_DEPLOY
+ENV INTERVENTIONEVALUATR_DEPLOY ${INTERVENTIONEVALUATR_DEPLOY}
+
 USER shiny
 EXPOSE 3838
 CMD ["/usr/bin/shiny-server.sh"] 
