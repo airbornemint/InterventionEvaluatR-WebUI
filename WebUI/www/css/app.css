@@ -76,6 +76,14 @@
   display: block;
 }
 
+#analysis-progress li.progress-item > span.badge {
+  display: none;
+}
+
+#analysis-progress li.progress-item.done > span.badge {
+  display: inline;
+}
+
 #help-toggle {
   display: none;
   position: fixed;

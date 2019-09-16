@@ -56,6 +56,12 @@ results.server = function(input, output, session, setup) {
         class="navbar results-heading mb-3 mt-3 justify-content-center primary-color",
         p(class="h3 p-2 m-0 text-white", "Analysis in progress…"),
         md_spinner("spinner-results") %>% tagAppendAttributes(class="text-white")
+      ),
+      div(
+        tags$ul(
+          id="analysis-progress",
+          class="list-group"
+        )
       )
     )
   })
@@ -105,7 +111,12 @@ results.server = function(input, output, session, setup) {
         info = setup$userInput()$info
         
         analysisTypes = input$analysisTypes
-
+        
+        progress = function(...) {
+          update_progress(session, ...)
+        }
+        
+        # All the future nonsense in here is actually unnecessary because I had to switch to sequential futures to get any kind of useful progress feedback, and it should be rewritten to just use regular function calls.
         future({
           withLogErrors({
             # If the user uploaded precomputed results, and their current analysis settings are compatible with them, use them
@@ -114,7 +125,7 @@ results.server = function(input, output, session, setup) {
             } 
             # Otherwise set up the computation worker and run the analysis
             else {
-              performAnalysis(fullParams, analysisTypes)
+              performAnalysis(fullParams, analysisTypes, progress)
             }
           })
         }) %...>% (function(analysis) {
@@ -451,4 +462,27 @@ supplemental_results_plot_panel = function(idx, id, title, explainer, expanded=F
       )
     ), expanded=expanded
   )
+}
+
+# Progress for us is basically a checklist. This function takes a named list for each checklist item. The value of each checklist item is either list(name="Display Name") for a new item or list(done=TRUE) for an item that is done. For example:
+#
+# updateProgress(a=list(name="First progress item"), b=list(name="Second progress item"))
+#
+# sets up two items on the progress checklist, and
+#
+# updateProgress(a=list(done=TRUE))
+#
+# marks the first one as done
+
+update_progress = function(session, ...) {
+  items = list(...) %>% llply(function(item) {
+    # Items that are bare TRUE/FALSE are wrapped in a list(done=X)
+    if (!is.list(item)) {
+      list(done=item)
+    } else {
+      item
+    }
+  })
+  print(items)
+  session$sendCustomMessage("update_analysis_progress", list(items=items))
 }

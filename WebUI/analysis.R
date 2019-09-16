@@ -4,29 +4,45 @@ library(ggplot2)
 library(tibble)
 
 # Run the relevant pieces of evaluatr analysis. This calls InterventionEvaluatR, but it doesn't do anything to rearrange the results into a form that is useful in the web interface
-performAnalysis = function(params, analysisTypes) {
+performAnalysis = function(params, analysisTypes, progress) {
   # return(readRDS("/tmp/app.plot.rds")$analysis) # For debugging
   dataCheckWarnings = list()
   withCallingHandlers({
+    # Helper function that turns InterventionEvaluatR progress information (done, total) into the format expected by the progress callback
+    analysisProgress = function(part) {
+      function(analysis, done, total) {
+        message(sprintf("%s %d / %d", part, done, total))
+        items = 1:total %>% llply(
+          function(idx) list(name=sprintf("Analysis part %d", idx), done=(idx <= done))
+        ) %>% setNames(
+          sprintf("analysis-%s-%s", part, 1:total)            
+        )
+        do.call(progress, items)
+      }
+    }
+
+    progress(setup=list(name="Preparing to run analysis"))
     worker = setupWorker()
     
     on.exit({
       dismissWorker(worker)
     }, add=TRUE)
-
+    progress(setup=TRUE)
+    
+    progress(init=list(name="Initializing analysis"))
     analysis = do.call(
       evaluatr.init,
       params
     )
-    if (!is.null(worker$cluster)) {
-      InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$cluster, function(analysis, done, total) { message(sprintf("%d / %d", done, total)) })
-    }
-    
+    progress(init=TRUE)
+
     if ('univariate' %in% analysisTypes) {
+      InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$cluster, analysisProgress("univariate"))
       univariateResults = evaluatr.univariate(analysis)
     }
     
     if ('impact' %in% analysisTypes) {
+      InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$cluster, analysisProgress("impact"))
       impactResults = evaluatr.impact(analysis)
     }
     
