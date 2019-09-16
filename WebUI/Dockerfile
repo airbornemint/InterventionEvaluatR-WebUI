@@ -78,7 +78,7 @@ RUN apt-get clean
 RUN rm -rf /tmp/*
 
 ARG INTERVENTIONEVALUATR_DEPLOY
-ENV INTERVENTIONEVALUATR_DEPLOY ${INTERVENTIONEVALUATR_DEPLOY}
+RUN echo "options(ie.deployment='${INTERVENTIONEVALUATR_DEPLOY}')" >> /usr/local/lib/R/etc/Rprofile.site
 
 USER shiny
 EXPOSE 3838

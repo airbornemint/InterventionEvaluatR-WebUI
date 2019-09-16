@@ -2,7 +2,7 @@
 options(ie.worker.local=TRUE)
 
 # Overrides for running in the cloud. 
-if(Sys.getenv("INTERVENTIONEVALUATR_DEPLOY") != "") {
+if(getOption("ie.deployment", "") != "") {
   options(ie.worker.local=FALSE)
   options(ie.digitalocean.access.token="${DIGITALOCEAN_ACCESS_TOKEN}")
 }
