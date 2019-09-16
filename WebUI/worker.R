@@ -92,6 +92,7 @@ dismissLocalWorker = function(worker) {
 }
 
 dismissRemoteWorker = function(worker) {
+  stopCluster(worker$cluster)
   check.call(
     c(
       getOption("ie.webui.docker-machine", "docker-machine"), "rm", "--force",
