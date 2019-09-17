@@ -484,5 +484,5 @@ update_progress = function(session, ...) {
     }
   })
   print(items)
-  session$sendCustomMessage("update_analysis_progress", list(items=items))
+  # session$sendCustomMessage("update_analysis_progress", list(items=items))
 }
