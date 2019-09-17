@@ -1,5 +1,6 @@
 proxy:
   port: 8080
+  heartbeat-timeout: 21600000
   authentication: none
   hide-navbar: true
   template-path: /opt/shinyproxy/templates
