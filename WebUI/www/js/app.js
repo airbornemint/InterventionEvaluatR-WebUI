@@ -30,11 +30,11 @@ Shiny.addCustomMessageHandler("activate_tab", function(message) {
   $("#" + message.tab).tab("show");
 });
 
-Shiny.addCustomMessageHandler("update_analysis_progress", function(message) {
-  // In here, message.array is a dict whose keys are unique IDs for progress items, and whose values are dict(name, done)
+function updateProgress(items) {
+  // In here, items is a dict whose keys are unique IDs for progress items, and whose values are dict(name, done)
   // For each item, we find an existing progress item with that key, creating if necessary, then update the name and the doneness
-  for (var id in message.items) {
-    var item = message.items[id];
+  for (var id in items) {
+    var item = items[id];
     id = "progress-" + id;
     var itemElt = $("#" + id);
     if (!itemElt.length) {
@@ -52,5 +52,19 @@ Shiny.addCustomMessageHandler("update_analysis_progress", function(message) {
       itemElt.toggleClass('done', item.done);
     }
   }
+  
+}
+
+// This kludge is explained in results.R
+setInterval(function(){
+    $.ajax({ url: window.location.href.split('#')[0] + "/.session-data/" + Shiny.shinyapp.config.sessionId
+ + "/progress.json", success: function(data){
+        updateProgress(data);
+    }, dataType: "json"});
+}, 5000);
+
+
+Shiny.addCustomMessageHandler("update_analysis_progress", function(message) {
+  updateProgress(message.items);
 });
 
