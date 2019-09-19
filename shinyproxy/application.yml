@@ -1,5 +1,6 @@
 proxy:
   port: 8080
+  heartbeat-timeout: 21600000
   authentication: none
   hide-navbar: true
   template-path: /opt/shinyproxy/templates
@@ -13,6 +14,8 @@ proxy:
     container-cmd: []
     container-image: ${APP_IMAGE}
     container-network: InterventionEvaluatR
+    container-volumes:
+      - session-data:/srv/shiny-server/WebUI/www/.session-data
 
 logging:
   file:
