@@ -10,7 +10,6 @@ performAnalysis = function(params, analysisTypes, progress) {
   withCallingHandlers({
     progress(setup=list(name="Preparing to run analysis"))
     progress(init=list(name="Initializing analysis"))
-    progress(setup=FALSE)
     
     if ('univariate' %in% analysisTypes) {
       progress(univariate=list(name="Running univariate analysis"))
@@ -35,6 +34,7 @@ performAnalysis = function(params, analysisTypes, progress) {
       }
     }
 
+    progress(setup=FALSE)
     worker = setupWorker()
     
     on.exit({
