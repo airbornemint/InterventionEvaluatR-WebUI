@@ -9,6 +9,7 @@ performAnalysis = function(params, analysisTypes, progress) {
   dataCheckWarnings = list()
   withCallingHandlers({
     progress(setup=list(name="Preparing to run analysis"))
+    progress(setup=FALSE)
     progress(init=list(name="Initializing analysis"))
 
     if ('univariate' %in% analysisTypes) {
@@ -36,7 +37,6 @@ performAnalysis = function(params, analysisTypes, progress) {
 
     worker = setupWorker()
     
-    progress(setup=FALSE)
     on.exit({
       dismissWorker(worker)
     }, add=TRUE)
