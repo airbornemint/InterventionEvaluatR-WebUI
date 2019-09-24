@@ -41,9 +41,13 @@ function updateProgress(progress) {
     if (!itemElt.length) {
       // Item doesn't exist, create
       itemElt = $("<li class='progress-item list-group-item d-flex justify-content-between align-items-center' />").attr("id", id).append(
-        "<span class='name'/><span class='badge badge-warning badge-pill progress-waiting'><i class='fas fa-clock' aria-hidden='true'></i></span><span class='badge badge-success badge-pill progress-done'><i class='fas fa-check' aria-hidden='true'></i></span>"
+        "<span class='name'/>"
       ).append(
-        '<span class="spinner-border spinner-border-sm text-primary progress-current" role="status"><span class="sr-only">In progress…</span></span>'
+        "<span class='badge badge-warning badge-pill progress-waiting'><i class='fas fa-clock' aria-hidden='true'></i></span>"
+      ).append(
+        "<span class='badge badge-success badge-pill progress-done'><i class='fas fa-check' aria-hidden='true'></i></span>"
+      ).append(
+        '<span class="progress-current"><span class="spinner-border spinner-border-sm text-primary" role="status"><span class="sr-only">In progress…</span></span></span>'
       );
       
       // Insert at the correct place
