@@ -76,16 +76,12 @@
   display: block;
 }
 
-#analysis-progress li.progress-item > span.badge {
+#analysis-progress li.progress-item.waiting > span.badge, #analysis-progress li.progress-item.waiting > span.spinner-border, #analysis-progress li.progress-item.done > span.spinner-border, #analysis-progress li.progress-item > span.badge  {
   display: none;
 }
 
-#analysis-progress li.progress-item.done > span.badge {
+#analysis-progress li.progress-item.done > span.badge, #analysis-progress li.progress-item > span.spinner-border {
   display: inline;
-}
-
-#analysis-progress li.progress-item.done > span.spinner-border {
-  display: none;
 }
 
 #help-toggle {
