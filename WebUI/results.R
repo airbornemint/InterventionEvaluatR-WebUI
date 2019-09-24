@@ -466,15 +466,15 @@ supplemental_results_plot_panel = function(idx, id, title, explainer, expanded=F
   )
 }
 
-# Progress for us is basically a checklist. This function takes a named list for each checklist item. The value of each checklist item is either list(name="Display Name") for a new item or list(done=TRUE) for an item that is done. For example:
+# Progress for us is basically a checklist. This function takes a named list for each checklist item. The value of each checklist item is one of: list(name="Display Name") for a new item that hasn't started yet, list(done=FALSE) for an item that has started but isn't done, or list(done=TRUE) for an item that is done. The first two can be combined. For example:
 #
-# updateProgress(a=list(name="First progress item"), b=list(name="Second progress item"))
+# updateProgress(a=list(name="First progress item", done=FALSE), b=list(name="Second progress item"))
 #
-# sets up two items on the progress checklist, and
+# sets up two items on the progress checklist, of which the first is in progress and the second isn't yet started, and
 #
-# updateProgress(a=list(done=TRUE))
+# updateProgress(a=list(done=TRUE), b=list(done=TRUE))
 #
-# marks the first one as done
+# marks both as done. 
 
 update_progress = function(session, ...) {
   items = list(...) %>% llply(function(item) {
@@ -509,22 +509,37 @@ updateState = function(state, session, items) {
 
   sessionState = state[[sessionID]]
   if (is.null(sessionState)) {
-    sessionState = list()
+    sessionState = list(items=list(), order=c())
   }
 
   for (itemID in names(items)) {
     item = items[[itemID]]
 
-    itemState = sessionState[[itemID]]
+    itemState = sessionState$items[[itemID]]
     if (is.null(itemState)) {
       itemState = list()
+      # We also need to decide where this item will appear in the list
+      # Its predecessor will be the last item that is currently in the list that is not waiting
+      insertAfter = sessionState$order %>% laply(function(id) {
+        if (!is.null(sessionState$items[[id]]$done)) {
+          id
+        } else {
+          NA
+        }
+      }) %>% na.omit()
+
+      if (length(insertAfter)) {
+        sessionState$order = c(sessionState$order[1:length(insertAfter)], itemID, sessionState$order[(length(insertAfter) + 1):length(sessionState$order)])
+      } else {
+        sessionState$order = c(sessionState$order, itemID)
+      }
     }
 
     for (propertyID in names(item)) {
       itemState[[propertyID]] = item[[propertyID]]
     }
 
-    sessionState[[itemID]] = itemState
+    sessionState$items[[itemID]] = itemState
   }
 
   state[[sessionID]] = sessionState

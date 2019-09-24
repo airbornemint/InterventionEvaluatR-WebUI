@@ -8,6 +8,20 @@ performAnalysis = function(params, analysisTypes, progress) {
   # return(readRDS("/tmp/app.plot.rds")$analysis) # For debugging
   dataCheckWarnings = list()
   withCallingHandlers({
+    progress(setup=list(name="Preparing to run analysis"))
+    progress(init=list(name="Initializing analysis"))
+    progress(setup=FALSE)
+    
+    if ('univariate' %in% analysisTypes) {
+      progress(univariate=list(name="Running univariate analysis"))
+    }
+    
+    if ('impact' %in% analysisTypes) {
+      progress(impact=list(name="Running impact analysis"))
+    }
+
+    progress(finish=list(name="Finishing analysis"))
+    
     # Helper function that turns InterventionEvaluatR progress information (done, total) into the format expected by the progress callback
     analysisProgress = function(part) {
       function(analysis, done, total) {
@@ -21,7 +35,6 @@ performAnalysis = function(params, analysisTypes, progress) {
       }
     }
 
-    progress(setup=list(name="Preparing to run analysis"))
     worker = setupWorker()
     
     on.exit({
@@ -29,7 +42,7 @@ performAnalysis = function(params, analysisTypes, progress) {
     }, add=TRUE)
     progress(setup=TRUE)
     
-    progress(init=list(name="Initializing analysis"))
+    progress(init=FALSE)
     analysis = do.call(
       evaluatr.init,
       params
@@ -37,18 +50,24 @@ performAnalysis = function(params, analysisTypes, progress) {
     progress(init=TRUE)
 
     if ('univariate' %in% analysisTypes) {
+      progress(univariate=FALSE)
       InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$cluster, analysisProgress("univariate"))
       univariateResults = evaluatr.univariate(analysis)
+      progress(univariate=TRUE)
     }
     
     if ('impact' %in% analysisTypes) {
+      progress(impact=FALSE)
       InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$cluster, analysisProgress("impact"))
       impactResults = evaluatr.impact(analysis)
+      progress(impact=TRUE)
     }
     
     # Only keep what we need so we aren't shipping large amounts of never-to-be-used data between worker and UI
+    progress(finish=FALSE)
     evaluatr.prune(analysis)
     analysis$dataCheckWarnings = dataCheckWarnings
+    progress(finish=TRUE)
     analysis
   }, evaluatr.dataCheck=function(warning) {
     dataCheckWarnings <<- c(dataCheckWarnings, list(warning))

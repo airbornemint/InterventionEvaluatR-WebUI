@@ -1,6 +1,5 @@
 library(magrittr)
 library(plotly)
-library(fontawesome)
 library(shinyjs)
 library(future)
 library(parallel)
@@ -74,7 +73,7 @@ ui <- md_page(
         class="navbar-nav justify-content-end",
         tags$li(
           class="nav-item", id="help-button",
-          tags$a(class="nav-link", fa("question-circle", height="1.5em", fill="white"))
+          tags$a(class="nav-link", icon("question-circle"))
         )
       )
     ) %>% tagAppendAttributes(class="navbar-expand-sm")

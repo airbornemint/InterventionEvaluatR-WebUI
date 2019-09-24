@@ -30,18 +30,29 @@ Shiny.addCustomMessageHandler("activate_tab", function(message) {
   $("#" + message.tab).tab("show");
 });
 
-function updateProgress(items) {
+function updateProgress(progress) {
   // In here, items is a dict whose keys are unique IDs for progress items, and whose values are dict(name, done)
   // For each item, we find an existing progress item with that key, creating if necessary, then update the name and the doneness
-  for (var id in items) {
-    var item = items[id];
+  var progressList = $("#analysis-progress");
+  progress.order.forEach(function(id, idx) {
+    var item = progress.items[id];
     id = "progress-" + id;
     var itemElt = $("#" + id);
     if (!itemElt.length) {
       // Item doesn't exist, create
       itemElt = $("<li class='progress-item list-group-item d-flex justify-content-between align-items-center' />").attr("id", id).append(
-        "<span class='name'/><span class='badge badge-primary badge-pill'>&#x2713;</span>"
-      ).appendTo($("#analysis-progress"));
+        "<span class='name'/><span class='badge badge-warning badge-pill progress-waiting'><i class='fas fa-clock' aria-hidden='true'></i></span><span class='badge badge-success badge-pill progress-done'><i class='fas fa-check' aria-hidden='true'></i></span>"
+      ).append(
+        '<span class="spinner-border spinner-border-sm text-primary progress-current" role="status"><span class="sr-only">In progress…</span></span>'
+      );
+      
+      // Insert at the correct place
+      var children = progressList.children();
+      if (idx < children.length) {
+        children.eq(idx).before(itemElt);
+      } else {
+        progressList.append(itemElt);
+      }
     }
 
     // Item exists, update name and doneness
@@ -49,9 +60,11 @@ function updateProgress(items) {
       itemElt.find(".name").text(item.name);
     }
     if ('done' in item) {
-      itemElt.toggleClass('done', item.done);
+      itemElt.toggleClass('done', item.done).removeClass('waiting');
+    } else {
+      itemElt.addClass('waiting');
     }
-  }
+  });
   
 }
 
@@ -64,7 +77,7 @@ setInterval(function(){
 }, 5000);
 
 
-Shiny.addCustomMessageHandler("update_analysis_progress", function(message) {
-  updateProgress(message.items);
-});
+// Shiny.addCustomMessageHandler("update_analysis_progress", function(message) {
+//   updateProgress(message.items);
+// });
 
