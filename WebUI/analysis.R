@@ -9,9 +9,9 @@ performAnalysis = function(params, analysisTypes, progress) {
   dataCheckWarnings = list()
   withCallingHandlers({
     progress(setup=list(name="Preparing to run analysis"))
-    progress(setup=FALSE)
     progress(init=list(name="Initializing analysis"))
-
+    progress(setup=FALSE)
+    
     if ('univariate' %in% analysisTypes) {
       progress(univariate=list(name="Running univariate analysis"))
     }
