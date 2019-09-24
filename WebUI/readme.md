@@ -15,7 +15,7 @@ The code is roughly divided into:
 
 * `app.R`: The main skeleton of the app (main navigation bar, help button)
 * `setup.R`: The analysis setup UI and logic. This is where all the magic happens before the user starts the analysis — loading of data, selection of analysis parameters, etc. The corresponding help content is in `markdown/help-setup.md`.
-* `results.R`: Display of results UI and logic. This is everything that happens in response to the Analyze button — preparing the data for analysis, running the analysis, displaying the results, and saving the results. The corresponding help content is in `markdown/help-results.md`. Other relevant templates are in `markdown/results-*.Rmd` and `Report.template.tex`.
+* `results.R`: Display of results UI and logic. This is everything that happens in response to the Analyze button — preparing the data for analysis, running the analysis, displaying progress, displaying the results, and saving the results. The corresponding help content is in `markdown/help-results.md`. Other relevant templates are in `markdown/results-*.Rmd` and `Report.template.tex`.
 * `analysis.R`: This is the code that interfaces directly with the InterventionEvaluatR package. Its main purpose is to turn user's selection of parameters into calls to `evaluatr.*` and to turn the results of `evaluatr.*` into something that's suited for being displayed in the web UI. 
 * `worker.R`: This is low-level code responsible for setting up cloud-compute resources to run the analysis. 
 * `common.R`: Some utilities used by various other code. 
@@ -36,10 +36,8 @@ The web UI is *intentionally* pinned to a specific revision of the main Interven
 
 The current process for updating InterventionEvaluatR used by web UI is:
 
-1. Merge the changes you are interested in to the `web-ui` branch in InterventionEvaluatR repository
+1. Merge the changes you are interested in into the `web-ui` branch in InterventionEvaluatR repository
 2. With the WebUI.Rproj open, update InterventionEvaluatR to the latest on the `web-ui` branch using `devtools::install_github("weinbergerlab/InterventionEvaluatR", "web-ui")`
 3. You can now run the web UI locally with the updated InterventionEvaluatR. 
 4. When you are satisfied with the results, run `packrat::snapshot()` to record the new version InterventionEvaluatoR R in packrat
 5. Commit the changes to `packrat.lock` that were made by running `packrat::snapshot()`
-
-At some point in the future, the changes from the `web-ui` branch will be merged into the main InterventionEvaluatoR branch, and step 1 will become unnecessary.
