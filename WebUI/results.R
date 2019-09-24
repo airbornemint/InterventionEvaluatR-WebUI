@@ -492,7 +492,6 @@ update_progress = function(session, ...) {
   # session$sendCustomMessage("update_analysis_progress", list(items=items))
   
   # Instead, write progress info into a downloadable file and have the client poll it
-  browser()
   progressState <<- updateState(progressState, session, items)
   sessionProgress = progressState[[session$token]] %>% toJSON(auto_unbox=TRUE)
   
