@@ -80,6 +80,11 @@
   display: block;
 }
 
+#analysis-progress li.progress-item > span.progress-current {
+  width: 28px;
+  text-align: center;
+}
+
 #analysis-progress li.progress-item > span.progress-done, #analysis-progress li.progress-item > span.progress-waiting, #analysis-progress li.progress-item.waiting > span.progress-done, #analysis-progress li.progress-item.waiting > span.progress-current, #analysis-progress li.progress-item.done > span.progress-current, #analysis-progress li.progress-item.done > span.progress-waiting  {
   display: none;
 }
