@@ -1,9 +1,10 @@
 library(magrittr)
 library(plotly)
-library(fontawesome)
 library(shinyjs)
 library(future)
+library(parallel)
 library(promises)
+library(jsonlite, exclude=c("validate"))
 library(shiny)
 library(InterventionEvaluatR)
 library(uuid)
@@ -14,7 +15,6 @@ library(lubridate)
 library(plyr)
 library(dplyr)
 library(htmltools)
-library(uuid)
 library(brew)
 library(tools)
 library(rlang)
@@ -27,7 +27,7 @@ source("setup.R")
 source("results.R")
 source("worker.R")
 
-plan(multisession)
+plan(sequential)
 
 ui <- md_page(
   id="page",
@@ -73,7 +73,7 @@ ui <- md_page(
         class="navbar-nav justify-content-end",
         tags$li(
           class="nav-item", id="help-button",
-          tags$a(class="nav-link", fa("question-circle", height="1.5em", fill="white"))
+          tags$a(class="nav-link", icon("question-circle"))
         )
       )
     ) %>% tagAppendAttributes(class="navbar-expand-sm")

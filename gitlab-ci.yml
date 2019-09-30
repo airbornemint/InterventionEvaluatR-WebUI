@@ -6,9 +6,17 @@ variables:
   DOCKER_IMAGE_WEBUI: "${CI_REGISTRY_IMAGE}/interventionevaluatr-web-ui-ci:ci-${CI_PIPELINE_IID}"
   DOCKER_IMAGE_WEBUI_REF: "${CI_REGISTRY_IMAGE}/interventionevaluatr-web-ui-ci:ci-${CI_COMMIT_REF_SLUG}"
   DOCKER_IMAGE_WEBUI_MASTER: "${CI_REGISTRY_IMAGE}/interventionevaluatr-web-ui-ci:ci-master"
-  DOCKER_SAVE_WEBUI: "docker/interventionevaluatr-web-ui-${CI_PIPELINE_IID}.tar.xz"
+  DOCKER_IMAGE_SHINYPROXY: "${CI_REGISTRY_IMAGE}/interventionevaluatr-shinyproxy-ci:ci-${CI_PIPELINE_IID}"
+  DOCKER_IMAGE_SHINYPROXY_REF: "${CI_REGISTRY_IMAGE}/interventionevaluatr-shinyproxy-ci:ci-${CI_COMMIT_REF_SLUG}"
+  DOCKER_IMAGE_SHINYPROXY_MASTER: "${CI_REGISTRY_IMAGE}/interventionevaluatr-shinyproxy-ci:ci-master"
+  DOCKER_IMAGE_NGINX: "${CI_REGISTRY_IMAGE}/interventionevaluatr-nginx-ci:ci-${CI_PIPELINE_IID}"
+  DOCKER_IMAGE_NGINX_REF: "${CI_REGISTRY_IMAGE}/interventionevaluatr-nginx-ci:ci-${CI_COMMIT_REF_SLUG}"
+  DOCKER_IMAGE_NGINX_MASTER: "${CI_REGISTRY_IMAGE}/interventionevaluatr-nginx-ci:ci-master"
+  DOCKER_IMAGE_WORKER: "${CI_REGISTRY_IMAGE}/interventionevaluatr-worker-ci:ci-${CI_PIPELINE_IID}"
+  DOCKER_IMAGE_WORKER_REF: "${CI_REGISTRY_IMAGE}/interventionevaluatr-worker-ci:ci-${CI_COMMIT_REF_SLUG}"
+  DOCKER_IMAGE_WORKER_MASTER: "${CI_REGISTRY_IMAGE}/interventionevaluatr-worker-ci:ci-master"
   APP_WEBUI: "app/interventionevaluatr-web-ui-${CI_PIPELINE_IID}.tar.xz"
-  DOCKER_CONTAINER_WEBUI: "interventionevaluatr-web-ui"
+  DOCKER_CONTAINER: "interventionevaluatr-web-ui"
 
 .build:
   stage: build
@@ -23,25 +31,55 @@ variables:
     DOCKER_TLS_CERTDIR: ""
   script:
     - docker login -u gitlab-ci-token -p "${CI_BUILD_TOKEN}" "${CI_REGISTRY_IMAGE}"
+    # Build web UI docker image
     - docker pull "${DOCKER_IMAGE_WEBUI_REF}" || true
     - docker pull "${DOCKER_IMAGE_WEBUI_MASTER}" || true
-    - docker build --cache-from "${DOCKER_IMAGE_WEBUI_REF}" --cache-from "${DOCKER_IMAGE_WEBUI_MASTER}" -t "${DOCKER_IMAGE_WEBUI}" -t "${DOCKER_IMAGE_WEBUI_REF}" WebUI
+    - docker build ${DOCKER_NOCACHE:-} --cache-from "${DOCKER_IMAGE_WEBUI_REF}" --cache-from "${DOCKER_IMAGE_WEBUI_MASTER}" -t "${DOCKER_IMAGE_WEBUI}" -t "${DOCKER_IMAGE_WEBUI_REF}" --build-arg "GITLAB_REGISTRY=${CI_REGISTRY_IMAGE}" --build-arg "GITLAB_REGISTRY_USER=${GITLAB_REGISTRY_USER}" --build-arg "GITLAB_REGISTRY_TOKEN=${GITLAB_REGISTRY_TOKEN}" --build-arg "DIGITALOCEAN_ACCESS_TOKEN=${DIGITALOCEAN_ACCESS_TOKEN}" --build-arg "WORKER_IMAGE=${DOCKER_IMAGE_WORKER}" --build-arg INTERVENTIONEVALUATR_DEPLOY="${INTERVENTIONEVALUATR_DEPLOY}" WebUI
     - docker push "${DOCKER_IMAGE_WEBUI}" 
     - docker push "${DOCKER_IMAGE_WEBUI_REF}"
+    # Find out what SHA of InterventionEvaluatR should be installed on the worker
+    - docker run --workdir /srv/shiny-server/WebUI "${DOCKER_IMAGE_WEBUI}" Rscript -e 'packageDescription("InterventionEvaluatR")'
+    - export INTERVENTIONEVALUATR_REF=$(docker run --workdir /srv/shiny-server/WebUI "${DOCKER_IMAGE_WEBUI}" Rscript -e 'write(packageDescription("InterventionEvaluatR")$GithubSHA1, stdout())')
+    # Build ShinyProxy docker image (referencing the app image)
+    - docker pull "${DOCKER_IMAGE_SHINYPROXY_REF}" || true
+    - docker pull "${DOCKER_IMAGE_SHINYPROXY_MASTER}" || true
+    - docker build ${DOCKER_NOCACHE:-} --cache-from "${DOCKER_IMAGE_SHINYPROXY_REF}" --cache-from "${DOCKER_IMAGE_SHINYPROXY_MASTER}" -t "${DOCKER_IMAGE_SHINYPROXY}" -t "${DOCKER_IMAGE_SHINYPROXY_REF}" --build-arg "APP_IMAGE=${DOCKER_IMAGE_WEBUI}" shinyproxy
+    - docker push "${DOCKER_IMAGE_SHINYPROXY}" 
+    - docker push "${DOCKER_IMAGE_SHINYPROXY_REF}"
+    # Build nginx image
+    - docker pull "${DOCKER_IMAGE_NGINX_REF}" || true
+    - docker pull "${DOCKER_IMAGE_NGINX_MASTER}" || true
+    - docker build ${DOCKER_NOCACHE:-} --cache-from "${DOCKER_IMAGE_NGINX_REF}" --cache-from "${DOCKER_IMAGE_NGINX_MASTER}" -t "${DOCKER_IMAGE_NGINX}" -t "${DOCKER_IMAGE_NGINX_REF}" --build-arg "APP_IMAGE=${DOCKER_IMAGE_WEBUI}" nginx-proxy
+    - docker push "${DOCKER_IMAGE_NGINX}" 
+    - docker push "${DOCKER_IMAGE_NGINX_REF}"
+    # Build worker docker image
+    - docker pull "${DOCKER_IMAGE_WORKER_REF}" || true
+    - docker pull "${DOCKER_IMAGE_WORKER_MASTER}" || true
+    - docker build ${DOCKER_NOCACHE:-} --cache-from "${DOCKER_IMAGE_WORKER_REF}" --cache-from "${DOCKER_IMAGE_WORKER_MASTER}" -t "${DOCKER_IMAGE_WORKER}" -t "${DOCKER_IMAGE_WORKER_REF}" --build-arg "INTERVENTIONEVALUATR_REF=${INTERVENTIONEVALUATR_REF}" worker
+    - docker push "${DOCKER_IMAGE_WORKER}" 
+    - docker push "${DOCKER_IMAGE_WORKER_REF}"
+    # Save app source in a build artifact
     - mkdir -p "app"
     - tar -cvzf "${APP_WEBUI}" WebUI
+    # Generate final docker-compose.yml
+    - apk add perl
+    - perl -p -i -e 's{\$(\{)?(\w+)(?(1)\})}{$ENV{$2} // $&}ge' docker-compose.yml
   artifacts:
     paths:
-      - "${DOCKER_SAVE_WEBUI}"
       - "${APP_WEBUI}"
+      - docker-compose.yml
 
 build-dev:
   extends: .build
+  variables:
+    INTERVENTIONEVALUATR_DEPLOY: staging
   artifacts:
     expire_in: 30 days
 
 build-rel:
   extends: .build
+  variables:
+    INTERVENTIONEVALUATR_DEPLOY: production
   only:
     - tags
 
@@ -52,14 +90,14 @@ build-rel:
   script:
     - docker login -u gitlab-ci-token -p "${CI_BUILD_TOKEN}" "${CI_REGISTRY_IMAGE}"
     - docker-machine --debug status "${MACHINE_NAME}" && docker-machine --debug provision "${MACHINE_NAME}"
-    - docker-machine --debug status "${MACHINE_NAME}" || docker-machine --debug create --driver digitalocean --digitalocean-access-token "${DIGITAL_OCEAN_ACCESS_TOKEN}" --digitalocean-image ubuntu-16-04-x64 --digitalocean-monitoring --digitalocean-region=sfo2 --digitalocean-tags=InterventionEvaluatR --digitalocean-size "s-1vcpu-2gb" "${MACHINE_NAME}" 
-    - docker $(docker-machine config "${MACHINE_NAME}") rm --force "${DOCKER_CONTAINER_WEBUI}" || true
-    - docker $(docker-machine config "${MACHINE_NAME}") run --restart=always --detach --publish 80:3838 --name "${DOCKER_CONTAINER_WEBUI}" "${DOCKER_IMAGE_WEBUI}"
+    - docker-machine --debug status "${MACHINE_NAME}" || (docker-machine --debug rm --force "${MACHINE_NAME}"; docker-machine --debug create --driver digitalocean --digitalocean-access-token "${DIGITALOCEAN_ACCESS_TOKEN}" --digitalocean-image ubuntu-16-04-x64 --digitalocean-monitoring --digitalocean-region=sfo2 --digitalocean-tags=InterventionEvaluatR --digitalocean-size "s-1vcpu-2gb" --digitalocean-userdata=cloud-config.yml "${MACHINE_NAME}")
+    - docker $(docker-machine config "${MACHINE_NAME}") rm --force "${DOCKER_CONTAINER}" || true
+    # Set up docker networking
+    - docker-compose $(docker-machine config "${MACHINE_NAME}") up --detach 
     - docker $(docker-machine config "${MACHINE_NAME}") system prune --all --force
+    # Pull the WebUI image on deploy to reduce delay on first load
+    - docker $(docker-machine config "${MACHINE_NAME}") pull "${DOCKER_IMAGE_WEBUI}"
   dependencies: []
-  artifacts:
-    paths:
-      - "${MACHINE_STORAGE_PATH}"
     
 deploy-dev:
   extends: .deploy

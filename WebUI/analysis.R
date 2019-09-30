@@ -4,23 +4,75 @@ library(ggplot2)
 library(tibble)
 
 # Run the relevant pieces of evaluatr analysis. This calls InterventionEvaluatR, but it doesn't do anything to rearrange the results into a form that is useful in the web interface
-performAnalysis = function(params, analysisTypes) {
+performAnalysis = function(params, analysisTypes, progress) {
   # return(readRDS("/tmp/app.plot.rds")$analysis) # For debugging
-  analysis = do.call(
-    evaluatr.init,
-    params
-  )
-  
-  if ('univariate' %in% analysisTypes) {
-    univariateResults = evaluatr.univariate(analysis)
-  }
+  dataCheckWarnings = list()
+  withCallingHandlers({
+    progress(setup=list(name="Preparing to run analysis"))
+    progress(init=list(name="Initializing analysis"))
+    
+    if ('univariate' %in% analysisTypes) {
+      progress(univariate=list(name="Running univariate analysis"))
+    }
+    
+    if ('impact' %in% analysisTypes) {
+      progress(impact=list(name="Running impact analysis"))
+    }
 
-  if ('impact' %in% analysisTypes) {
-    impactResults = evaluatr.impact(analysis)
-  }
+    progress(finish=list(name="Finishing analysis"))
+    
+    # Helper function that turns InterventionEvaluatR progress information (done, total) into the format expected by the progress callback
+    analysisProgress = function(part) {
+      function(analysis, done, total) {
+        message(sprintf("%s %d / %d", part, done, total))
+        items = 1:total %>% llply(
+          function(idx) list(name=sprintf("Analysis part %d", idx), done=(idx <= done))
+        ) %>% setNames(
+          sprintf("analysis-%s-%s", part, 1:total)            
+        )
+        do.call(progress, items)
+      }
+    }
 
-  # Only keep what we need so we aren't shipping large amounts of never-to-be-used data between worker and UI
-  evaluatr.prune(analysis)
+    progress(setup=FALSE)
+    worker = setupWorker()
+    
+    on.exit({
+      dismissWorker(worker)
+    }, add=TRUE)
+    progress(setup=TRUE)
+    
+    progress(init=FALSE)
+    analysis = do.call(
+      evaluatr.init,
+      params
+    )
+    progress(init=TRUE)
+
+    if ('univariate' %in% analysisTypes) {
+      progress(univariate=FALSE)
+      InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$cluster, analysisProgress("univariate"))
+      univariateResults = evaluatr.univariate(analysis)
+      progress(univariate=TRUE)
+    }
+    
+    if ('impact' %in% analysisTypes) {
+      progress(impact=FALSE)
+      InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$cluster, analysisProgress("impact"))
+      impactResults = evaluatr.impact(analysis)
+      progress(impact=TRUE)
+    }
+    
+    # Only keep what we need so we aren't shipping large amounts of never-to-be-used data between worker and UI
+    progress(finish=FALSE)
+    evaluatr.prune(analysis)
+    analysis$dataCheckWarnings = dataCheckWarnings
+    progress(finish=TRUE)
+    analysis
+  }, evaluatr.dataCheck=function(warning) {
+    dataCheckWarnings <<- c(dataCheckWarnings, list(warning))
+    invokeRestart("muffleWarning")
+  })
 }
 
 # Take the output of InterventionEvaluatR and rearrange it into a form that is better suited for what the Web UI needs to do with it
@@ -106,10 +158,9 @@ reformatAnalysis = function(analysis, analysisTypes, info) {
     })
   }
   
-  reformatted$dataIssues = list(
-    # list(description="Nothing to see here, just a test"),
-    # list(description="Nothing to see here, just another test")
-  )
+  reformatted$dataIssues = llply(analysis$dataCheckWarnings, function(warning) {
+    list(type = "warning", description = warning$message)
+  })
   
   reformatted
 }

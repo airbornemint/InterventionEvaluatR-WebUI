@@ -42,6 +42,10 @@
   padding-top: 3.5rem; /* 3.5rem for header nav */
 }
 
+#help-button > a > i.fa {
+  font-size: 150%;
+}
+
 .help-on .main-content {
   padding-right: 25rem; 
 }
@@ -66,6 +70,22 @@
 
 #resultsUI .accordion.supplemental {
   width: 100%;
+}
+
+#resultsUI .warnings ul {
+  list-style: none;
+}
+
+#resultsUI .warnings ul > li > .issue {
+  display: block;
+}
+
+#analysis-progress li.progress-item > span.progress-done, #analysis-progress li.progress-item > span.progress-waiting, #analysis-progress li.progress-item.waiting > span.progress-done, #analysis-progress li.progress-item.waiting > span.progress-current, #analysis-progress li.progress-item.done > span.progress-current, #analysis-progress li.progress-item.done > span.progress-waiting  {
+  display: none;
+}
+
+#analysis-progress li.progress-item.done > span.progress-done, #analysis-progress li.progress-item > span.progress-current, #analysis-progress li.progress-item.waiting > span.progress-waiting {
+  display: inline;
 }
 
 #help-toggle {

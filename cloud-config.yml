@@ -1,0 +1,6 @@
+#cloud-config
+runcmd:
+  - while [ ! -d /etc/systemd/system/docker.service.d ] ; do sleep 15 ; done
+  - export DEBIAN_FRONTEND=noninteractive
+  - apt-get update -y -qq
+  - apt-get install -y -qq do-agent

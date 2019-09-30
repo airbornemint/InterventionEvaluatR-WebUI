@@ -56,6 +56,12 @@ results.server = function(input, output, session, setup) {
         class="navbar results-heading mb-3 mt-3 justify-content-center primary-color",
         p(class="h3 p-2 m-0 text-white", "Analysis in progress…"),
         md_spinner("spinner-results") %>% tagAppendAttributes(class="text-white")
+      ),
+      div(
+        tags$ul(
+          id="analysis-progress",
+          class="list-group"
+        )
       )
     )
   })
@@ -105,7 +111,12 @@ results.server = function(input, output, session, setup) {
         info = setup$userInput()$info
         
         analysisTypes = input$analysisTypes
-
+        
+        progress = function(...) {
+          update_progress(session, ...)
+        }
+        
+        # All the future nonsense in here is actually unnecessary because I had to switch to sequential futures to get any kind of useful progress feedback, and it should be rewritten to just use regular function calls.
         future({
           withLogErrors({
             # If the user uploaded precomputed results, and their current analysis settings are compatible with them, use them
@@ -114,19 +125,7 @@ results.server = function(input, output, session, setup) {
             } 
             # Otherwise set up the computation worker and run the analysis
             else {
-              worker = setupWorker()
-              oplan = workerPlan(worker)
-              on.exit(plan(oplan), add=TRUE)
-              
-              on.exit({
-                dismissWorker(worker)
-              }, add=TRUE)
-              
-              future({
-                withLogErrors({
-                  performAnalysis(fullParams, analysisTypes)
-                })
-              }) %>% value()
+              performAnalysis(fullParams, analysisTypes, progress)
             }
           })
         }) %...>% (function(analysis) {
@@ -247,6 +246,8 @@ results.server = function(input, output, session, setup) {
     }
   )
   outputOptions(output, 'downloadResults', suspendWhenHidden=FALSE)
+  
+  update_progress(session)
 }
 
 # Server-side update of results when analysis is complete
@@ -463,4 +464,83 @@ supplemental_results_plot_panel = function(idx, id, title, explainer, expanded=F
       )
     ), expanded=expanded
   )
+}
+
+# Progress for us is basically a checklist. This function takes a named list for each checklist item. The value of each checklist item is one of: list(name="Display Name") for a new item that hasn't started yet, list(done=FALSE) for an item that has started but isn't done, or list(done=TRUE) for an item that is done. The first two can be combined. For example:
+#
+# updateProgress(a=list(name="First progress item", done=FALSE), b=list(name="Second progress item"))
+#
+# sets up two items on the progress checklist, of which the first is in progress and the second isn't yet started, and
+#
+# updateProgress(a=list(done=TRUE), b=list(done=TRUE))
+#
+# marks both as done. 
+
+update_progress = function(session, ...) {
+  items = list(...) %>% llply(function(item) {
+    # Items that are bare TRUE/FALSE are wrapped in a list(done=X)
+    if (!is.list(item)) {
+      list(done=item)
+    } else {
+      item
+    }
+  })
+  print(items)
+
+  # There's a bug in Shiny which causes R to crash with a segfault if we do this a happy way, so kludge it is
+  # https://community.rstudio.com/t/sendcustommessage-segfault-failing-to-work-around-it/39993
+  # session$sendCustomMessage("update_analysis_progress", list(items=items))
+  
+  # Instead, write progress info into a downloadable file and have the client poll it
+  progressState <<- updateState(progressState, session, items)
+  sessionProgress = progressState[[session$token]] %>% toJSON(auto_unbox=TRUE)
+  
+  d = sprintf("www/.session-data/%s", session$token)
+  dir.create(d, showWarnings = FALSE, recursive = TRUE)
+  write(sessionProgress, sprintf("%s/progress.json", d))
+}
+
+# Kludge from above continues
+progressState = list()
+
+updateState = function(state, session, items) {
+  sessionID = session$token
+
+  sessionState = state[[sessionID]]
+  if (is.null(sessionState)) {
+    sessionState = list(items=list(), order=c())
+  }
+
+  for (itemID in names(items)) {
+    item = items[[itemID]]
+
+    itemState = sessionState$items[[itemID]]
+    if (is.null(itemState)) {
+      itemState = list()
+      # We also need to decide where this item will appear in the list
+      # Its predecessor will be the last item that is currently in the list that is not waiting
+      insertAfter = sessionState$order %>% laply(function(id) {
+        if (!is.null(sessionState$items[[id]]$done)) {
+          id
+        } else {
+          NA
+        }
+      }) %>% na.omit()
+
+      if (length(insertAfter)) {
+        sessionState$order = c(sessionState$order[1:length(insertAfter)], itemID, sessionState$order[(length(insertAfter) + 1):length(sessionState$order)])
+      } else {
+        sessionState$order = c(sessionState$order, itemID)
+      }
+    }
+
+    for (propertyID in names(item)) {
+      itemState[[propertyID]] = item[[propertyID]]
+    }
+
+    sessionState$items[[itemID]] = itemState
+  }
+
+  state[[sessionID]] = sessionState
+  state
 }
