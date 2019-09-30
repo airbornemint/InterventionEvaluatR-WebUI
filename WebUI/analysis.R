@@ -23,12 +23,12 @@ performAnalysis = function(params, analysisTypes, progress) {
     
     # Helper function that turns InterventionEvaluatR progress information (done, total) into the format expected by the progress callback
     analysisProgress = function(part) {
-      function(analysis, done, total) {
-        message(sprintf("%s %d / %d", part, done, total))
-        items = 1:total %>% llply(
-          function(idx) list(name=sprintf("Analysis part %d", idx), done=(idx <= done))
+      function(analysis, done, names, before) {
+        message(sprintf("%s: %d / %d", part, done, length(names)))
+        items = seq_along(names) %>% llply(
+          function(idx) list(name=names[[idx]], done=(idx <= done))
         ) %>% setNames(
-          sprintf("analysis-%s-%s", part, 1:total)            
+          sprintf("analysis-%s-%s", part, 1:length(names))
         )
         do.call(progress, items)
       }
