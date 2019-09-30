@@ -38,6 +38,15 @@ ul.stepper > li > .step-body {
   fill: #007bff
 }
 
-.accordion > .card > .card-header > a.collapsed > h5 > svg {
-  transform: rotate(180deg)
+.accordion > .card > .card-header > a > h5 > i.fa-angle-down {
+  display: none;
 }
+
+.accordion > .card > .card-header > a.collapsed > h5 > i.fa-angle-down {
+  display: inline;
+}
+
+.accordion > .card > .card-header > a.collapsed > h5 > i.fa-angle-up {
+  display: none;
+}
+

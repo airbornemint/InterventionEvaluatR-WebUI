@@ -264,9 +264,9 @@ results.server.show = function(input, output, session, analysis) {
             p(class="h3 p-2 m-0 text-white", "Analysis Summary")
           ),
           md_accordion(
-            id=sprintf("acc-results-group-%s", idx),
+            id="acc-results-overview",
             md_accordion_card(
-              visId("summary", idx),
+              "acc-results-summary",
               "Summary",
               renderHTML(
                 "markdown/results-summary.Rmd", envir=new_environment(data=list(
