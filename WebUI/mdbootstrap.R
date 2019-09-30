@@ -238,7 +238,8 @@ md_accordion = function(id, ...) {
             tags$h5(
               class="mb-0",
               card$title,
-              icon("angle-up")
+              icon("angle-up"),
+              icon("angle-down")
             )
           )
         ),
