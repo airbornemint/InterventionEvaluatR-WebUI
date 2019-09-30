@@ -485,7 +485,6 @@ update_progress = function(session, ...) {
       item
     }
   })
-  print(items)
 
   # There's a bug in Shiny which causes R to crash with a segfault if we do this a happy way, so kludge it is
   # https://community.rstudio.com/t/sendcustommessage-segfault-failing-to-work-around-it/39993
