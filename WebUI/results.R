@@ -150,7 +150,7 @@ results.server = function(input, output, session, setup) {
           analysisStatus(ANALYSIS_FAILED)
           print(error$message)
           print(error$call)
-          showNotification(error$message)
+          results.server.showError(input, output, session, error)
         })
         
         # By constructing a future but returning NULL, shiny server will continue updating the UI while the future is being computed, which allows us to give progress updates
@@ -385,6 +385,35 @@ results.server.show = function(input, output, session, analysis) {
         outputOptions(output, visId("prevented", idx), suspendWhenHidden=FALSE)
       }
     }
+    output$resultsPendingUI = renderUI({
+    })
+  })
+}
+
+# Display error that occurred during analysis
+results.server.showError = function(input, output, session, error) {
+  withLogErrors({
+    output$resultsUI = renderUI({
+      # One section for each analysis group
+      tagList(
+        tags$section(
+          div(
+            class="navbar results-heading mb-3 mt-3 justify-content-center primary-color",
+            p(class="h3 p-2 m-0 text-danger", "Analysis Failed")
+          ),
+          md_accordion(
+            id="acc-results-overview",
+            md_accordion_card(
+              "acc-results-error",
+              span(class="text-danger", "Error"),
+              p(error$message),
+              expanded=TRUE
+            )
+          ) %>% tagAppendAttributes(class="mb-3 mt-3 col-12")
+        )
+      )
+    })
+    
     output$resultsPendingUI = renderUI({
     })
   })
