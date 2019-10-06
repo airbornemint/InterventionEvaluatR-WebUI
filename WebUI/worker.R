@@ -8,7 +8,7 @@ setupWorker = function() {
 }
 
 setupLocalWorker = function() {
-  list(local=TRUE)
+  list(local=TRUE, startCluster=NULL, stopCluster=NULL)
 }
 
 setupRemoteWorker = function() {
@@ -49,7 +49,12 @@ setupRemoteWorker = function() {
     numCores = clusterCall(singleCluster, function() { future::availableCores(methods=c("system")) })[[1]]
     stopCluster(singleCluster)
   
-    list(local=FALSE, cluster=makeCluster(numCores), machineName=machineName)
+    list(
+      local=FALSE, 
+      startCluster=function() { makeCluster(numCores) }, 
+      stopCluster=function(cluster) { stopCluster(cluster) }, 
+      machineName=machineName
+    )
   }, error = function(errorCondition) {
     message(errorCondition)
     check.call(
@@ -60,23 +65,6 @@ setupRemoteWorker = function() {
     )
     signalCondition(errorCondition)
   })
-}
-
-# Generate a future evaluation plan for our worker
-workerPlan = function(worker) {
-  if(worker$local) {
-    localWorkerPlan(worker)
-  } else {
-    remoteWorkerPlan(worker)
-  }
-}
-
-localWorkerPlan = function(worker) {
-  plan()
-}
-
-remoteWorkerPlan = function(worker) {
-  plan(cluster, workers=worker$cluster)
 }
 
 # Shut down the worker
@@ -92,7 +80,6 @@ dismissLocalWorker = function(worker) {
 }
 
 dismissRemoteWorker = function(worker) {
-  stopCluster(worker$cluster)
   check.call(
     c(
       getOption("ie.webui.docker-machine", "docker-machine"), "rm", "--force",

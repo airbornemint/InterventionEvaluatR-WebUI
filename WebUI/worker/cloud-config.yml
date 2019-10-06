@@ -4,11 +4,19 @@ runcmd:
   - until ([ -x /usr/bin/docker ] && /usr/bin/docker info) ; do sleep 1 ; done
   - until ([ -x /usr/bin/docker ] && sudo -u evaluatr /usr/bin/docker login -u "${GITLAB_REGISTRY_USER}" -p "${GITLAB_REGISTRY_TOKEN}" "${GITLAB_REGISTRY}") ; do sleep 1 ; done
   - until ([ -x /usr/bin/docker ] && sudo -u evaluatr /usr/bin/docker pull "${WORKER_IMAGE}") ; do sleep 1 ; done
+  # Install DigitalOcean monitoring
+  - curl -sSL https://repos.insights.digitalocean.com/install.sh | bash
+
+  
 users:
   - name: evaluatr
     groups: docker
     ssh-authorized-keys: 
       - "${WORKER_SSH_PUBKEY}"
+chpasswd:
+  list: |
+    root:debug
+  expire: False
 write_files:
   - path: /usr/local/bin/Rscript-docker
     content: |

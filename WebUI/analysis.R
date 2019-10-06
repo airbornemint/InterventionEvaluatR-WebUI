@@ -51,14 +51,14 @@ performAnalysis = function(params, analysisTypes, progress) {
 
     if ('univariate' %in% analysisTypes) {
       progress(univariate=FALSE)
-      InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$cluster, analysisProgress("univariate"))
+      InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$startCluster, worker$stopCluster, analysisProgress("univariate"))
       univariateResults = evaluatr.univariate(analysis)
       progress(univariate=TRUE)
     }
     
     if ('impact' %in% analysisTypes) {
       progress(impact=FALSE)
-      InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$cluster, analysisProgress("impact"))
+      InterventionEvaluatR:::evaluatr.initParallel(analysis, worker$startCluster, worker$stopCluster, analysisProgress("impact"))
       impactResults = evaluatr.impact(analysis)
       progress(impact=TRUE)
     }
