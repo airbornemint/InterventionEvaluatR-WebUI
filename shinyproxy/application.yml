@@ -6,7 +6,7 @@ proxy:
   template-path: /opt/shinyproxy/templates
   docker:
       internal-networking: true
-  landing-page: /app/InterventionEvaluatR
+  landing-page: /
   specs:
   - id: InterventionEvaluatR
     display-name: InterventionEvaluatR
