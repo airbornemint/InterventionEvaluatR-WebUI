@@ -260,7 +260,7 @@ results.server.show = function(input, output, session, analysis) {
       tagList(
         tags$section(
           div(
-            class="navbar results-heading justify-content-center primary-color",
+            class="navbar results-heading mt-3 mb-3 justify-content-center primary-color",
             p(class="h3 p-2 m-0 text-white", "Analysis Summary")
           ),
           md_accordion(
