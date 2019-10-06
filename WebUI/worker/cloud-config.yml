@@ -13,10 +13,6 @@ users:
     groups: docker
     ssh-authorized-keys: 
       - "${WORKER_SSH_PUBKEY}"
-chpasswd:
-  list: |
-    root:debug
-  expire: False
 write_files:
   - path: /usr/local/bin/Rscript-docker
     content: |
