@@ -36,6 +36,8 @@ RUN apt-get update -y -qq && apt-get install -y -qq --no-install-recommends ${AP
 COPY --chown=shiny packrat/packrat.lock packrat/packrat.opts /srv/shiny-server/WebUI/packrat/
 RUN install2.r packrat
 RUN ( cd /srv/shiny-server/WebUI ; sudo -u shiny Rscript -e 'packrat::restore()' )
+### Packrat completely broke when INLA was added so for now I am hardcoding the core package version here (grumble grumble). Need to look into using renv instead
+RUN ( cd /srv/shiny-server/WebUI ; Rscript -e 'install.packages("devtools"); options(repos=c(getOption("repos"), INLA="https://inla.r-inla-download.org/R/stable")); devtools::install_github("weinbergerlab/InterventionEvaluatR", ref="69b9b334")' )
 ### Install Shiny app
 COPY --chown=shiny . /srv/shiny-server/WebUI
 COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
