@@ -21,7 +21,7 @@ variables:
 .build:
   stage: build
   tags:
-    - dind
+    - dind-mem:4
   image: docker:18-dind
   services:
     - docker:dind
