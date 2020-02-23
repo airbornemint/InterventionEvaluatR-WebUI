@@ -74,7 +74,7 @@ function updateProgress(progress) {
 
 // This kludge is explained in results.R
 setInterval(function(){
-    $.ajax({ url: window.location.href.split('#')[0] + "/.session-data/" + Shiny.shinyapp.config.sessionId
+    $.ajax({ url: (window.location.href.split('#')[0]).replace(/\/+$/, "") + "/.session-data/" + Shiny.shinyapp.config.sessionId
  + "/progress.json", success: function(data){
         updateProgress(data);
     }, dataType: "json"});
