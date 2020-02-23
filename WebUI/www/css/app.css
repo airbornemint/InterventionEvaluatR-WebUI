@@ -220,6 +220,15 @@ ul.stepper li a .summary {
 .shiny-options-group {
   display: flex;
   flex-wrap: wrap;
+  padding: 1em 2em 1em 1em;
+}
+
+.shiny-input-checkboxgroup.shiny-input-container-inline label ~ .shiny-options-group, .shiny-input-radiogroup.shiny-input-container-inline label ~ .shiny-options-group {
+  margin-top: -10px;
+}
+
+#impactType.shiny-input-container:not(.shiny-input-container-inline) {
+  width: 600px;
 }
 
 .shiny-options-group > .checkbox-inline, .shiny-options-group > .checkbox {
