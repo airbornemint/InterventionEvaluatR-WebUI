@@ -84,11 +84,21 @@ setup.ui = function() {
                 "Which types of analysis do you want to perform?",
                 c(
                   "Univariate Poisson regression"="univariate",
-                  "Synthetic control impact analysis"="impact"
+                  "Impact analysis"="impact"
                 ),
                 selected = c("univariate", "impact"),
                 inline=TRUE
               )),
+              radioButtons(
+                "impactType",
+                "Which type of impact analysis do you want to perform?",
+                c(
+                  "Ridge analysis (faster, ?downside)"="ridge",
+                  "Synthetic control analysis (slower, ?upside)"="syncon"
+                ),
+                selected = c("ridge"),
+                inline=FALSE
+              ),
               uiOutput("analysisGroupsUI"),
               uiOutput("analyzeButtonUI")
             )
@@ -139,6 +149,13 @@ setup.server = function(input, output, session) {
     if (!is.numeric(input$version) || input$version < SAVE_VERSION_COMPATIBLE) {
       input$analysis = NULL
     }
+
+    # In RDS prior to version 15, ridge = FALSE is implicit
+    if (is.null(input$params$impactType)) {
+      input$params$ridge = FALSE;
+      input$analysis$ridge = FALSE;
+    }
+
     input
   }
   
@@ -336,7 +353,8 @@ setup.server = function(input, output, session) {
       group_name=input$groupCol,
       date_name=input$dateCol,
       outcome_name=input$outcomeCol,
-      denom_name=input$denomCol
+      denom_name=input$denomCol,
+      ridge=(input$impactType == "ridge")
     )    
   })
   

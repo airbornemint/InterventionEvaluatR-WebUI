@@ -166,6 +166,6 @@ reformatAnalysis = function(analysis, analysisTypes, info) {
 }
 
 # This is the version number for the "download results" rds file. Change if making incompatible changes.
-SAVE_VERSION_CURRENT = 14
+SAVE_VERSION_CURRENT = 15
 # This is oldest version number for the "download results" rds file that we still accept. Change when dropping support for loading older files.
 SAVE_VERSION_COMPATIBLE = 14
