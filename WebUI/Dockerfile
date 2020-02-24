@@ -82,7 +82,7 @@ RUN rm -rf /tmp/*
 ARG INTERVENTIONEVALUATR_DEPLOY
 RUN echo "options(ie.deployment='${INTERVENTIONEVALUATR_DEPLOY}')" >> /usr/local/lib/R/etc/Rprofile.site
 
-USER shiny
+USER root
 EXPOSE 3838
 CMD ["/usr/bin/shiny-server.sh"] 
 
