@@ -116,11 +116,22 @@ reformatAnalysis = function(analysis, analysisTypes, info) {
   if ('impact' %in% analysisTypes) {
     impactPlots = evaluatr.plots(analysis)
     for(idx in seq_along(analysis$groups)) {
-      reformatted$results$groups[[idx]]$plots$tsMonthly = impactPlots$groups[[idx]]$pred_best + ggtitle(NULL)
-      reformatted$results$groups[[idx]]$plots$tsYearly = impactPlots$groups[[idx]]$pred_best_agg + ggtitle(NULL)
+      if (!analysis$ridge) {
+        reformatted$results$groups[[idx]]$plots$tsMonthly = impactPlots$groups[[idx]]$pred_best + ggtitle(NULL)
+        reformatted$results$groups[[idx]]$plots$tsYearly = impactPlots$groups[[idx]]$pred_best_agg + ggtitle(NULL)
+        reformatted$results$groups[[idx]]$best = analysis$results$impact$best$variant[[idx]]
+        
+        prevented = as.data.frame(analysis$results$impact$best$cumsum_prevented[, , idx])
+      } else {
+        reformatted$results$groups[[idx]]$plots$tsMonthly = impactPlots$groups[[idx]]$pred_full + ggtitle(NULL)
+        reformatted$results$groups[[idx]]$plots$tsYearly = impactPlots$groups[[idx]]$pred_full_agg + ggtitle(NULL)
+        reformatted$results$groups[[idx]]$best = "full"
+        
+        prevented = as.data.frame(analysis$results$impact$full$cumsum_prevented[, , idx])
+      }
+
       reformatted$results$groups[[idx]]$plots$prevented = impactPlots$groups[[idx]]$cumsum_prevented + ggtitle(NULL) + theme(panel.grid.major.y=element_line(color="lightgrey"))
 
-      prevented = as.data.frame(analysis$results$impact$best$cumsum_prevented[, , idx])
       prevented = prevented[nrow(prevented),] %>% round() %>% signif(3)
       reformatted$results$groups[[idx]]$prevented.value = list(
         median=prevented[["50%"]],
@@ -131,7 +142,6 @@ reformatAnalysis = function(analysis, analysisTypes, info) {
         format(val, big.mark = "\U205F", scientific=FALSE) # "Medium mathematical space", no scientific notation
       })
       
-      reformatted$results$groups[[idx]]$best = analysis$results$impact$best$variant[[idx]]
     }
   }
   
@@ -141,14 +151,20 @@ reformatAnalysis = function(analysis, analysisTypes, info) {
     }
     
     rr = rbind(
-      analysis$results$impact$best$rr_mean %>% normRR(variant="best"), 
       analysis$results$impact$full$rr_mean %>% normRR(variant="full"),
       analysis$results$impact$time$rr_mean %>% normRR(variant="time"), 
       analysis$results$impact$time_no_offset$rr_mean %>% normRR(variant="time_no_offset"), 
-      analysis$results$impact$its$rr_end %>% normRR(variant="its"), 
-      analysis$results$impact$pca$rr_mean %>% normRR(variant="pca")
+      analysis$results$impact$its$rr_end %>% normRR(variant="its")
     )
     
+    if (!analysis$ridge) {
+      rr = rbind(
+        rr, 
+        analysis$results$impact$pca$rr_mean %>% normRR(variant="pca"),
+        analysis$results$impact$best$rr_mean %>% normRR(variant="best")
+      )
+    }
+
     reformatted$results$rateRatios = llply(seq_along(analysis$groups), function(idx) {
       rr %>% filter(group==analysis$groups[[idx]]) %>% mutate(
         rr=sprintf("%.2f (%.2f - %.2f)", median, lcl, ucl),
@@ -166,6 +182,6 @@ reformatAnalysis = function(analysis, analysisTypes, info) {
 }
 
 # This is the version number for the "download results" rds file. Change if making incompatible changes.
-SAVE_VERSION_CURRENT = 14
+SAVE_VERSION_CURRENT = 15
 # This is oldest version number for the "download results" rds file that we still accept. Change when dropping support for loading older files.
 SAVE_VERSION_COMPATIBLE = 14
