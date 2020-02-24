@@ -524,7 +524,7 @@ update_progress = function(session, ...) {
   sessionProgress = progressState[[session$token]] %>% toJSON(auto_unbox=TRUE)
   
   d = sprintf("www/.session-data/%s", session$token)
-  dir.create(d, showWarnings = FALSE, recursive = TRUE)
+  dir.create(d, showWarnings = TRUE, recursive = TRUE)
   write(sessionProgress, sprintf("%s/progress.json", d))
 }
 
