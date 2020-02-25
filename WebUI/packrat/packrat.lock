@@ -104,9 +104,9 @@ Requires: backports
 
 Package: cli
 Source: CRAN
-Version: 1.1.0
-Hash: bc4e54014c2049f2605ad0c3ba0cce6b
-Requires: assertthat, crayon
+Version: 2.0.1
+Hash: 8e710a5f3177f1db9c6138e1dcbdfc30
+Requires: assertthat, crayon, fansi, glue
 
 Package: clipr
 Source: CRAN
@@ -181,6 +181,11 @@ Package: fansi
 Source: CRAN
 Version: 0.4.0
 Hash: f147621f72b561485bfffcae78c4f5d5
+
+Package: farver
+Source: CRAN
+Version: 2.0.3
+Hash: 29a358c21cb8de2e424cbec6b6be6553
 
 Package: fontawesome
 Source: github
