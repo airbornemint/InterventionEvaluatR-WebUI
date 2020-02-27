@@ -93,8 +93,8 @@ setup.ui = function() {
                 "impactType",
                 "Which type of impact analysis do you want to perform?",
                 c(
-                  "Ridge analysis (faster, ?downside)"="ridge",
-                  "Synthetic control analysis (slower, ?upside)"="syncon"
+                  "Bayesian (ridge) analysis — faster"="ridge",
+                  "Frequentist (Markov chain Monte Carlo) analysis — slower"="mcmc"
                 ),
                 selected = c("ridge"),
                 inline=FALSE
