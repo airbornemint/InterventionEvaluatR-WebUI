@@ -341,7 +341,8 @@ results.server.show = function(input, output, session, analysis) {
               tags$li("Individual plots (PDF). You can use these in your own reports and presentations."),
               tags$li("Data file with analysis results (RDS). Advanced users can import this into RStudio for additional analysis or to generate additional plots.")
             )
-          )
+          ),
+          HTML("<script>$(function() { $('#downloadResults').click() })</script>")
         )
       )
     })
