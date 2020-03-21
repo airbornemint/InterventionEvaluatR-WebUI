@@ -342,7 +342,7 @@ results.server.show = function(input, output, session, analysis) {
               tags$li("Data file with analysis results (RDS). Advanced users can import this into RStudio for additional analysis or to generate additional plots.")
             )
           ),
-          HTML("<script>$(function() { $('#downloadResults').click() })</script>")
+          HTML("<script>$(function() { $('#downloadResults')[0].click() })</script>")
         )
       )
     })
