@@ -5,7 +5,9 @@ proxy:
   hide-navbar: true
   template-path: /opt/shinyproxy/templates
   docker:
-      internal-networking: true
+      # internal-networking: true
+      port-range-start: 20000
+      port-range-start: 20003
   landing-page: /
   specs:
   - id: InterventionEvaluatR
