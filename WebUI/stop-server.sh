@@ -1,2 +1,2 @@
 #!/bin/sh
-test "${INTERVENTIONEVALUATR_DEPLOY}" && sudo kill 1
+sudo kill 1

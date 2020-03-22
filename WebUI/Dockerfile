@@ -29,7 +29,7 @@ ARG BUILD_APT_DEPENDENCIES="tzdata locales fontconfig curl"
 RUN apt-get update -y -qq && apt-get install -y -qq --no-install-recommends ${BUILD_APT_DEPENDENCIES}
 
 ### Setup packages needed to run our app
-ARG APT_DEPENDENCIES="texinfo texlive texlive-xetex openssh-client"
+ARG APT_DEPENDENCIES="texinfo texlive texlive-xetex openssh-client procps"
 RUN apt-get update -y -qq && apt-get install -y -qq --no-install-recommends ${APT_DEPENDENCIES}
 
 ### Install required R packages. Doing it this way allows docker to cache packrat state and not rebuild everything when app source changes in a way that doesn't affect package dependencies

@@ -25,7 +25,7 @@ results.help = function() {
 }
 
 # Server-side handling of results UI
-results.server = function(input, output, session, setup) {
+results.server = function(input, output, session, setup, analysisRunning) {
   ############################################################
   # Analysis
   ############################################################
@@ -77,6 +77,7 @@ results.server = function(input, output, session, setup) {
         return()
       } else {
         analysisStatus(ANALYSIS_RUNNING)
+        analysisRunning(list(running=TRUE))
         
         fullAnalysisData = setup$preparedData()
         
@@ -125,12 +126,14 @@ results.server = function(input, output, session, setup) {
             } 
             # Otherwise set up the computation worker and run the analysis
             else {
+
               performAnalysis(fullParams, analysisTypes, progress)
             }
           })
         }) %...>% (function(analysis) {
           print("Analysis done")
           analysisStatus(ANALYSIS_DONE)
+          analysisRunning(list(running=FALSE))
           completedAnalysis(analysis)
           
           reformatted = reformatAnalysis(analysis, analysisTypes, info)
@@ -148,6 +151,7 @@ results.server = function(input, output, session, setup) {
         }) %...!% (function(error) {
           print("Analysis failed")
           analysisStatus(ANALYSIS_FAILED)
+          analysisRunning(list(running=FALSE))
           print(error$message)
           print(error$call)
           results.server.showError(input, output, session, error)
