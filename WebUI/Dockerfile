@@ -60,6 +60,9 @@ RUN curl -L https://github.com/docker/machine/releases/download/v0.16.0/docker-m
 RUN mv /tmp/docker-machine /usr/local/bin/docker-machine
 RUN chmod +x /usr/local/bin/docker-machine
 
+### Allow shiny server to stop Docker instance
+RUN echo "shiny ALL = NOPASSWD: /bin/kill" >> /etc/sudoers.d/shiny
+
 # Finish up the configuration
 RUN echo tzdata tzdata/Areas select America >> /tmp/debconf.txt
 RUN echo tzdata tzdata/Zones/America select New_York >> /tmp/debconf.txt
