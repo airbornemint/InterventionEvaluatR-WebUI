@@ -24,18 +24,18 @@ results.help = function() {
   renderHTML("markdown/help-results.md")
 }
 
+ANALYSIS_READY = "ready"
+ANALYSIS_RUNNING = "running"
+ANALYSIS_DONE = "done"
+ANALYSIS_FAILED = "failed"
+ANALYSIS_CANCELED = "canceled"
+
 # Server-side handling of results UI
 results.server = function(input, output, session, setup) {
   ############################################################
   # Analysis
   ############################################################
   
-  ANALYSIS_READY = "ready"
-  ANALYSIS_RUNNING = "running"
-  ANALYSIS_DONE = "done"
-  ANALYSIS_FAILED = "failed"
-  ANALYSIS_CANCELED = "canceled"
-
   analysisStatus = reactiveVal(ANALYSIS_READY)
   completedAnalysis = reactiveVal(NULL)
   reformattedAnalysis = reactiveVal(NULL)
@@ -125,6 +125,7 @@ results.server = function(input, output, session, setup) {
             } 
             # Otherwise set up the computation worker and run the analysis
             else {
+
               performAnalysis(fullParams, analysisTypes, progress)
             }
           })
@@ -148,6 +149,7 @@ results.server = function(input, output, session, setup) {
         }) %...!% (function(error) {
           print("Analysis failed")
           analysisStatus(ANALYSIS_FAILED)
+          analysisRunning(list(running=FALSE))
           print(error$message)
           print(error$call)
           results.server.showError(input, output, session, error)
@@ -248,6 +250,7 @@ results.server = function(input, output, session, setup) {
   outputOptions(output, 'downloadResults', suspendWhenHidden=FALSE)
   
   update_progress(session)
+  return(analysisStatus)
 }
 
 # Server-side update of results when analysis is complete

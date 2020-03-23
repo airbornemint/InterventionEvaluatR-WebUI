@@ -100,7 +100,46 @@ ui <- md_page(
 
 server = function(input, output, session) {
   setup = setup.server(input, output, session)
-  results.server(input, output, session, setup)
+
+  analysisState = results.server(input, output, session, setup)
+
+  ############################################################
+  # Shiny idle timeout
+  ############################################################
+  # We need to shut down the server automatically when the 
+  # User is idle, to free up resources for other users
+  # Front end reports user activity once per minute in 
+  # input$lastUserActivity. We check for user activity once
+  # a minute and if we detect none for 5 minutes we stop the
+  # server
+
+  previousAnalysisState = reactiveVal("")
+  autoStop = reactiveVal(as.numeric(Sys.time()))
+  
+  observe({
+    validate(need(input$lastUserActivity, FALSE))
+    autoStop(as.numeric(Sys.time()))
+  })
+
+  observe({
+    # Invalidate every minute
+    invalidateLater(60000, session)
+
+    # Analysis state transition counts as activity (to prevent immediate stop when analysis completes)
+    if (previousAnalysisState() != analysisState()) {
+      autoStop(as.numeric(Sys.time()))
+      previousAnalysisState(analysisState())
+    }
+
+    # Check time since last activity
+    idleTimeout = 5 * 60
+    if (as.numeric(Sys.time()) > autoStop() + idleTimeout) {
+      # Don't shut down if we're running analysis
+      if (analysisState() != ANALYSIS_RUNNING && !getOption("ie.worker.local", default=TRUE)) {
+        system("sh ./stop-server.sh")
+      }
+    }
+  })
 }
 
 # Run the application 

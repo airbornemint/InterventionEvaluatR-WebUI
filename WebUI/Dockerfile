@@ -29,7 +29,7 @@ ARG BUILD_APT_DEPENDENCIES="tzdata locales fontconfig curl"
 RUN apt-get update -y -qq && apt-get install -y -qq --no-install-recommends ${BUILD_APT_DEPENDENCIES}
 
 ### Setup packages needed to run our app
-ARG APT_DEPENDENCIES="texinfo texlive texlive-xetex openssh-client"
+ARG APT_DEPENDENCIES="texinfo texlive texlive-xetex openssh-client procps"
 RUN apt-get update -y -qq && apt-get install -y -qq --no-install-recommends ${APT_DEPENDENCIES}
 
 ### Install required R packages. Doing it this way allows docker to cache packrat state and not rebuild everything when app source changes in a way that doesn't affect package dependencies
@@ -59,6 +59,9 @@ RUN dpkg -i /tmp/pandoc-2.7.3-1-amd64.deb
 RUN curl -L https://github.com/docker/machine/releases/download/v0.16.0/docker-machine-$(uname -s)-$(uname -m) > /tmp/docker-machine
 RUN mv /tmp/docker-machine /usr/local/bin/docker-machine
 RUN chmod +x /usr/local/bin/docker-machine
+
+### Allow shiny server to stop Docker instance
+RUN echo "shiny ALL = NOPASSWD: /bin/kill" >> /etc/sudoers.d/shiny
 
 # Finish up the configuration
 RUN echo tzdata tzdata/Areas select America >> /tmp/debconf.txt

@@ -85,3 +85,24 @@ setInterval(function(){
 //   updateProgress(message.items);
 // });
 
+// Idle timer notifies the backend of user activity once a minute, to allow the back end to shut down for idle users
+var lastReport = 0;
+function reportUserActivity() {
+  var reportingInterval = 60000; // Interval between reports to backend, ms
+
+  window.onmousemove = userActivity; // catches mouse movements
+  window.onmousedown = userActivity; // catches mouse movements
+  window.onclick = userActivity;     // catches mouse clicks
+  window.onscroll = userActivity;    // catches scrolling
+  window.onkeypress = userActivity;  //catches keyboard actions
+
+  function userActivity() {
+    var now = new Date().getTime();
+    // Limit backend contact to once per reporting interval, then use shiny JS API to contact the backend
+    if (now > lastReport + reportingInterval) {
+      Shiny.setInputValue("lastUserActivity", now, {priority: "event"});
+      lastReport = now;
+    }
+  }
+}
+reportUserActivity();
