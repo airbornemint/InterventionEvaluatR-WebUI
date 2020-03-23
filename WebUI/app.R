@@ -101,8 +101,7 @@ ui <- md_page(
 server = function(input, output, session) {
   setup = setup.server(input, output, session)
 
-  analysis = reactiveVal(list(running=FALSE))
-  results.server(input, output, session, setup, analysis)
+  analysisState = results.server(input, output, session, setup)
 
   ############################################################
   # Shiny idle timeout
@@ -114,22 +113,29 @@ server = function(input, output, session) {
   # a minute and if we detect none for 5 minutes we stop the
   # server
 
-  autoStop = reactiveVal(list(lastUserActivity=as.numeric(Sys.time()))) # Will be list(lastUserActivity)
+  previousAnalysisState = reactiveVal("")
+  autoStop = reactiveVal(as.numeric(Sys.time()))
   
   observe({
     validate(need(input$lastUserActivity, FALSE))
-    autoStop(list(lastUserActivity=as.numeric(Sys.time())))
+    autoStop(as.numeric(Sys.time()))
   })
 
   observe({
     # Invalidate every minute
     invalidateLater(60000, session)
 
+    # Analysis state transition counts as activity (to prevent immediate stop when analysis completes)
+    if (previousAnalysisState() != analysisState()) {
+      autoStop(as.numeric(Sys.time()))
+      previousAnalysisState(analysisState())
+    }
+
     # Check time since last activity
     idleTimeout = 5 * 60
-    if (as.numeric(Sys.time()) > autoStop()$lastUserActivity + idleTimeout) {
+    if (as.numeric(Sys.time()) > autoStop() + idleTimeout) {
       # Don't shut down if we're running analysis
-      if (!analysis()$running && !getOption("ie.worker.local", default=TRUE)) {
+      if (analysisState() != ANALYSIS_RUNNING && !getOption("ie.worker.local", default=TRUE)) {
         system("sh ./stop-server.sh")
       }
     }

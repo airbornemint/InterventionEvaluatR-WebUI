@@ -24,18 +24,18 @@ results.help = function() {
   renderHTML("markdown/help-results.md")
 }
 
+ANALYSIS_READY = "ready"
+ANALYSIS_RUNNING = "running"
+ANALYSIS_DONE = "done"
+ANALYSIS_FAILED = "failed"
+ANALYSIS_CANCELED = "canceled"
+
 # Server-side handling of results UI
-results.server = function(input, output, session, setup, analysisRunning) {
+results.server = function(input, output, session, setup) {
   ############################################################
   # Analysis
   ############################################################
   
-  ANALYSIS_READY = "ready"
-  ANALYSIS_RUNNING = "running"
-  ANALYSIS_DONE = "done"
-  ANALYSIS_FAILED = "failed"
-  ANALYSIS_CANCELED = "canceled"
-
   analysisStatus = reactiveVal(ANALYSIS_READY)
   completedAnalysis = reactiveVal(NULL)
   reformattedAnalysis = reactiveVal(NULL)
@@ -77,7 +77,6 @@ results.server = function(input, output, session, setup, analysisRunning) {
         return()
       } else {
         analysisStatus(ANALYSIS_RUNNING)
-        analysisRunning(list(running=TRUE))
         
         fullAnalysisData = setup$preparedData()
         
@@ -133,7 +132,6 @@ results.server = function(input, output, session, setup, analysisRunning) {
         }) %...>% (function(analysis) {
           print("Analysis done")
           analysisStatus(ANALYSIS_DONE)
-          analysisRunning(list(running=FALSE))
           completedAnalysis(analysis)
           
           reformatted = reformatAnalysis(analysis, analysisTypes, info)
@@ -252,6 +250,7 @@ results.server = function(input, output, session, setup, analysisRunning) {
   outputOptions(output, 'downloadResults', suspendWhenHidden=FALSE)
   
   update_progress(session)
+  return(analysisStatus)
 }
 
 # Server-side update of results when analysis is complete
