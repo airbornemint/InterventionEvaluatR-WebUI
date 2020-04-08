@@ -149,7 +149,6 @@ results.server = function(input, output, session, setup) {
         }) %...!% (function(error) {
           print("Analysis failed")
           analysisStatus(ANALYSIS_FAILED)
-          analysisRunning(list(running=FALSE))
           print(error$message)
           print(error$call)
           results.server.showError(input, output, session, error)
