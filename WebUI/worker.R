@@ -40,15 +40,29 @@ setupRemoteWorker = function() {
           workers=rep(workerIp, workerCount),
           rshopts=c("-i", "worker/id_rsa", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"),
           user="evaluatr",
-          rscript="/usr/local/bin/Rscript-docker"
+          rscript="/usr/local/bin/Rscript-docker",
+          connectTimeout=5*60 # Increase connection timeout to 5min to give the worker more time to pull the image
         )
     }
   
     # First make a single-worker cluster, which we will use to determine the number of cores available on the worker
-    singleCluster = makeCluster(1)
-    numCores = clusterCall(singleCluster, function() { future::availableCores(methods=c("system")) })[[1]]
-    stopCluster(singleCluster)
-  
+    # Repeat this a few times just to guard against transient worker startup errors
+    # (Which can potentially occur, for example, due to a transient delay in docker pull at worker startup)
+    workerCores = function() {
+      singleCluster = makeCluster(1)
+      numCores = clusterCall(singleCluster, function() { future::availableCores(methods=c("system")) })[[1]]
+      stopCluster(singleCluster)
+      return(numCores)
+    }
+
+    for(i in 1:3) {
+      tryCatch({
+        numCores = workerCores()
+      }, error = function(errorCondition) {
+      })
+    }
+    numCores = workerCores()
+    
     list(
       local=FALSE, 
       startCluster=function() { makeCluster(numCores) }, 
