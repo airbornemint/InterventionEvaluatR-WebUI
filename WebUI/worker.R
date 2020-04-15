@@ -42,7 +42,8 @@ setupRemoteWorker = function() {
           user="evaluatr",
           rscript="/usr/local/bin/Rscript-docker",
           connectTimeout=5*60, # Increase connection timeout to 5min to give the worker more time to pull the image
-          verbose=TRUE
+          verbose=TRUE,
+          port=floor(runif(1, min=8800, max=8900))
         )
     }
   
