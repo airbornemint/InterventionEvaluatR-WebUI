@@ -41,7 +41,9 @@ setupRemoteWorker = function() {
           rshopts=c("-i", "worker/id_rsa", "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=/dev/null"),
           user="evaluatr",
           rscript="/usr/local/bin/Rscript-docker",
-          connectTimeout=5*60 # Increase connection timeout to 5min to give the worker more time to pull the image
+          connectTimeout=5*60, # Increase connection timeout to 5min to give the worker more time to pull the image
+          verbose=TRUE,
+          port=floor(runif(1, min=8800, max=8900))
         )
     }
   
@@ -57,11 +59,15 @@ setupRemoteWorker = function() {
 
     for(i in 1:3) {
       tryCatch({
+        message(sprintf("workerCores attempt #%d", i))
         numCores = workerCores()
       }, error = function(errorCondition) {
+        message("failed")
       })
     }
+    message(sprintf("workerCores last attempt", i))
     numCores = workerCores()
+    message(sprintf("succeeded"))
     
     list(
       local=FALSE, 
