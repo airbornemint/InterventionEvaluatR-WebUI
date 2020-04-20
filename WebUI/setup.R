@@ -387,11 +387,15 @@ setup.server = function(input, output, session) {
       choices = c("", choices)
     }
     
-    selectInput(
-      inputId = "dateCol",
-      label = "Which variable in your data represents time?",
-      choices = choices
-    )
+    if (length(choices) > 0) {
+      selectInput(
+        inputId = "dateCol",
+        label = "Which variable in your data represents time?",
+        choices = choices
+      )
+    } else {
+      div("Your data doesn't contain a valid time variable. The time variable must be formatted as either ", code("year-month-day"), " or ", code("year/month/day"), "and it must be either monthly or quarterly, with no skipped time periods.")
+    }
   })
   outputOptions(output, 'dateColUI', suspendWhenHidden=FALSE)
   
