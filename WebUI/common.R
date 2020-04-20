@@ -5,7 +5,11 @@ dateFormats = list(
   `YYYY-MM-DD`="%Y-%m-%d",
   `YYYY-DD-MM`="%Y-%d-%m",
   `MM-DD-YYYY`="%m-%d-%Y",
-  `DD-MM-YYYY`="%d-%m-%Y"
+  `DD-MM-YYYY`="%d-%m-%Y",
+  `YYYY/MM/DD`="%Y/%m/%d",
+  `YYYY/DD/MM`="%Y/%d/%m",
+  `MM/DD/YYYY`="%m/%d/%Y",
+  `DD/MM/YYYY`="%d/%m/%Y"
 )
 
 postDurations = list(
