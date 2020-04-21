@@ -409,7 +409,7 @@ setup.server = function(input, output, session) {
       choices = choices
     )
     
-    if (length(choices) == 1) {
+    if (length(choices) < 2) {
       select = hidden(select)
     }
     
