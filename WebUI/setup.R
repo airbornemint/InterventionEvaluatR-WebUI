@@ -430,7 +430,7 @@ setup.server = function(input, output, session) {
     selectInput(
       inputId = "denomCol",
       label = "Which is the denominator variable in your data?",
-      choices = c(`No denominator`="", setdiff(names(inputData()), names(dateColumns(inputData()))))
+      choices = c("", setdiff(names(inputData()), names(dateColumns(inputData()))))
     )
   })
   outputOptions(output, 'denomColUI', suspendWhenHidden=FALSE)
@@ -521,7 +521,7 @@ setup.server = function(input, output, session) {
   })
   
   observe({
-    with(list(periodsAvailable=checkNeed(dataOutcome()) && (!dataNeedsGroup() || checkNeed(dataGroup()))), {
+    with(list(periodsAvailable=checkNeed(dataOutcome()) && checkNeed(input$denomCol) && (!dataNeedsGroup() || checkNeed(dataGroup()))), {
       updateButton(session, "nextPeriods", disabled=!periodsAvailable)
       md_update_stepper_step(session, "steps", "periods", enabled=periodsAvailable)
     })
