@@ -7,5 +7,5 @@ if(getOption("ie.deployment", "") != "") {
   options(ie.digitalocean.access.token="${DIGITALOCEAN_ACCESS_TOKEN}")
 }
 #### -- Packrat Autoloader (version 0.5.0-21) -- ####
-source("packrat/init.R")
+# source("packrat/init.R")
 #### -- End Packrat Autoloader -- ####
