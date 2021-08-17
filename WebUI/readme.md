@@ -37,7 +37,11 @@ The web UI is *intentionally* pinned to a specific revision of the main Interven
 The current process for updating InterventionEvaluatR used by web UI is:
 
 1. Merge the changes you are interested in into the `web-ui` branch in InterventionEvaluatR repository
-2. With the WebUI.Rproj open, update InterventionEvaluatR to the latest on the `web-ui` branch using `devtools::install_github("weinbergerlab/InterventionEvaluatR", "web-ui")`. Note that these versions work: InterventionEvaluatR-WebUI commit 47fa32cb; InterventionEvaluatR commit 6acc2c07 
+2. With the WebUI.Rproj open, update InterventionEvaluatR to the latest on the `web-ui` branch using `devtools::install_github("weinbergerlab/InterventionEvaluatR", "web-ui")`. Note that these versions work: InterventionEvaluatR-WebUI commit 47fa32cb; InterventionEvaluatR commit 6acc2c07 ; 
+3. also run this to update packages: 
+devtools::install_deps()
+devtools::install_version("future", version = "1.19.1", repos = "http://cran.us.r-project.org")
+
 3. You can now run the web UI locally with the updated InterventionEvaluatR. 
 4. When you are satisfied with the results, run `packrat::snapshot()` to record the new version InterventionEvaluatoR R in packrat
 5. Commit the changes to `packrat.lock` that were made by running `packrat::snapshot()`
