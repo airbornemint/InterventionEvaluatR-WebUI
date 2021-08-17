@@ -89,16 +89,6 @@ setup.ui = function() {
                 selected = c("univariate", "impact"),
                 inline=TRUE
               )),
-              radioButtons(
-                "impactType",
-                "Which type of impact analysis do you want to perform?",
-                c(
-                  "Bayesian (ridge) analysis — faster"="ridge",
-                  "Frequentist (Markov chain Monte Carlo) analysis — slower"="mcmc"
-                ),
-                selected = c("ridge"),
-                inline=FALSE
-              ),
               uiOutput("analysisGroupsUI"),
               uiOutput("analyzeButtonUI")
             )
@@ -150,12 +140,7 @@ setup.server = function(input, output, session) {
       input$analysis = NULL
     }
 
-    # In RDS prior to version 15, ridge = FALSE is implicit
-    if (is.null(input$params$impactType)) {
-      input$params$ridge = FALSE;
-      input$analysis$ridge = FALSE;
-    }
-
+ 
     input
   }
   
@@ -353,8 +338,7 @@ setup.server = function(input, output, session) {
       group_name=input$groupCol,
       date_name=input$dateCol,
       outcome_name=input$outcomeCol,
-      denom_name=input$denomCol,
-      ridge=(input$impactType == "ridge")
+      denom_name=input$denomCol
     )    
   })
   
