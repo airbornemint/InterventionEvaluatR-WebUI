@@ -41,11 +41,18 @@ performAnalysis = function(params, analysisTypes, progress) {
       dismissWorker(worker)
     }, add=TRUE)
     progress(setup=TRUE)
+
+    call.params = params    
+    # Lite version only does ridge (and has no ridge param in init)
+    if (lite) {
+      params$ridge = TRUE
+      call.params$ridge = NULL
+    }
     
     progress(init=FALSE)
     analysis = do.call(
       evaluatr.init,
-      params
+      call.params
     )
     progress(init=TRUE)
 
@@ -63,6 +70,11 @@ performAnalysis = function(params, analysisTypes, progress) {
       progress(impact=TRUE)
     }
     
+    # Lite version only does ridge
+    if (lite) {
+      analysis$ridge = TRUE
+    }
+
     # Only keep what we need so we aren't shipping large amounts of never-to-be-used data between worker and UI
     progress(finish=FALSE)
     evaluatr.prune(analysis)
@@ -153,13 +165,13 @@ reformatAnalysis = function(analysis, analysisTypes, info) {
     rr = rbind(
       analysis$results$impact$full$rr_mean %>% normRR(variant="full"),
       analysis$results$impact$time$rr_mean %>% normRR(variant="time"), 
-      analysis$results$impact$time_no_offset$rr_mean %>% normRR(variant="time_no_offset"), 
       analysis$results$impact$its$rr_end %>% normRR(variant="its")
     )
     
     if (!analysis$ridge) {
       rr = rbind(
         rr, 
+        analysis$results$impact$time_no_offset$rr_mean %>% normRR(variant="time_no_offset"), 
         analysis$results$impact$pca$rr_mean %>% normRR(variant="pca"),
         analysis$results$impact$best$rr_mean %>% normRR(variant="best")
       )

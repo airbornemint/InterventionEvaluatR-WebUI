@@ -1,4 +1,12 @@
 # Create setup UI
+hiddenIf = function(hidden, ui) {
+    if(!hidden) {
+    return(ui)
+  } else {
+    return(hidden(ui))
+  }
+}
+
 setup.ui = function() {
   div(
     class="tab-pane fade show active",
@@ -89,7 +97,7 @@ setup.ui = function() {
                 selected = c("univariate", "impact"),
                 inline=TRUE
               )),
-              radioButtons(
+              hiddenIf(lite, radioButtons(
                 "impactType",
                 "Which type of impact analysis do you want to perform?",
                 c(
@@ -98,7 +106,7 @@ setup.ui = function() {
                 ),
                 selected = c("ridge"),
                 inline=FALSE
-              ),
+              )),
               uiOutput("analysisGroupsUI"),
               uiOutput("analyzeButtonUI")
             )

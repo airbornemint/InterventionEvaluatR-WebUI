@@ -1,6 +1,8 @@
 library(plyr)
 library(rmarkdown)
 
+lite = tryCatch(InterventionEvaluatR:::lite, error=function(err){FALSE})
+
 dateFormats = list(
   `YYYY-MM-DD`="%Y-%m-%d",
   `YYYY-DD-MM`="%Y-%d-%m",
